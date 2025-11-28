@@ -215,7 +215,7 @@ const MyBookings = () => {
                       sx={{
                         px: 1.5,
                         borderRadius: 2,
-                        minHeight: 36,
+                           minHeight: 36,
                         '& .MuiChip-label': { py: 0.8 },
                       }}
                     />
