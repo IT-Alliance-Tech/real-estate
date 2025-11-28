@@ -7,9 +7,6 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
-// Assets (using placeholders or existing icons if available, for now using emojis/text)
-// You can replace these with actual image imports later
-
 const ads = [
   {
     id: 1,
@@ -43,78 +40,103 @@ const SubscriptionAdBanner = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <Box sx={{ py: 6, bgcolor: '#f5f7fa' }}>
+    <Box
+      sx={{
+        py: { xs: 4, sm: 5, md: 6 },
+        bgcolor: '#f5f7fa',
+        display: 'flex',
+        justifyContent: 'center'
+      }}
+    >
       <Container maxWidth="lg">
-        <Swiper
-          modules={[Autoplay, Pagination, EffectFade]}
-          effect="fade"
-          spaceBetween={30}
-          slidesPerView={1}
-          autoplay={{
-            delay: 4000,
-            disableOnInteraction: false,
-          }}
-          pagination={{
-            clickable: true,
-            dynamicBullets: true,
-          }}
-          loop={true}
-          style={{
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-          }}
-        >
-          {ads.map((ad) => (
-            <SwiperSlide key={ad.id}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  height: { xs: 300, md: 400 },
-                  width: '100%',
-                  background: ad.bgGradient,
-                  display: 'flex',
-                  alignItems: 'center',
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Background Image Overlay */}
-                <Box
-                  component="img"
-                  src={ad.image}
-                  alt={ad.title}
-                  sx={{
-                    position: 'absolute',
-                    right: 0,
-                    top: 0,
-                    height: '100%',
-                    width: { xs: '100%', md: '60%' },
-                    objectFit: 'cover',
-                    opacity: 0.2,
-                    maskImage: 'linear-gradient(to left, black 50%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to left, black 50%, transparent 100%)'
-                  }}
-                />
 
-                <Container>
-                  <Box sx={{ position: 'relative', zIndex: 2, maxWidth: { xs: '100%', md: '60%' }, color: '#fff', textAlign: { xs: 'center', md: 'left' } }}>
+        {/* Wrapper to fix 100% height and consistent layout */}
+        <Box sx={{ width: '100%', height: '100%', borderRadius: 3 }}>
+
+          <Swiper
+            modules={[Autoplay, Pagination, EffectFade]}
+            effect="fade"
+            slidesPerView={1}
+            autoplay={{
+              delay: 4000,
+              disableOnInteraction: false,
+            }}
+            pagination={{
+              clickable: true,
+              dynamicBullets: true,
+            }}
+            loop={true}
+            style={{
+              borderRadius: '24px',
+              overflow: 'hidden',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.12)'
+            }}
+          >
+            {ads.map((ad) => (
+              <SwiperSlide key={ad.id}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    height: { xs: 340, sm: 360, md: 420, lg: 450 },
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    background: ad.bgGradient
+                  }}
+                >
+
+                  {/* Background Image */}
+                  <Box
+                    component="img"
+                    src={ad.image}
+                    alt={ad.title}
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      height: '100%',
+                      width: { xs: '100%', md: '60%' },
+                      objectFit: 'cover',
+                      opacity: 0.22,
+                      maskImage: 'linear-gradient(to left, black 45%, transparent 100%)',
+                      WebkitMaskImage: 'linear-gradient(to left, black 45%, transparent 100%)'
+                    }}
+                  />
+
+                  {/* Main Content */}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      zIndex: 2,
+                      pl: { xs: 2, sm: 3, md: 6 },
+                      pr: { xs: 2, sm: 3 },
+                      maxWidth: { xs: '100%', md: '55%' },
+                      textAlign: { xs: 'center', md: 'left' },
+                      color: '#fff',
+                    }}
+                  >
                     <Typography
                       variant={isMobile ? "h4" : "h2"}
                       fontWeight={800}
                       gutterBottom
                       sx={{
-                        textShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                        lineHeight: 1.2
+                        textShadow: '0 3px 12px rgba(0,0,0,0.25)'
                       }}
                     >
                       {ad.title}
                     </Typography>
+
                     <Typography
                       variant={isMobile ? "body1" : "h5"}
-                      sx={{ mb: 4, opacity: 0.9, fontWeight: 400 }}
+                      sx={{
+                        mb: 4,
+                        opacity: 0.95,
+                        fontWeight: 400,
+                      }}
                     >
                       {ad.subtitle}
                     </Typography>
+
                     <Button
                       variant="contained"
                       size="large"
@@ -126,24 +148,24 @@ const SubscriptionAdBanner = () => {
                         px: 4,
                         py: 1.5,
                         borderRadius: '50px',
-                        fontSize: '1.1rem',
-                        boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
+                        fontSize: '1.05rem',
+                        boxShadow: '0 12px 25px rgba(0,0,0,0.20)',
                         '&:hover': {
-                          bgcolor: '#f0f0f0',
+                          bgcolor: '#f7f7f7',
                           transform: 'translateY(-2px)',
-                          boxShadow: '0 15px 30px rgba(0,0,0,0.3)'
+                          boxShadow: '0 20px 30px rgba(0,0,0,0.25)'
                         },
-                        transition: 'all 0.3s ease'
+                        transition: '0.25s ease'
                       }}
                     >
                       {ad.cta}
                     </Button>
                   </Box>
-                </Container>
-              </Box>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+                </Box>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </Box>
       </Container>
     </Box>
   );

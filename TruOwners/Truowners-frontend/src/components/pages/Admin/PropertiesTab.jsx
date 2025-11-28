@@ -78,6 +78,7 @@ import { buildApiUrl, API_CONFIG } from '../../../config/api';
 import RoomIcon from '@mui/icons-material/Room';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from "@mui/icons-material/Close";
 
 const PropertiesTab = () => {
   const theme = useTheme();
@@ -485,14 +486,25 @@ const handlePostPropertySubmit = async () => {
 
 </Box>
 </Box>
-
 <Dialog
   open={postPropertyOpen}
   onClose={() => setPostPropertyOpen(false)}
-  maxWidth="sm" // reduced width
+  maxWidth="sm"
   fullWidth
-  PaperProps={{ sx: { borderRadius: 2, p: 0, boxShadow: 'none' } }}
+  PaperProps={{ sx: { borderRadius: 2, p: 0, boxShadow: 'none', position: 'relative' } }}  
 >
+  <IconButton
+    onClick={() => setPostPropertyOpen(false)}
+    sx={{
+      position: "absolute",
+      top: 10,
+      right: 10,
+      zIndex: 10
+    }}
+  >
+    <CloseIcon />
+  </IconButton>
+
   {/* Header Section */}
   <Box textAlign="center" py={3} px={2} borderBottom="1px solid #e0e0e0">
     <Typography variant="h4" fontWeight={700} mb={1}>
@@ -790,19 +802,16 @@ const handlePostPropertySubmit = async () => {
       disabled={uploading || !newPropertyData.title || newPropertyData.mediaFiles?.length === 0}
       sx={{
         backgroundColor: '#1976d2',
-        color: '#fff', // text is white
-        px: 8, // more horizontal padding
+        color: '#fff',
+        px: 8,
         py: 1.5,
         fontWeight: 600,
-        minWidth: 200, // minimum width for the button
-        '&:hover': { 
-          backgroundColor: '#115293', 
-          color: '#fff' 
-        },
+        minWidth: 200,
+        '&:hover': { backgroundColor: '#115293', color: '#fff' },
         '&.Mui-disabled': {
-          backgroundColor: '#1976d2', // keep background blue even when disabled
-          color: '#fff', // keep text white when disabled
-          opacity: 1, // remove faded look for disabled button
+          backgroundColor: '#1976d2',
+          color: '#fff',
+          opacity: 1,
         },
       }}
     >
@@ -810,6 +819,7 @@ const handlePostPropertySubmit = async () => {
     </Button>
   </DialogActions>
 </Dialog>
+
 
 
 
