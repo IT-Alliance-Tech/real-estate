@@ -54,11 +54,11 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
       alignItems: "center",
     },
     [theme.breakpoints.down(992)]: {
-     display: "grid",
-     gridTemplateColumns: "1fr 1fr",
-     gap: "8px",
-     justifyContent: "center",
-     alignItems: "center",
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "8px",
+      justifyContent: "center",
+      alignItems: "center",
     },
   },
   "& .MuiTabs-indicator": {
@@ -202,7 +202,12 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
   return (
     <div>
       {/* Status Tabs */}
-      <StyledTabs value={statusTab} onChange={handleTabChange} centered>
+      <StyledTabs
+        value={statusTab}
+        onChange={handleTabChange}
+        centered
+        sx={{ display: { xs: "none", lg: "flex" } }}
+      >
         <StyledTab label="ALL STATUS" />
         <StyledTab label="FOR RENT" />
         <StyledTab label="FOR SALE" />
@@ -224,7 +229,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         }}
       >
         {/* Property Type */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{ display: { xs: "none", lg: "block" } }}>
           <SectionLabel>
             <HomeIcon sx={{ fontSize: 16 }} />
             LOOKING FOR
@@ -249,7 +254,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         </Grid>
 
         {/* Location */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={8} lg={3}>
           <SectionLabel>
             <LocationOnIcon sx={{ fontSize: 16 }} />
             LOCATION
@@ -270,7 +275,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         </Grid>
 
         {/* Bedrooms */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{ display: { xs: "none", lg: "block" } }}>
           <SectionLabel>
             <BedIcon sx={{ fontSize: 16 }} />
             PROPERTY SIZE
@@ -295,7 +300,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         </Grid>
 
         {/* Budget */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{ display: { xs: "none", lg: "block" } }}>
           <SectionLabel>
             <BedIcon sx={{ fontSize: 16 }} />
             YOUR BUDGET
@@ -312,7 +317,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         </Grid>
 
         {/* Search Button */}
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={4} lg={2}>
           <StyledButton variant="contained" fullWidth onClick={handleSearchClick}>
             Search
           </StyledButton>
