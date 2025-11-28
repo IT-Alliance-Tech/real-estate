@@ -94,7 +94,7 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
       if (filters.searchTerm) params.append("search", filters.searchTerm);
       if (filters.maxBudget) params.append("maxBudget", filters.maxBudget);
 
-        console.log(params.toString(), "params");
+      console.log(params.toString(), "params");
 
       const response = await fetch(
         `${buildApiUrl(API_CONFIG.USER.PROPERTIES)}?${params.toString()}`,
@@ -264,7 +264,7 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
   return (
     <div>
       {/* ✅ HERO SECTION */}
-      <motion.div 
+      <motion.div
         className="position-relative row g-0 justify-content-center cursor_pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -279,6 +279,7 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
             height: "100%",
             maxHeight: "400px",
             objectFit: "cover",
+            objectPosition: "0% 5%"
           }}
         />
       </motion.div>
