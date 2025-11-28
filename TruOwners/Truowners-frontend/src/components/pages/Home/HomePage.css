@@ -319,7 +319,7 @@ body {
 /* ===== PROPERTIES SECTION ===== */
 .properties-section {
   padding: var(--spacing-12) 0;
-  background: linear-gradient(180deg, var(--bg-light-blue) 0%, rgba(255, 255, 255, 0) 100%);
+  /* background: linear-gradient(180deg, var(--bg-light-blue) 0%, rgba(255, 255, 255, 0) 100%); */
 }
 
 .properties-grid {

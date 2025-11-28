@@ -1,5 +1,5 @@
 // PropertiesTab.jsx - Updated with title search and mark as sold functionality
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -82,6 +82,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 const PropertiesTab = () => {
   const theme = useTheme();
+    const fileInputRef = useRef(null);
 
   /* ---------------- State Management ---------------- */
   const [properties, setProperties] = useState([]);
@@ -138,6 +139,9 @@ const openGoogleMaps = () => {
   const query = encodeURIComponent(address);
   window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
 };
+
+console.log(newPropertyData);
+
 
 const [uploading, setUploading] = useState(false);
 
@@ -777,6 +781,7 @@ const handlePostPropertySubmit = async () => {
         p={4}
         textAlign="center"
         sx={{ cursor: 'pointer' }}
+        onClick={() => fileInputRef.current.click()}
       >
         <CameraAltIcon sx={{ fontSize: 50, color: '#1976d2' }} />
         <Typography mt={1} fontWeight={600}>Click here to upload or drag and drop images</Typography>
@@ -785,6 +790,7 @@ const handlePostPropertySubmit = async () => {
         </Typography>
         <input
           hidden
+            ref={fileInputRef}  
           type="file"
           multiple
           accept="image/*,video/*"

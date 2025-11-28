@@ -120,6 +120,29 @@
     font-size: var(--font-size-xs);
     font-weight: 600;
   }
+  .Ownercheckmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  
+  .amenity-checkbox input[type="checkbox"]:checked + .Ownercheckmark {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .amenity-checkbox input[type="checkbox"]:checked + .Ownercheckmark::after {
+    content: '✓';
+    color: var(--white);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
   
   /* Image input styling */
   .image-input-group {
