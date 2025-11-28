@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import "./home.css";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
-import headerImage from "../../../assets/images/home/banner.png"; // ✅ corrected path
+import headerImage from "../../../../public/banner.jpeg"; // ✅ corrected path
 import search from "../../../assets/images/home/search.svg";
 import useScreenSize from "../../helper/userScreenSize.jsx";
 import PropertyTypeSelect from "../search-screen/propertyTypeSelect.jsx";
@@ -276,7 +276,8 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
           alt="hero_banner"
           style={{
             width: "100%",
-            height: "400px",
+            height: "100%",
+            maxHeight: "400px",
             objectFit: "cover",
           }}
         />
