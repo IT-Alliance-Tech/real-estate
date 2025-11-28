@@ -628,7 +628,7 @@ const removeMedia = (id) => {
                     checked={formData.amenities.includes(amenity)}
                     onChange={() => handleAmenityToggle(amenity)}
                   />
-                  <span className="checkmark"></span>
+                  <span className="Ownercheckmark"></span>
                   {amenity}
                 </label>
               ))}
