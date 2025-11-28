@@ -4,6 +4,7 @@ import { buildApiUrl, API_CONFIG } from '../../../config/api';
 import { uploadFile, generateFileName } from '../../../config/supabase';
 import { handleApiError, getErrorMessage, validateApiResponse } from '../../../utils/errorHandler';
 import './Owner.css';
+import '../Auth/Auth.css';
 import PropertySuccessModal from './PropertySuccessModal';
 
 const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
@@ -294,18 +295,25 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
 
  const handleSubmit = async (e) => {
   e.preventDefault();
+  console.log('EditProperty: handleSubmit called');
 
-  if (!validateForm()) return;
+  if (!validateForm()) {
+    console.log('EditProperty: Validation failed');
+    return;
+  }
 
   setLoading(true);
   setError('');
 
   try {
     // Upload any new media files
+    console.log('EditProperty: Uploading media...');
     const newMediaUrls = await uploadAllMedia();
     const allMediaUrls = [...existingImages, ...newMediaUrls];
+    console.log('EditProperty: Media uploaded', allMediaUrls);
 
     // Send PATCH request to update property
+    console.log('EditProperty: Sending PATCH request to', `${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`);
     const response = await fetch(`${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`, {
       method: 'PATCH',
       headers: {
@@ -338,7 +346,9 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     try {
       data = await response.json();
       validateApiResponse(data);
+      console.log('EditProperty: API Response', data);
     } catch (parseError) {
+      console.error('EditProperty: JSON parse error', parseError);
       throw new Error('Invalid response from server');
     }
 
@@ -347,6 +357,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     }
 
     if (data.success) {
+      console.log('EditProperty: Success', data.data);
       // Update state for further edits (keeps form editable)
       setFormData({
         title: data.data.title || '',

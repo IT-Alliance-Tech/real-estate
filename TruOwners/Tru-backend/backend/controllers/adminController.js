@@ -7,7 +7,288 @@ const { PROPERTY_STATUS, BOOKING_STATUS } = require('../utils/constants');
 const UserSubscription = require('../models/UserSubscription');
 const PropertyView = require('../models/PropertyView');
 
-// Approve/reject property
+// Create property with owner details (Admin only)
+const createPropertyWithOwner = async (req, res) => {
+  try {
+    const { owner: ownerData, property: propertyData } = req.body;
+
+    // Validate required fields
+    if (!ownerData || !propertyData) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        error: { message: 'Owner and property data are required' },
+        data: null
+      });
+    }
+
+    // Validate email is provided
+    if (!ownerData.email) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        error: { message: 'Owner email is required' },
+        data: null
+      });
+    }
+
+    // Validate property required fields
+    const requiredPropertyFields = ['title', 'rent', 'location'];
+    for (const field of requiredPropertyFields) {
+      if (!propertyData[field]) {
+        return res.status(400).json({
+          statusCode: 400,
+          success: false,
+          error: { message: `Property ${field} is required` },
+          data: null
+        });
+      }
+    }
+
+    let user, owner, isNewOwner = false;
+
+    // Check if user with this email exists
+    user = await User.findOne({ email: ownerData.email.toLowerCase() });
+
+    if (user) {
+      // User exists, check if they have an owner profile
+      if (user.role !== 'owner') {
+        return res.status(400).json({
+          statusCode: 400,
+          success: false,
+          error: { message: 'User with this email exists but is not an owner' },
+          data: null
+        });
+      }
+
+      owner = await Owner.findOne({ user: user._id });
+      if (!owner) {
+        // User is marked as owner but no owner profile exists, create one
+        // Validate owner fields for new owner profile
+        const requiredOwnerFields = ['name', 'phone', 'idProofType', 'idProofNumber', 'idProofImageUrl'];
+        for (const field of requiredOwnerFields) {
+          if (!ownerData[field]) {
+            return res.status(400).json({
+              statusCode: 400,
+              success: false,
+              error: { message: `Owner ${field} is required for new owner` },
+              data: null
+            });
+          }
+        }
+
+        owner = new Owner({
+          user: user._id,
+          idProofType: ownerData.idProofType,
+          idProofNumber: ownerData.idProofNumber,
+          idProofImageUrl: ownerData.idProofImageUrl,
+          verified: true, // Admin-created owners are auto-verified
+          properties: []
+        });
+        await owner.save();
+        isNewOwner = true;
+      }
+      // If owner exists, we don't need to validate or update owner details
+    } else {
+      // Validate all owner fields for completely new user + owner
+      const requiredOwnerFields = ['name', 'phone', 'idProofType', 'idProofNumber', 'idProofImageUrl'];
+      for (const field of requiredOwnerFields) {
+        if (!ownerData[field]) {
+          return res.status(400).json({
+            statusCode: 400,
+            success: false,
+            error: { message: `Owner ${field} is required for new owner` },
+            data: null
+          });
+        }
+      }
+
+      // Create new user with owner role
+      user = new User({
+        email: ownerData.email.toLowerCase(),
+        name: ownerData.name,
+        phone: ownerData.phone,
+        role: 'owner',
+        verified: true, // Admin-created users are auto-verified
+        password: Math.random().toString(36).slice(-8) // Generate random password
+      });
+      await user.save();
+
+      // Create owner profile
+      owner = new Owner({
+        user: user._id,
+        idProofType: ownerData.idProofType,
+        idProofNumber: ownerData.idProofNumber,
+        idProofImageUrl: ownerData.idProofImageUrl,
+        verified: true,
+        properties: []
+      });
+      await owner.save();
+      isNewOwner = true;
+    }
+
+    // Create property
+    const property = new Property({
+      owner: owner._id,
+      title: propertyData.title,
+      description: propertyData.description || '',
+      location: propertyData.location,
+      rent: propertyData.rent,
+      deposit: propertyData.deposit || 0,
+      listingType: propertyData.listingType || 'rent',
+      category: propertyData.category || 'residential',
+      propertyType: propertyData.propertyType || 'apartment',
+      bedrooms: propertyData.bedrooms || 0,
+      bathrooms: propertyData.bathrooms || 0,
+      area: propertyData.area || 0,
+      amenities: propertyData.amenities || [],
+      images: propertyData.images || [],
+      status: PROPERTY_STATUS.APPROVED, // Admin-created properties are auto-approved
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await property.save();
+
+    // Add property to owner's properties array
+    owner.properties.push(property._id);
+    await owner.save();
+
+    // Populate owner and user data for response
+    await property.populate({
+      path: 'owner',
+      populate: {
+        path: 'user',
+        select: '-password'
+      }
+    });
+
+    res.status(201).json({
+      statusCode: 201,
+      success: true,
+      error: null,
+      data: {
+        message: 'Property created successfully',
+        property: {
+          id: property._id,
+          title: property.title,
+          description: property.description,
+          location: property.location,
+          rent: property.rent,
+          deposit: property.deposit,
+          propertyType: property.propertyType,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          area: property.area,
+          amenities: property.amenities,
+          images: property.images,
+          status: property.status,
+          createdAt: property.createdAt,
+          updatedAt: property.updatedAt
+        },
+        owner: {
+          id: owner._id,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role
+          },
+          idProofType: owner.idProofType,
+          idProofNumber: owner.idProofNumber,
+          verified: owner.verified
+        },
+        isNewOwner
+      }
+    });
+  } catch (error) {
+    console.error('Create property with owner error:', error);
+    res.status(500).json({
+      statusCode: 500,
+      success: false,
+      error: {
+        message: 'Internal server error',
+        details: error.message
+      },
+      data: null
+    });
+  }
+};
+
+// Check if owner exists by email
+const checkOwnerExists = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        error: { message: 'Email is required' },
+        data: null
+      });
+    }
+
+    // Check if user with this email exists and has owner role
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(200).json({
+        statusCode: 200,
+        success: true,
+        error: null,
+        data: {
+          exists: false,
+          message: 'Owner not found'
+        }
+      });
+    }
+
+    if (user.role !== 'owner') {
+      return res.status(200).json({
+        statusCode: 200,
+        success: true,
+        error: null,
+        data: {
+          exists: false,
+          message: 'User exists but is not an owner'
+        }
+      });
+    }
+
+    // Check if owner profile exists
+    const owner = await Owner.findOne({ user: user._id });
+
+    return res.status(200).json({
+      statusCode: 200,
+      success: true,
+      error: null,
+      data: {
+        exists: true,
+        owner: {
+          id: owner?._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          verified: owner?.verified || false
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Check owner exists error:', error);
+    res.status(500).json({
+      statusCode: 500,
+      success: false,
+      error: {
+        message: 'Internal server error',
+        details: error.message
+      },
+      data: null
+    });
+  }
+};
+
 const reviewProperty = async (req, res) => {
   const { status } = req.body;
 
@@ -737,6 +1018,8 @@ const getUserHistory = async (req, res) => {
 };
 
 module.exports = {
+  createPropertyWithOwner,
+  checkOwnerExists,
   reviewProperty,
   updatePropertyStatus,
   manageSiteVisit,
