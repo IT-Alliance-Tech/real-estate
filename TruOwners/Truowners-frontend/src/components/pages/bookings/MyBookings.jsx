@@ -73,11 +73,75 @@ const MyBookings = () => {
     </Box>
   )
 
-  if (bookings.length === 0) return (
-    <Box sx={{ textAlign: 'center', mt: 6 }}>
-      <Typography variant="h6">No bookings found.</Typography>
-    </Box>
-  )
+// ⭐ IMPROVED EMPTY STATE DESIGN — SIMILAR TO WISHLIST ⭐
+if (bookings.length === 0) return (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '60vh',
+      px: 2,
+      mt: 6,
+      mb: 8
+    }}
+  >
+    <Paper
+      elevation={3}
+      sx={{
+        p: 6,
+        borderRadius: 3,
+        textAlign: 'center',
+        maxWidth: 450,
+        width: '100%',
+        backgroundColor: '#fafafa'
+      }}
+    >
+      <Box
+        sx={{
+          fontSize: 72,
+          mb: 2,
+          display: 'flex',
+          justifyContent: 'center',
+          color: '#1976d2'
+        }}
+      >
+        📅
+      </Box>
+
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+        No Bookings Yet
+      </Typography>
+
+      <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
+        You haven’t made any bookings yet. Start exploring properties and schedule a visit anytime!
+      </Typography>
+
+      <Box
+        component="button"
+        onClick={() => navigate('/')}
+        sx={{
+          backgroundColor: '#1976d2',
+          color: '#fff',
+          px: 4,
+          py: 1.5,
+          borderRadius: 2,
+          fontSize: 16,
+          fontWeight: 500,
+          cursor: 'pointer',
+          border: 'none',
+          transition: '0.3s',
+          '&:hover': { backgroundColor: '#125aa0' }
+        }}
+      >
+        Explore Properties
+      </Box>
+    </Paper>
+  </Box>
+)
+
+
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 } }}>

@@ -151,6 +151,24 @@
   .auth-error span {
     flex-shrink: 0;
   }
+
+  .auth-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+    padding: var(--spacing-3);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-4);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+  
+  .auth-success span {
+    flex-shrink: 0;
+  }
+  
   
   /* Loading Spinner */
   .loading-spinner {

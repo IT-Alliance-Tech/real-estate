@@ -427,7 +427,7 @@ const PropertyDetailsModal = ({ property, onClose, onUpdate, onSuccessAction }) 
   return (
     <>
       <Dialog
-        open={true}
+        open={!showEdit}
         onClose={onClose}
         maxWidth="md"
         fullWidth

@@ -138,9 +138,10 @@ const OwnerDashboard = () => {
     const getStatusBadge = (status) => {
         const statusConfig = {
             pending: { color: 'warning', text: 'Under Review', icon: '🔍' },
-            approved: { color: 'success', text: 'Live', icon: '✅' },
+            approved: { color: 'success', text: 'Approved', icon: '✅' },
             rejected: { color: 'danger', text: 'Rejected', icon: '❌' },
-            suspended: { color: 'danger', text: 'Suspended', icon: '⚠️' }
+            suspended: { color: 'danger', text: 'Suspended', icon: '⚠️' },
+            published: { color: 'success', text: 'Live', icon: '✅' }
         }
 
         const config = statusConfig[status] || statusConfig.pending

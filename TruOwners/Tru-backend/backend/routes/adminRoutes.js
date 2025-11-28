@@ -9,6 +9,8 @@ router.use(auth);
 router.use(adminAuth);
 
 // Property management
+router.get('/check-owner', adminController.checkOwnerExists);
+router.post('/properties', adminController.createPropertyWithOwner);
 router.patch('/properties/:id/review', adminController.reviewProperty);
 router.put('/properties/:id', adminController.updatePropertyStatus);
 
