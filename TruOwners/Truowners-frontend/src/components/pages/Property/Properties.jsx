@@ -22,11 +22,14 @@ import {
   Stack,
   Divider,
   Chip,
+  Drawer,
+  IconButton,
 } from "@mui/material";
 import {
   Home as HomeIcon,
   Warning as WarningIcon,
   Search as SearchIcon,
+  Close as CloseIcon
 } from "@mui/icons-material";
 import FilterSidebar from "./FilterSidebar";
 import BannerImg from "../../../assets/images/home/banner 1.png";
@@ -64,6 +67,9 @@ const PropertiesPage = () => {
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [wishlist, setWishlist] = useState([]);
+
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
 
   // Initialize filters from URL parameters on component mount
 
@@ -157,6 +163,7 @@ const PropertiesPage = () => {
       } else {
         throw new Error(getErrorMessage(data));
       }
+      setMobileFilterOpen(false)
     } catch (err) {
       console.error("Fetch properties error:", err);
       setError(err.message || "Failed to load properties. Please try again.");
@@ -262,7 +269,7 @@ const PropertiesPage = () => {
   const handleFilterSearch = (queryString, updatedFilters) => {
 
     console.log(updatedFilters);
-    
+
     // Update filters state
     const newFilters = {
       propertyType: updatedFilters.propertyType || "",
@@ -408,15 +415,32 @@ const PropertiesPage = () => {
 
         <Grid container spacing={2} sx={{ mt: 2, display: "flex" }}>
           {/* Sidebar */}
-          <Grid item xs={12} md={3}>
+          <Grid
+            item
+            xs={12}
+            lg={3}
+            sx={{
+display: {
+  xs: "none",
+  sm: "none",
+  md: "none",
+  lg: "none", // hide 1200–1275 too
+  "@media (min-width:1276px)": {
+    display: "block", // show desktop filter only above 1276px
+  },
+},
+
+
+}}
+   // show only ≥1200px
+          >
             <Paper
               elevation={3}
               sx={{
                 p: 2,
                 borderRadius: 2,
-                // height: "100%",
                 position: "sticky",
-                top: "80px", // keeps sidebar fixed while scrolling
+                top: "80px",
               }}
             >
               <FilterSidebar
@@ -436,27 +460,21 @@ const PropertiesPage = () => {
             </Paper>
           </Grid>
 
-
-
           {/* Active Filters Display */}
-
-
-
-
-
-
-
-
           {/* Properties List */}
+          <Grid item xs={12} md={6} sx={{
+           maxWidth: {
+  xs: "100%",
+  md: "100%",
+  "@media (min-width:1200px) and (max-width:1275px)": "100%",
+  lg: "70%",
+},
 
-
-          <Grid item xs={12} md={6}  sx={{
-    maxWidth: "70%",
-    width: "100%",
-    "@media (max-width:1275px)": {
-      maxWidth: "100%",
-    },
-  }} width={"100%"}>
+            width: "100%",
+            "@media (max-width:1275px)": {
+              maxWidth: "100%",
+            },
+          }} width={"100%"}>
             <Box sx={{ mt: 3, gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', }}>
               {loading ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
@@ -505,16 +523,17 @@ const PropertiesPage = () => {
                   {/* Properties Grid */}
                   <Box
                     sx={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
                       gap: 3,
                       mb: 4,
-                      '@media (max-width: 768px)': {
-                        gridTemplateColumns: '1fr',
-                        gap: 2,
-                      },
+                      justifyContent: "center",
+                      justifyItems: "center",
+                      mx: "auto",
+                      ml: { xs: 0, md: 4, lg: 6 }
                     }}
                   >
+
                     {/*{properties.map((property, index) => (
         <React.Fragment key={property.id}>
           <PropertyCard
@@ -550,7 +569,7 @@ const PropertiesPage = () => {
                               style={{
                                 maxWidth: "320px",
                                 borderRadius: "8px",
-                                margin: "0 auto",
+                                margin: "12px",
                               }}
                             />
                           </Box>
@@ -592,6 +611,142 @@ const PropertiesPage = () => {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Floating Filter Button (Mobile Only) */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 150,
+          left: 15,
+          zIndex: 2000,
+          display: {
+  xs: "flex",
+  lg: "none",
+  "@media (min-width:1200px) and (max-width:1275px)": {
+   display: "flex"
+}
+
+}
+
+        }}
+      >
+
+<Box
+  sx={{
+    position: "fixed",
+    top: 150,
+    left: 15,
+    zIndex: 2000,
+   display: {
+  xs: mobileFilterOpen ? "none" : "flex",
+  sm: mobileFilterOpen ? "none" : "flex",
+  md: mobileFilterOpen ? "none" : "flex",
+  lg: mobileFilterOpen ? "none" : "flex",   // 1200–1275 also visible
+  "@media (min-width:1276px)": {
+    display: "none",                        // Hide only after 1276px
+  },
+},
+
+  }}
+>
+  <button
+    onClick={() => setMobileFilterOpen(true)}
+    style={{
+      width: "50px",
+      height: "50px",
+      borderRadius: "50%",
+      backgroundColor: "#1976d2",
+      border: "none",
+      color: "white",
+      fontSize: "22px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+    }}
+  >
+    ☰
+  </button>
+</Box>
+
+
+      </Box>
+
+      <Drawer
+        anchor="left"
+        open={mobileFilterOpen}
+        onClose={() => setMobileFilterOpen(false)}
+       sx={{
+  "@media (min-width:1276px)": {
+    display: "none",
+  },
+  "& .MuiDrawer-paper": {
+    width: "80%",
+    maxWidth: "400px",
+  },
+}}
+
+        // ✅ This allows dropdowns to render in portals outside the drawer
+        ModalProps={{
+          keepMounted: true, // Better mobile performance
+        }}
+      >
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* Header with close button */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              p: 2,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Filters
+            </Typography>
+            <IconButton
+              onClick={() => setMobileFilterOpen(false)}
+              edge="end"
+              aria-label="close"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Scrollable filter content */}
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              p: 2,
+            }}
+          >
+            <FilterSidebar
+              initialFilters={{
+                propertyType: "",
+                city: "",
+                bedrooms: "",
+                search: "",
+                budgetRange: [0, 100000],
+                rentRange: [0, 50000],
+                amenities: [""],
+                title: "",
+              }}
+              currentFilters={currentFilters}
+              onSearch={handleFilterSearch}
+            // onSearch={(data) => {
+            //   console.log(data);
+
+            //   handleFilterSearch(data);
+            //   setMobileFilterOpen(false);
+            // }}
+            />
+          </Box>
+        </Box>
+      </Drawer>
+
 
       {/* Modals */}
       {showAuthPrompt && <AuthPromptModal onClose={handleCloseModals} />}

@@ -1056,3 +1056,134 @@ flex-direction: row;
     font-size: 14px !important; /* Adjust as needed */
   }
 }
+
+/* ===== MOBILE RESPONSIVE: Whole-con Section ===== */
+@media (max-width: 768px) {
+  /* Make rows stack vertically */
+  .row12 {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Heading comes first - full width, centered */
+  .row12 .half2.heading2 {
+    order: 1;
+    width: 100%;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .heading2 h2 {
+    font-size: 28px !important;
+    line-height: 1.3;
+  }
+
+  /* Paragraph comes second - full width, centered */
+  .row12 .half2.paragraph2 {
+    order: 2;
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .paragraph2 p {
+    width: 90% !important;
+    text-align: center !important;
+    font-size: 14px;
+    margin: 0 auto;
+  }
+
+  /* Slider wrapper adjustments */
+  .slider-wrapper {
+    margin-top: 30px;
+    padding: 20px 10px;
+  }
+
+  .slider-wrapper .slick-list {
+    margin: 0 -10px;
+  }
+
+  .slider-wrapper .slick-slide {
+    padding: 0 10px;
+  }
+
+  /* Card adjustments for mobile */
+  .card-g {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+
+  /* Icon above heading layout for mobile */
+  .row-g {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+    text-align: center;
+  }
+
+  /* Icon column - centered at top */
+  .col-left {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    order: 1;
+  }
+
+  .col-left img {
+    width: 40px !important;
+    height: 40px;
+  }
+
+  /* Content column - below icon */
+  .col-right {
+    width: 100%;
+    order: 2;
+    text-align: center;
+  }
+
+  .col-right h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .col-right p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* Counter section - stack in single column */
+  .counter-section {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 40px 20px 20px 20px;
+  }
+
+  .counter-item:not(:last-child) {
+    border-right: none;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 20px;
+  }
+
+  .counter-number {
+    font-size: 2rem;
+  }
+
+  .counter-label {
+    font-size: 14px;
+  }
+
+  /* Slider arrows - smaller and better positioned */
+  .slider-wrapper .slick-prev {
+    left: 5px;
+  }
+
+  .slider-wrapper .slick-next {
+    right: 5px;
+  }
+
+  .slider-wrapper .slick-prev::after,
+  .slider-wrapper .slick-next::after {
+    font-size: 14px !important;
+  }
+}
