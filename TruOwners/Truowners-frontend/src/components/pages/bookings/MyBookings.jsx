@@ -138,7 +138,8 @@ if (bookings.length === 0) return (
         Explore Properties
       </Box>
     </Paper>
-  </Box>
+       
+       </Box>
 )
 
 

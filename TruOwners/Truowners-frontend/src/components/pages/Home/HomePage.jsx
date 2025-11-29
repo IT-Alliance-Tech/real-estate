@@ -628,28 +628,30 @@ const handleSearch = () => {
               <p>Some of our picked properties near you location.</p>
             </div>
 
-            {filteredProperties.length === 0 ? (
-              <div className="empty-properties">
-                <div className="empty-icon">🏠</div>
-                <h3>No properties match your criteria</h3>
-                <p>Try adjusting your filters or search terms to see more results.</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    setFilters({
-                      location: '',
-                      propertyType: 'all',
-                      priceRange: { min: 0, max: 10000 },
-                      bedrooms: 'any',
-                      amenities: []
-                    })
-                    setSearchTerm('')
-                  }}
-                >
-                  Clear All Filters
-                </button>
-              </div>
-            ) : (
+           {filteredProperties.length === 0 ? (
+  <div className="empty-properties d-flex flex-column align-items-center text-center">
+    <div className="empty-icon">🏠</div>
+    <h3>No properties match your criteria</h3>
+    <p>Try adjusting your filters or search terms to see more results.</p>
+    <button
+      className="btn btn-primary"
+      onClick={() => {
+        setFilters({
+          location: '',
+          propertyType: 'all',
+          priceRange: { min: 0, max: 10000 },
+          bedrooms: 'any',
+          amenities: []
+        })
+        setSearchTerm('')
+      }}
+    >
+      Clear All Filters
+    </button>
+  </div>
+) : (
+  // your list…
+
               <div className="properties-grid">
                 {filteredProperties.map((property, index) => (
                   <motion.div

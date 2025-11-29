@@ -322,6 +322,7 @@ body {
   /* background: linear-gradient(180deg, var(--bg-light-blue) 0%, rgba(255, 255, 255, 0) 100%); */
 }
 
+/* Properties grid - desktop & mobile */
 .properties-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -333,6 +334,45 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  /* Properties grid - smaller and centered */
+  .properties-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90%, 1fr)); /* smaller cards */
+    gap: 1rem; /* smaller spacing between cards */
+    padding: 0 1rem; /* avoid touching screen edges */
+    max-width: 100%; /* full width on mobile */
+    justify-content: center; /* center the grid */
+  }
+
+  /* Center headers, empty state, and buttons */
+  .properties-section {
+    text-align: center;
+  }
+
+  /* Empty state alignment */
+  .empty-properties {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Featured Properties heading & subtext size adjustment */
+  .properties-header h2 {
+    font-size: 1.2rem; /* smaller heading for mobile */
+    line-height: 1.2;
+    margin-bottom: 0.5rem; /* optional spacing below heading */
+  }
+
+  .properties-header p {
+    font-size: 0.85rem; /* smaller subtext */
+    line-height: 1.3;
+    margin-top: 0.2rem;
+  }
+}
+
+
 
 /* ===== LOADING & ERROR STATES ===== */
 .loading-state {

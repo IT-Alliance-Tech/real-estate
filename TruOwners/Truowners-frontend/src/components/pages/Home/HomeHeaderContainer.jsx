@@ -329,29 +329,29 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
         </div>
 
         {filteredProperties.length === 0 ? (
-          <div className="empty-properties">
-            <div className="empty-icon">🏠</div>
-            <h3>No properties match your criteria</h3>
-            <p>Try adjusting your filters or search terms to see more results.</p>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setFilters({
-                  status: "All",
-                  propertyType: "",
-                  city: "",
-                  bedrooms: "",
-                  searchTerm: "",
-                  rentRange: [0, 50000],
-                  depositRange: [0, 100000],
-                });
-                setSearchTerm("");
-              }}
-            >
-              Clear All Filters
-            </button>
-          </div>
-        ) : (
+  <div className="empty-properties d-flex flex-column align-items-center text-center">
+    <div className="empty-icon">🏠</div>
+    <h3>No properties match your criteria</h3>
+    <p>Try adjusting your filters or search terms to see more results.</p>
+    <button
+      className="btn btn-primary"
+      onClick={() => {
+        setFilters({
+          location: '',
+          propertyType: 'all',
+          priceRange: { min: 0, max: 10000 },
+          bedrooms: 'any',
+          amenities: []
+        })
+        setSearchTerm('')
+      }}
+    >
+      Clear All Filters
+    </button>
+  </div>
+) : (
+  // your list…
+
           <div className="properties-grid">
             {filteredProperties.slice(0, 6).map((property, index) => (
               <motion.div
