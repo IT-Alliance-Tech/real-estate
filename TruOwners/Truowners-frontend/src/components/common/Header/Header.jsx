@@ -716,13 +716,15 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                             </MenuItem>
   </>
 )}
-<MenuItem
-  onClick={() => { navigate('/subscription-plans'); handleUserMenuClose(); }}
-  sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
->
-  <BusinessIcon sx={{ mr: 2, fontSize: 20, color: '#9c27b0' }} />
-  <Typography variant="body2">Subscription Plans</Typography>
-</MenuItem>
+{isUser && (
+  <MenuItem
+    onClick={() => { navigate('/subscription-plans'); handleUserMenuClose(); }}
+    sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+  >
+    <BusinessIcon sx={{ mr: 2, fontSize: 20, color: '#9c27b0' }} />
+    <Typography variant="body2">Subscription Plans</Typography>
+  </MenuItem>
+)}
 
 {isUser && (
   <MenuItem

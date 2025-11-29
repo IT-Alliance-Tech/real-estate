@@ -48,7 +48,7 @@ const UsersTab = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
-  const [page, setPage]   = useState(0);
+  const [page, setPage] = useState(0);
   const [rowsPerPage, setRPP] = useState(10);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -63,7 +63,7 @@ const UsersTab = () => {
       setRefreshing(true);
       const token = localStorage.getItem('adminToken');
 
-      const res  = await fetch(buildApiUrl('/admin/users-with-subscriptions'), {
+      const res = await fetch(buildApiUrl('/admin/users-with-subscriptions'), {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
@@ -85,7 +85,7 @@ const UsersTab = () => {
       setHistoryLoading(true);
       const token = localStorage.getItem('adminToken');
       const url = buildApiUrl(API_CONFIG.ADMIN.USER_SUBSCRIPTION_HISTORY).replace(':userId', userId);
-      
+
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -377,7 +377,11 @@ const UsersTab = () => {
                         {userHistory.propertyViews.map((view) => (
                           <TableRow key={view.id}>
                             <TableCell>{view.property?.title || 'Unknown Property'}</TableCell>
-                            <TableCell>{view.property?.location || 'N/A'}</TableCell>
+                            <TableCell>
+                              {view.property?.location
+                                ? `${view.property.location.city || ''}${view.property.location.city && view.property.location.state ? ', ' : ''}${view.property.location.state || ''}`.trim() || 'N/A'
+                                : 'N/A'}
+                            </TableCell>
                             <TableCell>{new Date(view.viewedAt).toLocaleString()}</TableCell>
                           </TableRow>
                         ))}

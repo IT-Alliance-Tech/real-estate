@@ -94,7 +94,7 @@ const initiatePayment = async (req, res) => {
     await payment.save();
 
     // Prepare redirect URL
-    const redirectUrl = `${process.env.PHONEPE_REDIRECT_URL || 'http://localhost:3000/payment/callback'}?merchantTransactionId=${merchantTransactionId}`;
+    const redirectUrl = `${process.env.PHONEPE_REDIRECT_URL || 'http://localhost:5173/payment/callback'}?merchantTransactionId=${merchantTransactionId}`;
 
     // Create meta info
     const metaInfo = MetaInfo.builder()
@@ -113,11 +113,13 @@ const initiatePayment = async (req, res) => {
 
     console.log('Initiating PhonePe payment with SDK...');
     console.log('Merchant Order ID:', merchantTransactionId);
+    console.log('Redirect URL:', redirectUrl);
     console.log('Amount (paise):', totalAmount * 100);
 
     // Get PhonePe client and initiate payment
     const client = getPhonePeClient();
     const phonepeResponse = await client.pay(paymentRequest);
+    console.log('PhonePe Response:', phonepeResponse);
 
     console.log('PhonePe Response:', phonepeResponse);
 

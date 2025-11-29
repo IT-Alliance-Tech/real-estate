@@ -628,28 +628,30 @@ const handleSearch = () => {
               <p>Some of our picked properties near you location.</p>
             </div>
 
-            {filteredProperties.length === 0 ? (
-              <div className="empty-properties">
-                <div className="empty-icon">🏠</div>
-                <h3>No properties match your criteria</h3>
-                <p>Try adjusting your filters or search terms to see more results.</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    setFilters({
-                      location: '',
-                      propertyType: 'all',
-                      priceRange: { min: 0, max: 10000 },
-                      bedrooms: 'any',
-                      amenities: []
-                    })
-                    setSearchTerm('')
-                  }}
-                >
-                  Clear All Filters
-                </button>
-              </div>
-            ) : (
+           {filteredProperties.length === 0 ? (
+  <div className="empty-properties d-flex flex-column align-items-center text-center">
+    <div className="empty-icon">🏠</div>
+    <h3>No properties match your criteria</h3>
+    <p>Try adjusting your filters or search terms to see more results.</p>
+    <button
+      className="btn btn-primary"
+      onClick={() => {
+        setFilters({
+          location: '',
+          propertyType: 'all',
+          priceRange: { min: 0, max: 10000 },
+          bedrooms: 'any',
+          amenities: []
+        })
+        setSearchTerm('')
+      }}
+    >
+      Clear All Filters
+    </button>
+  </div>
+) : (
+  // your list…
+
               <div className="properties-grid">
                 {filteredProperties.map((property, index) => (
                   <motion.div
@@ -701,67 +703,69 @@ const handleSearch = () => {
             transition={{ duration: 0.8 }}
           >
             <div className="three-column-layout">
-              {/* Column 3 (Form) */}
-              <div className="column form-column" >
-                <form >
-                  <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', }}>
-                    <img src={truOwnersLogo} alt="TruOwners Logo" style={{ width: '200px' }} />
+  {/* Column 3 (Form) */}
+  <div className="column form-column">
+    <form>
+      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+        <img src={truOwnersLogo} alt="TruOwners Logo" style={{ width: '200px' }} />
+        <label className='title-color'>VIEW LISTINGS</label>
+      </div>
 
-                    <label className='title-color' >VIEW LISTINGS</label>
-                  </div>
-                  {/* <select>
-          <option>Select</option>
-        </select> */}
-                  {/* <label className='title-color1'>Information</label> */}
-                  {/* <input type="text" placeholder="I'm a" /> */}
-                  <input type="text" placeholder="NAME" />
-                  {/* <input type="text" placeholder="Last Name" /> */}
-                  <input type="email" placeholder="EMAIL ADDRESS" />
-                  <input type="number" placeholder="PHONE NUMBER" />
-                  {/* 
- <input type="text" placeholder="LOCATION" /> */}
-                  <textarea placeholder="HELLO, I AM INTERESTED IN 2 BHK 2ND FLOOR, NORTH FACING MAIN DOOR, 32000 RENT." rows="4"></textarea>
-                  {/* <label>Property</label> */}
-                  <select >
-                    <option value="">INTERESTED IN</option>
-                    <option value="SELL">SELL</option>
-                    <option value="RENT">RENT</option>
-                    <option value="LEASE">LEASE</option>
-                  </select>
-                  <label style={{ color: '#000' }}>
-                    <input type="checkbox" /> By submitting this form I agree to Terms of Use
-                  </label>
-                  <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', columnGap: '20px' }}>
-                    <button type="submit" class="submit-btn mar-btn" style={{ width: "50%" }}>SEND MESSAGE</button>
-                    <button type="submit" class="submit-btn mar-btn" style={{ width: "50%" }}>CALL</button>
-                  </div>
-                  <div className='whatsapp-btn'>
-                    <button type="submit" class="submit-btn mar-btn1" >WHATSAPP</button>
-                  </div>
-                </form>
-              </div>
-              {/* Column 1 */}
-              <div className="column center1">
-                <div className="section12">
-                  <h3>Putting a plan to action,
-                    to assure your satisfaction! </h3>
-                  <p>
-                    Every property listed on our platform is thoroughly verified for authenticity, location accuracy, and pricing—so you can rent or buy with complete confidence.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.section>
-          <motion.div
-            style={{
-              width: '100%',
-              background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)'
-            }}
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
+      <input type="text" placeholder="NAME" />
+      <input type="email" placeholder="EMAIL ADDRESS" />
+      <input type="number" placeholder="PHONE NUMBER" />
+
+      <textarea placeholder="HELLO, I AM INTERESTED IN 2 BHK 2ND FLOOR, NORTH FACING MAIN DOOR, 32000 RENT." rows="4"></textarea>
+
+      <select>
+        <option value="">INTERESTED IN</option>
+        <option value="SELL">SELL</option>
+        <option value="RENT">RENT</option>
+        <option value="LEASE">LEASE</option>
+      </select>
+
+      <label style={{ color: '#000' }}>
+        <input type="checkbox" /> By submitting this form I agree to Terms of Use
+      </label>
+
+      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', columnGap: '20px' }}>
+        <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>SEND MESSAGE</button>
+        <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>CALL</button>
+      </div>
+
+      <div className='whatsapp-btn'>
+        <button type="submit" className="submit-btn mar-btn1">WHATSAPP</button>
+      </div>
+    </form>
+  </div>
+
+  {/* Column 1 */}
+  <div className="column center1">
+    <div className="section12">
+      <h3 style={{ color: '#fff' }}>Putting a plan to action,
+        to assure your satisfaction!
+      </h3>
+      <p style={{ color: '#fff' }}>
+        Every property listed on our platform is thoroughly verified for authenticity, location accuracy,
+        and pricing—so you can rent or buy with complete confidence.
+      </p>
+    </div>
+  </div>
+</div>
+
+</motion.section>
+
+<motion.div
+  style={{
+    width: '100%',
+    background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)'
+  }}
+  initial={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  viewport={{ once: true }}
+  transition={{ duration: 0.8 }}
+>
+
             <div className="testimonial-slider-container">
               <h2
                 className="slider-title"
