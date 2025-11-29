@@ -16,7 +16,7 @@ const PaymentCallback = () => {
 
   useEffect(() => {
     const merchantTransactionId = searchParams.get("merchantTransactionId");
-    
+
     if (!merchantTransactionId) {
       setPaymentStatus("failed");
       setError("Invalid payment reference");
@@ -25,6 +25,17 @@ const PaymentCallback = () => {
 
     checkPaymentStatus(merchantTransactionId);
   }, [searchParams]);
+
+  // Auto-redirect to my-subscription after successful payment
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      const timer = setTimeout(() => {
+        navigate("/my-subscription");
+      }, 2000); // 2 second delay to show success message
+
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus, navigate]);
 
   const checkPaymentStatus = async (merchantTransactionId) => {
     try {
@@ -41,7 +52,7 @@ const PaymentCallback = () => {
 
       if (data.success) {
         setPaymentDetails(data.data);
-        
+
         if (data.data.payment.status === "success") {
           setPaymentStatus("success");
         } else if (data.data.payment.status === "failed") {
@@ -85,13 +96,13 @@ const PaymentCallback = () => {
           <div className="payment-success">
             <div className="success-icon">
               <svg viewBox="0 0 52 52" className="checkmark">
-                <circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                <path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                <circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                <path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
               </svg>
             </div>
             <h2>Payment Successful!</h2>
             <p>Your subscription has been activated successfully.</p>
-            
+
             {paymentDetails && (
               <div className="payment-info">
                 <div className="info-row">
@@ -121,13 +132,13 @@ const PaymentCallback = () => {
           <div className="payment-failed">
             <div className="failed-icon">
               <svg viewBox="0 0 52 52" className="crossmark">
-                <circle className="crossmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                <path className="crossmark-cross" fill="none" d="M16 16 36 36 M36 16 16 36"/>
+                <circle className="crossmark-circle" cx="26" cy="26" r="25" fill="none" />
+                <path className="crossmark-cross" fill="none" d="M16 16 36 36 M36 16 16 36" />
               </svg>
             </div>
             <h2>Payment Failed</h2>
             <p>{error || "Your payment could not be processed."}</p>
-            
+
             {paymentDetails && (
               <div className="payment-info">
                 <div className="info-row">
