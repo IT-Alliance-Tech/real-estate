@@ -52,9 +52,9 @@ function AppContent() {
   return (
     <Layout>
       <ErrorBoundary>
-         <Suspense fallback={null}>
-        <NewHomePage />
-        <HomePage />
+        <Suspense fallback={null}>
+          <NewHomePage />
+          <HomePage />
         </Suspense>
       </ErrorBoundary>
     </Layout>
@@ -107,13 +107,13 @@ function App() {
               <Route path="/error" element={<LayoutWrapper><ErrorPage /></LayoutWrapper>} />
 
               {/* Admin Routes */}
-              <Route 
-                path="/system/admin/secure-access-portal-2025" 
-                element={<ErrorBoundary><SecretAdminAccess /></ErrorBoundary>} 
+              <Route
+                path="/system/admin/secure-access-portal-2025"
+                element={<ErrorBoundary><SecretAdminAccess /></ErrorBoundary>}
               />
-              <Route 
-                path="/admin/dashboard" 
-                element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>} 
+              <Route
+                path="/admin/dashboard"
+                element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>}
               />
 
               {/* Fallback Route */}
