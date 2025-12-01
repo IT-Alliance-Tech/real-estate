@@ -239,35 +239,35 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
   };
 
    const validateForm = () => {
-  //   // Validate owner fields
-  //   if (!ownerData.email || !ownerData.email.includes('@')) {
-  //     setError('Valid owner email is required');
-  //     return false;
-  //   }
+  // //   // Validate owner fields
+  // //   if (!ownerData.email || !ownerData.email.includes('@')) {
+  // //     setError('Valid owner email is required');
+  // //     return false;
+  // //   }
     
-    // Only validate owner details if owner doesn't exist
-    if (!ownerExists) {
-      if (!ownerData.name.trim()) {
-        setError('Owner name is required');
-        return false;
-      }
-      // if (!ownerData.phone.trim()) {
-      //   setError('Owner phone is required');
-      //   return false;
-      // }
-      if (!ownerData.idProofType) {
-        setError('ID Proof type is required');
-        return false;
-      }
-      if (!ownerData.idProofNumber.trim()) {
-        setError('ID Proof number is required');
-        return false;
-      }
-      if (!idProofFile) {
-        setError('ID Proof image is required for new owners');
-        return false;
-      }
-    }
+  //   // Only validate owner details if owner doesn't exist
+  //   if (!ownerExists) {
+  //     if (!ownerData.name.trim()) {
+  //       setError('Owner name is required');
+  //       return false;
+  //     }
+  //     // if (!ownerData.phone.trim()) {
+  //     //   setError('Owner phone is required');
+  //     //   return false;
+  //     // }
+  //     if (!ownerData.idProofType) {
+  //       setError('ID Proof type is required');
+  //       return false;
+  //     }
+  //     if (!ownerData.idProofNumber.trim()) {
+  //       setError('ID Proof number is required');
+  //       return false;
+  //     }
+  //     if (!idProofFile) {
+  //       setError('ID Proof image is required for new owners');
+  //       return false;
+  //     }
+  //   }
 
     // Validate property fields
     if (!propertyData.title.trim()) {
