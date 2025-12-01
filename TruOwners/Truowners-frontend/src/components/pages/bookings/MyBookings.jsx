@@ -76,43 +76,59 @@ const MyBookings = () => {
 // ⭐ IMPROVED EMPTY STATE DESIGN — SIMILAR TO WISHLIST ⭐
 if (bookings.length === 0)
   return (
-    <Box sx={{ width: "100%", mt: 4, px: 2 }}>   {/* moved slightly right */}
+    <Box sx={{ width: "100%", mt: 4, px: 2 }}>
       
       {/* Back Button */}
-      <Box sx={{ mb: 3, ml: 1.5 }}>  {/* moved right */}
+      <Box sx={{ mb: 3, ml: 1.5 }}>
         <button
           onClick={() => navigate('/properties')}
           style={{
             background: "transparent",
             border: "1px solid #d0d7de",
-            padding: "10px 18px",          // increased padding
+            padding: "10px 18px",
             borderRadius: "8px",
             cursor: "pointer",
             color: "#555",
-            fontSize: "16px",              // increased size
-            marginLeft: "0px",
-            fontWeight: "500"              // slightly bolder
+            fontSize: "16px",
+            fontWeight: "500"
           }}
         >
           ← Back to Properties
         </button>
       </Box>
 
-      {/* Title + Count */}
+      {/* Title (center) + Count (right) */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          position: "relative",
           mb: 3,
-          ml: 1.5   // moved heading to the right
+          ml: 1.5
         }}
       >
-        <Typography sx={{ fontSize: "30px", fontWeight: 700, color: "#1976d2" }}>
+        {/* Center Heading — moved slightly UP */}
+        <Typography
+          sx={{
+            fontSize: "30px",
+            fontWeight: 700,
+            color: "#1976d2",
+            textAlign: "center",
+            width: "100%",
+            position: "absolute",
+            left: 0,
+            top: "-10px"   // ← moved up slightly
+          }}
+        >
           My Bookings
         </Typography>
 
-        <Typography sx={{ color: "#6c757d", fontSize: "16px" }}>
+        {/* Right-Aligned Count */}
+        <Typography
+          sx={{
+            color: "#6c757d",
+            fontSize: "16px",
+            textAlign: "right"
+          }}
+        >
           0 bookings found
         </Typography>
       </Box>
@@ -125,7 +141,7 @@ if (bookings.length === 0)
           alignItems: "center",
           minHeight: "55vh",
           px: 2,
-          mb: 10,
+          mb: 10
         }}
       >
         <Paper
@@ -136,16 +152,16 @@ if (bookings.length === 0)
             p: 6,
             borderRadius: "16px",
             backgroundColor: "#fff",
-            textAlign: "center",
+            textAlign: "center"
           }}
         >
           {/* Icon */}
           <Box
             sx={{
-              fontSize: "75px",    // slightly larger
+              fontSize: "75px",
               mb: 2,
               display: "flex",
-              justifyContent: "center",
+              justifyContent: "center"
             }}
           >
             🗓️
@@ -154,7 +170,7 @@ if (bookings.length === 0)
           {/* Main Heading */}
           <Typography
             variant="h5"
-            sx={{ fontWeight: 600, fontSize: "24px", mb: 1 }}   // increased
+            sx={{ fontWeight: 600, fontSize: "24px", mb: 1 }}
           >
             No bookings yet
           </Typography>
@@ -162,7 +178,7 @@ if (bookings.length === 0)
           {/* Subtext */}
           <Typography
             variant="body1"
-            sx={{ color: "#6c757d", mb: 3, fontSize: "17px" }}   // increased
+            sx={{ color: "#6c757d", mb: 3, fontSize: "17px" }}
           >
             Start exploring properties and schedule visits for your favorite ones!
           </Typography>
@@ -173,20 +189,16 @@ if (bookings.length === 0)
             style={{
               backgroundColor: "#1976d2",
               color: "#fff",
-              padding: "14px 28px",      // bigger button
+              padding: "14px 28px",
               borderRadius: "10px",
-              fontSize: "17px",           // increased
+              fontSize: "17px",
               fontWeight: "500",
               border: "none",
               cursor: "pointer",
-              transition: "0.3s",
+              transition: "0.3s"
             }}
-            onMouseOver={(e) =>
-              (e.target.style.backgroundColor = "#125aa0")
-            }
-            onMouseOut={(e) =>
-              (e.target.style.backgroundColor = "#1976d2")
-            }
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#125aa0")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#1976d2")}
           >
             Explore Properties
           </button>

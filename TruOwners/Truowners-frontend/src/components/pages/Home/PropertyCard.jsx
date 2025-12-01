@@ -287,12 +287,25 @@ const PropertyCard = ({
             alignItems: "center",
           }}
         >
-          <span className="property-card__price">
-            {formatCurrency(property?.rent)}
-          </span>
-          <span className="property-card__status-all">
-            {postType}
-          </span>
+
+          {/* ---------- UPDATED CONDITIONAL LOGIC ---------- */}
+          {property?.rent
+            ? (
+                <span className="property-card__price">
+                  {formatCurrency(property.rent)}
+                </span>
+              )
+            : null}
+
+          {postType && postType.trim() !== ""
+            ? (
+                <span className="property-card__status-all">
+                  {postType}
+                </span>
+              )
+            : null}
+          {/* ---------- END UPDATE ---------- */}
+
         </div>
 
         <h3 title={property?.title} className="property-card__title">

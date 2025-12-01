@@ -616,7 +616,7 @@ display: {
       <Box
         sx={{
           position: 'fixed',
-          top: 150,
+          top: 100,
           left: 15,
           zIndex: 2000,
           display: {
@@ -634,7 +634,7 @@ display: {
 <Box
   sx={{
     position: "fixed",
-    top: 150,
+    top: 240,
     left: 15,
     zIndex: 2000,
    display: {
