@@ -251,10 +251,10 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
         setError('Owner name is required');
         return false;
       }
-      if (!ownerData.phone.trim()) {
-        setError('Owner phone is required');
-        return false;
-      }
+      // if (!ownerData.phone.trim()) {
+      //   setError('Owner phone is required');
+      //   return false;
+      // }
       if (!ownerData.idProofType) {
         setError('ID Proof type is required');
         return false;
