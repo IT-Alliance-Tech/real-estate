@@ -433,7 +433,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   value={ownerData.phone}
                   onChange={handleOwnerChange}
                   placeholder="+1234567890"
-                  disabled={ownerExists}
+                         disabled={ownerExists}
                 />
               </div>
             </div>
