@@ -29,3 +29,4 @@ router.get('/payments', adminController.getAllPayments);
 router.post('/properties', adminController.uploadProperty);
 
 module.exports = router;
+// End of file
