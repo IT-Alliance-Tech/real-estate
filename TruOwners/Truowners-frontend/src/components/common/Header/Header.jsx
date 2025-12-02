@@ -857,87 +857,106 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
           </div>
 
           {/* Mobile Navigation */}
-          <nav className={`header-nav mobile-nav ${isMobileMenuOpen ? 'active' : ''}`}>
-            <div className="mobile-nav-buttons">
-              {isAuthenticated ? (
-                <>
-                  <div className="mobile-user-info">
-                    <div className="mobile-user-avatar">
-                      {getInitials(user?.name)}
-                    </div>
-                    <div className="mobile-user-details">
-                      <p className="mobile-user-name">{user?.name}</p>
-                      <p className="mobile-user-email">{user?.email}</p>
-                      <p className="mobile-user-role">({user?.role})</p>
-                    </div>
-                  </div>
+         <nav className={`header-nav mobile-nav ${isMobileMenuOpen ? 'active' : ''}`}>
+  <div className="mobile-nav-buttons">
+    {isAuthenticated ? (
+      <>
+        <div className="mobile-user-info">
+          <div className="mobile-user-avatar">
+            {getInitials(user?.name)}
+          </div>
+          <div className="mobile-user-details">
+            <p className="mobile-user-name">{user?.name}</p>
+            <p className="mobile-user-email">{user?.email}</p>
+            <p className="mobile-user-role">({user?.role})</p>
+          </div>
+        </div>
 
-                  {isUser && (
-                    <>
-                      <button
-                        className="btn btn-secondary btn-mobile"
-                        onClick={handleWishlistClick}
-                      >
-                        ❤️ Wishlist ({wishlistCount})
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-mobile"
-                        onClick={handleMyBookingsClick}
-                      >
-                        📅 My Bookings ({bookingsCount})
-                        {pendingBookingsCount > 0 && (
-                          <span style={{
-                            marginLeft: '8px',
-                            backgroundColor: '#ff9800',
-                            color: 'white',
-                            borderRadius: '10px',
-                            padding: '2px 6px',
-                            fontSize: '12px'
-                          }}>
-                            {pendingBookingsCount} pending
-                          </span>
-                        )}
-                      </button>
-                      <button className="btn btn-secondary btn-mobile">
-                        Profile
-                      </button>
-                    </>
-                  )}
+        {isUser && (
+          <>
+            <button
+              className="btn btn-secondary btn-mobile"
+              onClick={handleWishlistClick}
+            >
+              ❤️ Wishlist ({wishlistCount})
+            </button>
 
-                  {isOwner && (
-                    <button
-                      className="btn btn-secondary btn-mobile"
-                      onClick={handleAddPropertyClick}
-                    >
-                      Add Property
-                    </button>
-                  )}
-
-                  <button className="btn btn-danger btn-mobile" onClick={handleLogout}>
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="btn color-change btn-mobile"
-                    onClick={handleSignUpClick}
-                  >
-                    Sign Up
-                  </button>
-                  <button
-                    className="btn color-change1 btn-mobile"
-                    onClick={handleLoginClick}
-                  >
-                    Login
-                  </button>
-                  <button className="btn color-change2 btn-mobile" onClick={handleOwnerSignUpClick}>
-                    For Property Owners
-                  </button>
-                </>
+            <button
+              className="btn btn-secondary btn-mobile"
+              onClick={handleMyBookingsClick}
+            >
+              📅 My Bookings ({bookingsCount})
+              {pendingBookingsCount > 0 && (
+                <span
+                  style={{
+                    marginLeft: '8px',
+                    backgroundColor: '#ff9800',
+                    color: 'white',
+                    borderRadius: '10px',
+                    padding: '2px 6px',
+                    fontSize: '12px'
+                  }}
+                >
+                  {pendingBookingsCount} pending
+                </span>
               )}
-            </div>
-          </nav>
+            </button>
+
+            {/* 🔥 REPLACEMENT STARTS HERE */}
+            <button
+              className="btn btn-secondary btn-mobile"
+              onClick={() => navigate('/subscription-plans')}
+            >
+              📌 Subscription Plans
+            </button>
+
+            <button
+              className="btn btn-secondary btn-mobile"
+              onClick={() => navigate('/my-subscriptions')}
+            >
+              🧾 My Subscriptions
+            </button>
+            {/* 🔥 REPLACEMENT ENDS HERE */}
+          </>
+        )}
+
+        {isOwner && (
+          <button
+            className="btn btn-secondary btn-mobile"
+            onClick={handleAddPropertyClick}
+          >
+            Add Property
+          </button>
+        )}
+
+        <button className="btn btn-danger btn-mobile" onClick={handleLogout}>
+          Logout
+        </button>
+      </>
+    ) : (
+      <>
+        <button
+          className="btn color-change btn-mobile"
+          onClick={handleSignUpClick}
+        >
+          Sign Up
+        </button>
+
+        <button
+          className="btn color-change1 btn-mobile"
+          onClick={handleLoginClick}
+        >
+          Login
+        </button>
+
+        <button className="btn color-change2 btn-mobile" onClick={handleOwnerSignUpClick}>
+          For Property Owners
+        </button>
+      </>
+    )}
+  </div>
+</nav>
+
         </div>
       </header>
 

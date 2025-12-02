@@ -195,7 +195,7 @@ const SectionLabel = styled(Typography)(({ theme }) => ({
   color: "#666",
   textTransform: "uppercase",
   letterSpacing: "1px",
-  marginBottom: theme.spacing(1),
+  marginBottom: theme.spacing(2),
   display: "flex",
   alignItems: "center",
   gap: theme.spacing(0.5),
@@ -536,7 +536,8 @@ if (statusTab === 2 || statusTab === 3) {
       </Box>
 
       {/* First Row - Basic Filters */}
-      <Grid item xs={12} sm={6} md={3}>
+      
+      <Grid item xs={12} sm={6} md={3} sx={{ mb: 2 }}>
         <SectionLabel>
           <HomeIcon sx={{ fontSize: 16 }} />
           PROPERTY TYPE
@@ -549,6 +550,15 @@ if (statusTab === 2 || statusTab === 3) {
           SelectProps={{
             displayEmpty: true,
             renderValue: (value) => (value) || <span style={{ color: "#9e9e9e" }}>PROPERTY TYPE</span>,
+            MenuProps: {
+  disableScrollLock: true,
+  PaperProps: {
+    sx: {
+      zIndex: 3000,   // higher than drawer (2500)
+    },
+  },
+},
+
           }}
         >
           {propertyTypes.map((type) => (
@@ -559,7 +569,7 @@ if (statusTab === 2 || statusTab === 3) {
         </StyledTextField>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={3} sx={{ mb: 2 }}>
         <SectionLabel>
           <LocationOnIcon sx={{ fontSize: 16 }} />
           LOCATION
@@ -579,7 +589,7 @@ if (statusTab === 2 || statusTab === 3) {
         />
       </Grid>
 
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={3} sx={{ mb: 2 }}>
         <SectionLabel>
           <BedIcon sx={{ fontSize: 16 }} />
           BEDROOMS
@@ -602,7 +612,7 @@ if (statusTab === 2 || statusTab === 3) {
         </StyledTextField>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={3} sx={{ mb: 2 }}>
         <Button
           fullWidth
           color="primary"
@@ -620,7 +630,7 @@ if (statusTab === 2 || statusTab === 3) {
 {showMoreFilters === true ? (
   <>
     {/* --- Universal Price Range (Works for Rent, Sale, Lease, Commercial) --- */}
-    <Grid item xs={12} md={5} maxWidth={"350px"}>
+    <Grid item xs={12} md={5} maxWidth={"350px"} sx={{ mb: 2 }}>
       <SectionLabel>
         PRICE RANGE ₹{formatCurrencyShort(customRange[0])} – ₹{formatCurrencyShort(customRange[1])}
       </SectionLabel>
@@ -670,7 +680,7 @@ if (statusTab === 2 || statusTab === 3) {
  
 
     {/* --- RENT RANGE Section (unchanged, used for rent-specific filters) --- */}
-    <Grid item xs={12} md={5} maxWidth={"350px"}>
+    <Grid item xs={12} md={5} maxWidth={"350px"} sx={{ mb: 2 }}>
       {(statusTab === 1 || statusTab === 4) && (
         <>
           <SectionLabel>RENT RANGE</SectionLabel>

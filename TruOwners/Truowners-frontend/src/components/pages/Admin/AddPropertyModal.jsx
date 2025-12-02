@@ -238,36 +238,36 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
     }
   };
 
-  const validateForm = () => {
-    // Validate owner fields
-    if (!ownerData.email || !ownerData.email.includes('@')) {
-      setError('Valid owner email is required');
-      return false;
-    }
+   const validateForm = () => {
+  // //   // Validate owner fields
+  // //   if (!ownerData.email || !ownerData.email.includes('@')) {
+  // //     setError('Valid owner email is required');
+  // //     return false;
+  // //   }
     
-    // Only validate owner details if owner doesn't exist
-    if (!ownerExists) {
-      if (!ownerData.name.trim()) {
-        setError('Owner name is required');
-        return false;
-      }
-      if (!ownerData.phone.trim()) {
-        setError('Owner phone is required');
-        return false;
-      }
-      if (!ownerData.idProofType) {
-        setError('ID Proof type is required');
-        return false;
-      }
-      if (!ownerData.idProofNumber.trim()) {
-        setError('ID Proof number is required');
-        return false;
-      }
-      if (!idProofFile) {
-        setError('ID Proof image is required for new owners');
-        return false;
-      }
-    }
+  //   // Only validate owner details if owner doesn't exist
+  //   if (!ownerExists) {
+  //     if (!ownerData.name.trim()) {
+  //       setError('Owner name is required');
+  //       return false;
+  //     }
+  //     // if (!ownerData.phone.trim()) {
+  //     //   setError('Owner phone is required');
+  //     //   return false;
+  //     // }
+  //     if (!ownerData.idProofType) {
+  //       setError('ID Proof type is required');
+  //       return false;
+  //     }
+  //     if (!ownerData.idProofNumber.trim()) {
+  //       setError('ID Proof number is required');
+  //       return false;
+  //     }
+  //     if (!idProofFile) {
+  //       setError('ID Proof image is required for new owners');
+  //       return false;
+  //     }
+  //   }
 
     // Validate property fields
     if (!propertyData.title.trim()) {
@@ -404,7 +404,6 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                 onChange={handleOwnerChange}
                 onBlur={handleEmailBlur}
                 placeholder="owner@example.com"
-                required
                 disabled={checkingOwner}
               />
               {checkingOwner && <small>Checking...</small>}
@@ -434,7 +433,6 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   value={ownerData.phone}
                   onChange={handleOwnerChange}
                   placeholder="+1234567890"
-                  required
                   disabled={ownerExists}
                 />
               </div>
@@ -787,6 +785,5 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
       </div>
     </div>
   );
-};
-
+}
 export default AddPropertyModal;
