@@ -23,9 +23,9 @@ import {
   Chip,
   Divider,
   Grid,
-   IconButton
-} 
-from '@mui/material'
+  IconButton
+}
+  from '@mui/material'
 
 
 import ShareIcon from "@mui/icons-material/Share";
@@ -87,10 +87,10 @@ const PropertyDetailsPage = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const shareUrl = `https://truowners.com/property-details/${id}`;; // ✅ later replace with dynamic property link
 
-const handleCopy = () => {
-  navigator.clipboard.writeText(shareUrl);
-  alert("Link copied!");
-};
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shareUrl);
+    alert("Link copied!");
+  };
 
 
   // New booking info state
@@ -794,7 +794,7 @@ const handleCopy = () => {
           <div className="property-header">
             <div className="property-title-section">
               <h1 className="property-title">{property.title || 'Untitled Property'}</h1>
-              
+
               <div className="property-location-wrapper">
                 {isAuthenticated && subscription ? (
                   <p className="property-location">📍 {getLocationString(property.location)}</p>
@@ -902,46 +902,46 @@ const handleCopy = () => {
                 onError={(e) => { e.target.src = '/placeholder-property.jpg' }}
               />
               <IconButton
-  onClick={() => setShareOpen(true)}
-  size="small"
-  sx={{
-    position: "absolute",
-    top: 8,
-    right: 110,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    color: "#555",
-    zIndex: 1,
-    "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 1)",
-      transform: "scale(1.1)",
-    },
-  }}
-  title="Share Property"
->
-  <ShareIcon />
-</IconButton>
+                onClick={() => setShareOpen(true)}
+                size="small"
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 110,
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  color: "#555",
+                  zIndex: 1,
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 1)",
+                    transform: "scale(1.1)",
+                  },
+                }}
+                title="Share Property"
+              >
+                <ShareIcon />
+              </IconButton>
 
 
 
-<IconButton
-  onClick={handleBookVisit}
-  size="small"
-  sx={{
-    position: "absolute",
-    top: 8,
-    right: 60, // adjust 48px so it doesn't overlap wishlist button
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    color: "#2F80ED",
-    zIndex: 1,
-    "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 1)",
-      transform: "scale(1.1)",
-    },
-  }}
-  title="Book a Visit"
->
-  <CalendarTodayIcon />
-</IconButton>
+              <IconButton
+                onClick={handleBookVisit}
+                size="small"
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 60, // adjust 48px so it doesn't overlap wishlist button
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  color: "#2F80ED",
+                  zIndex: 1,
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 1)",
+                    transform: "scale(1.1)",
+                  },
+                }}
+                title="Book a Visit"
+              >
+                <CalendarTodayIcon />
+              </IconButton>
 
               {/* Wishlist Icon */}
 
@@ -1345,85 +1345,85 @@ const handleCopy = () => {
           )}
         </Dialog>
         <Dialog open={shareOpen} onClose={() => setShareOpen(false)}>
-  <DialogTitle sx={{ display: "flex", justifyContent: "space-between" }}>
-    <Typography variant="h6" color="primary">
-      Share property
-    </Typography>
-    <IconButton onClick={() => setShareOpen(false)}>
-      <CloseIcon />
-    </IconButton>
-  </DialogTitle>
+          <DialogTitle sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography variant="h6" color="primary">
+              Share property
+            </Typography>
+            <IconButton onClick={() => setShareOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
 
-  <DialogContent>
-    <Typography variant="body2" sx={{ mb: 2 }}>
-      Share this property with your friends and family
-    </Typography>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              Share this property with your friends and family
+            </Typography>
 
-    {/* Social Media Icons */}
-    <Box sx={{ display: "flex", justifyContent: "space-around", mb: 3 }}>
-  <Box
-    textAlign="center"
-    sx={{ cursor: "pointer" }}
-    onClick={() => window.open(`https://wa.me/?text=${shareUrl}`, "_blank")}
-  >
-    <WhatsAppIcon sx={{ fontSize: 36, color: "#25D366" }} />
-    <Typography variant="caption" display="block">
-      WhatsApp
-    </Typography>
-  </Box>
-      
-  <Box
-    textAlign="center"
-    sx={{ cursor: "pointer" }}
-    onClick={() => window.open(`mailto:?subject=Check this property&body=${shareUrl}`)}
-  >
-    <EmailIcon sx={{ fontSize: 36, color: "#0072c6" }} />
-    <Typography variant="caption" display="block">
-      Email
-    </Typography>
-  </Box>
-      
-  <Box
-    textAlign="center"
-    sx={{ cursor: "pointer" }}
-    onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, "_blank")}
-  >
-    <FacebookIcon sx={{ fontSize: 36, color: "#1877F2" }} />
-    <Typography variant="caption" display="block">
-      Facebook
-    </Typography>
-  </Box>
-       <Box
-    textAlign="center"
-    sx={{ cursor: "pointer" }}
-    onClick={() => window.open(`https://t.me/share/url?url=${shareUrl}`, "_blank")}
-  >
-    <TelegramIcon sx={{ fontSize: 36, color: "#0088cc" }} />
-    <Typography variant="caption" display="block">
-      Telegram
-    </Typography>
-  </Box>
-    </Box>
+            {/* Social Media Icons */}
+            <Box sx={{ display: "flex", justifyContent: "space-around", mb: 3 }}>
+              <Box
+                textAlign="center"
+                sx={{ cursor: "pointer" }}
+                onClick={() => window.open(`https://wa.me/?text=${shareUrl}`, "_blank")}
+              >
+                <WhatsAppIcon sx={{ fontSize: 36, color: "#25D366" }} />
+                <Typography variant="caption" display="block">
+                  WhatsApp
+                </Typography>
+              </Box>
 
-    {/* Copy Link */}
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <TextField
-        fullWidth
-        size="small"
-        value={shareUrl}
-        InputProps={{ readOnly: true }}
-      />
-      <Button
-        onClick={handleCopy}
-        variant="contained"
-        color="success"
-        sx={{ ml: 1 }}
-      >
-        Copy
-      </Button>
-    </Box>
-  </DialogContent>
-</Dialog>
+              <Box
+                textAlign="center"
+                sx={{ cursor: "pointer" }}
+                onClick={() => window.open(`mailto:?subject=Check this property&body=${shareUrl}`)}
+              >
+                <EmailIcon sx={{ fontSize: 36, color: "#0072c6" }} />
+                <Typography variant="caption" display="block">
+                  Email
+                </Typography>
+              </Box>
+
+              <Box
+                textAlign="center"
+                sx={{ cursor: "pointer" }}
+                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, "_blank")}
+              >
+                <FacebookIcon sx={{ fontSize: 36, color: "#1877F2" }} />
+                <Typography variant="caption" display="block">
+                  Facebook
+                </Typography>
+              </Box>
+              <Box
+                textAlign="center"
+                sx={{ cursor: "pointer" }}
+                onClick={() => window.open(`https://t.me/share/url?url=${shareUrl}`, "_blank")}
+              >
+                <TelegramIcon sx={{ fontSize: 36, color: "#0088cc" }} />
+                <Typography variant="caption" display="block">
+                  Telegram
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Copy Link */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                fullWidth
+                size="small"
+                value={shareUrl}
+                InputProps={{ readOnly: true }}
+              />
+              <Button
+                onClick={handleCopy}
+                variant="contained"
+                color="success"
+                sx={{ ml: 1 }}
+              >
+                Copy
+              </Button>
+            </Box>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </LocalizationProvider>
