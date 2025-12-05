@@ -420,19 +420,19 @@ const PropertiesPage = () => {
             xs={12}
             lg={3}
             sx={{
-display: {
-  xs: "none",
-  sm: "none",
-  md: "none",
-  lg: "none", // hide 1200–1275 too
-  "@media (min-width:1276px)": {
-    display: "block", // show desktop filter only above 1276px
-  },
-},
+              display: {
+                xs: "none",
+                sm: "none",
+                md: "none",
+                lg: "none", // hide 1200–1275 too
+                "@media (min-width:1276px)": {
+                  display: "block", // show desktop filter only above 1276px
+                },
+              },
 
 
-}}
-   // show only ≥1200px
+            }}
+          // show only ≥1200px
           >
             <Paper
               elevation={3}
@@ -463,12 +463,12 @@ display: {
           {/* Active Filters Display */}
           {/* Properties List */}
           <Grid item xs={12} md={6} sx={{
-           maxWidth: {
-  xs: "100%",
-  md: "100%",
-  "@media (min-width:1200px) and (max-width:1275px)": "100%",
-  lg: "70%",
-},
+            maxWidth: {
+              xs: "100%",
+              md: "100%",
+              "@media (min-width:1200px) and (max-width:1275px)": "100%",
+              lg: "70%",
+            },
 
             width: "100%",
             "@media (max-width:1275px)": {
@@ -620,54 +620,54 @@ display: {
           left: 15,
           zIndex: 2000,
           display: {
-  xs: "flex",
-  lg: "none",
-  "@media (min-width:1200px) and (max-width:1275px)": {
-   display: "flex"
-}
+            xs: "flex",
+            lg: "none",
+            "@media (min-width:1200px) and (max-width:1275px)": {
+              display: "flex"
+            }
 
-}
+          }
 
         }}
       >
 
-<Box
-  sx={{
-    position: "fixed",
-    top: 240,
-    left: 15,
-    zIndex: 2000,
-   display: {
-  xs: mobileFilterOpen ? "none" : "flex",
-  sm: mobileFilterOpen ? "none" : "flex",
-  md: mobileFilterOpen ? "none" : "flex",
-  lg: mobileFilterOpen ? "none" : "flex",   // 1200–1275 also visible
-  "@media (min-width:1276px)": {
-    display: "none",                        // Hide only after 1276px
-  },
-},
+        <Box
+          sx={{
+            position: "fixed",
+            top: 240,
+            left: 15,
+            zIndex: 2000,
+            display: {
+              xs: mobileFilterOpen ? "none" : "flex",
+              sm: mobileFilterOpen ? "none" : "flex",
+              md: mobileFilterOpen ? "none" : "flex",
+              lg: mobileFilterOpen ? "none" : "flex",   // 1200–1275 also visible
+              "@media (min-width:1276px)": {
+                display: "none",                        // Hide only after 1276px
+              },
+            },
 
-  }}
->
-  <button
-    onClick={() => setMobileFilterOpen(true)}
-    style={{
-      width: "50px",
-      height: "50px",
-      borderRadius: "50%",
-      backgroundColor: "#1976d2",
-      border: "none",
-      color: "white",
-      fontSize: "22px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-    }}
-  >
-    ☰
-  </button>
-</Box>
+          }}
+        >
+          <button
+            onClick={() => setMobileFilterOpen(true)}
+            style={{
+              width: "50px",
+              height: "50px",
+              borderRadius: "50%",
+              backgroundColor: "#1976d2",
+              border: "none",
+              color: "white",
+              fontSize: "22px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            }}
+          >
+            ☰
+          </button>
+        </Box>
 
 
       </Box>
@@ -676,15 +676,15 @@ display: {
         anchor="left"
         open={mobileFilterOpen}
         onClose={() => setMobileFilterOpen(false)}
-       sx={{
-  "@media (min-width:1276px)": {
-    display: "none",
-  },
-  "& .MuiDrawer-paper": {
-    width: "80%",
-    maxWidth: "400px",
-  },
-}}
+        sx={{
+          "@media (min-width:1276px)": {
+            display: "none",
+          },
+          "& .MuiDrawer-paper": {
+            width: "80%",
+            maxWidth: "400px",
+          },
+        }}
 
         // ✅ This allows dropdowns to render in portals outside the drawer
         ModalProps={{

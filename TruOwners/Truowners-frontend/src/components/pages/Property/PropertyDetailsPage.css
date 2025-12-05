@@ -128,30 +128,32 @@
 }
 
 .main-image {
-  width: 100%;
-  height: 300px; /* Adjust height as needed */
+  max-width: 100%;
+  max-height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;  
   overflow: hidden;
 }
 
 .main-image img {
   width: 100%;
-  height: 100%;
-  object-fit: contain; /* Show full image without cropping */
-  background-color: #f5f5f5; /* Optional: keeps empty space clean */
+  height: 400px;
+  background-color: #f5f5f5;
 }
 
 /* Wishlist Icon inside Property Image */
 .property-image-wrapper {
   position: relative;
-  width: 100%;
-  height: 450px; /* Add fixed height for stable layout */
+  width: 75%;
+  /* height: 450px; */
   /* overflow: hidden; */
 }
 
 .property-image-wrapper .property-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; 
+  /* width: 100%; */
+  /* height: 100%; */
+  /* object-fit: contain;  */
 
 }
 
@@ -599,6 +601,10 @@
   .main-image {
     height: 300px;
   }
+  .main-image img {
+  width: 100%;
+  height: 300px;
+}
 
   .image-nav {
     width: 50px;
@@ -991,7 +997,6 @@
 .lock-overlay {
   position: absolute;
   top: 50%;
-  left:15px;           /* FIX: Always keeps it aligned properly */
   transform: translateY(-50%);
   display: flex;
   align-items: center;
