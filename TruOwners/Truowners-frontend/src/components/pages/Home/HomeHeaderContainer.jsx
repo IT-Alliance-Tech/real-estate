@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import "./home.css";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
-import headerImage from "../../../../public/banner.jpeg"; // ✅ corrected path
+import headerImage from "../../../../public/home_banner.jpeg"; // ✅ corrected path
 import search from "../../../assets/images/home/search.svg";
 import useScreenSize from "../../helper/userScreenSize.jsx";
 import PropertyTypeSelect from "../search-screen/propertyTypeSelect.jsx";
@@ -279,7 +279,7 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
             height: "100%",
             maxHeight: "400px",
             objectFit: "cover",
-            objectPosition: "0% 5%"
+            objectPosition: "0% 0%"
           }}
         />
       </motion.div>
@@ -329,28 +329,28 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
         </div>
 
         {filteredProperties.length === 0 ? (
-  <div className="empty-properties d-flex flex-column align-items-center text-center">
-    <div className="empty-icon">🏠</div>
-    <h3>No properties match your criteria</h3>
-    <p>Try adjusting your filters or search terms to see more results.</p>
-    <button
-      className="btn btn-primary"
-      onClick={() => {
-        setFilters({
-          location: '',
-          propertyType: 'all',
-          priceRange: { min: 0, max: 10000 },
-          bedrooms: 'any',
-          amenities: []
-        })
-        setSearchTerm('')
-      }}
-    >
-      Clear All Filters
-    </button>
-  </div>
-) : (
-  // your list…
+          <div className="empty-properties d-flex flex-column align-items-center text-center">
+            <div className="empty-icon">🏠</div>
+            <h3>No properties match your criteria</h3>
+            <p>Try adjusting your filters or search terms to see more results.</p>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setFilters({
+                  location: '',
+                  propertyType: 'all',
+                  priceRange: { min: 0, max: 10000 },
+                  bedrooms: 'any',
+                  amenities: []
+                })
+                setSearchTerm('')
+              }}
+            >
+              Clear All Filters
+            </button>
+          </div>
+        ) : (
+          // your list…
 
           <div className="properties-grid">
             {filteredProperties.slice(0, 6).map((property, index) => (
