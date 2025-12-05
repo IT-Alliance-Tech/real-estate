@@ -46,24 +46,24 @@ import {
 
 const Header = () => {
 
-const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showEditProfile, setShowEditProfile] = useState(false)
 
 
-const handleEditProfileClick = () => {
-  setShowEditProfile(true)
-  handleUserMenuClose()
-}
+  const handleEditProfileClick = () => {
+    setShowEditProfile(true)
+    handleUserMenuClose()
+  }
 
-const handleSaveProfile = (updatedData) => {
-  console.log("Profile Updated:", updatedData)
-  // TODO: call API to save changes
-  setShowEditProfile(false)
-}
+  const handleSaveProfile = (updatedData) => {
+    console.log("Profile Updated:", updatedData)
+    // TODO: call API to save changes
+    setShowEditProfile(false)
+  }
 
-const [showUserEditProfile, setShowUserEditProfile] = useState(false)
+  const [showUserEditProfile, setShowUserEditProfile] = useState(false)
 
 
-  
+
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
@@ -181,7 +181,7 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
       if (response.ok) {
         const data = await response.json()
         validateApiResponse(data)
-        
+
         if (data.success && data.data.wishlist) {
           const properties = data.data.wishlist.properties || []
           setWishlistCount(properties.length)
@@ -211,14 +211,14 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
       if (response.ok) {
         const data = await response.json()
         validateApiResponse(data)
-        
+
         if (data.success && data.data) {
           const totalBookings = data.data.totalBookings || 0
           const bookings = data.data.bookings || []
-          
+
           // Count pending bookings
           const pendingCount = bookings.filter(booking => booking.status === 'pending').length
-          
+
           setBookingsCount(totalBookings)
           setPendingBookingsCount(pendingCount)
         }
@@ -382,7 +382,7 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                   </Menu>
                 </Box> */}
 
-                 <Button 
+                <Button
                   onClick={() => handleNavigation('/about')}
                   sx={{
                     color: '#333',
@@ -397,7 +397,7 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                   About
                 </Button>
 
-                <Button 
+                <Button
                   onClick={() => handleNavigation('/contact')}
                   sx={{
                     color: '#333',
@@ -501,15 +501,15 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                         aria-expanded={isUserMenuOpen ? 'true' : undefined}
                         onClick={handleUserMenuClick}
                         startIcon={
-                          <img 
-                            src={defaultProfilePic} 
-                            alt="User Icon" 
-                            style={{ 
-                              width: 32, 
-                              height: 32, 
+                          <img
+                            src={defaultProfilePic}
+                            alt="User Icon"
+                            style={{
+                              width: 32,
+                              height: 32,
                               borderRadius: '50%',
                               objectFit: 'cover'
-                            }} 
+                            }}
                           />
                         }
                         endIcon={isUserMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -558,7 +558,7 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                             size="small"
                             color="primary"
                             variant="filled"
-                            sx={{ 
+                            sx={{
                               textTransform: 'capitalize',
                               fontSize: '11px',
                               height: 24
@@ -567,7 +567,7 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                         </Box>
 
                         {/* Menu Items */}
-                      {/* {isUser && (
+                        {/* {isUser && (
                           <>
                             <MenuItem 
                               onClick={handleWishlistClick}
@@ -639,18 +639,18 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                         )}  */}
 
 
-{isUser && (
-  <>
-    <MenuItem
-      onClick={() => { setShowUserEditProfile(true); handleUserMenuClose(); }}
-      sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
-    >
-      <PersonIcon sx={{ mr: 2, fontSize: 20, color: '#1976d2' }} />
-      <Typography variant="body2">Edit Profile</Typography>
-    </MenuItem>
- <MenuItem 
+                        {isUser && (
+                          <>
+                            <MenuItem
+                              onClick={() => { setShowUserEditProfile(true); handleUserMenuClose(); }}
+                              sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                            >
+                              <PersonIcon sx={{ mr: 2, fontSize: 20, color: '#1976d2' }} />
+                              <Typography variant="body2">Edit Profile</Typography>
+                            </MenuItem>
+                            <MenuItem
                               onClick={handleWishlistClick}
-                              sx={{ 
+                              sx={{
                                 padding: '12px 20px',
                                 '&:hover': { backgroundColor: '#f5f5f5' }
                               }}
@@ -673,10 +673,10 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                                 )}
                               </Box>
                             </MenuItem>
-                            
-                            <MenuItem 
+
+                            <MenuItem
                               onClick={handleMyBookingsClick}
-                              sx={{ 
+                              sx={{
                                 padding: '12px 20px',
                                 '&:hover': { backgroundColor: '#f5f5f5' }
                               }}
@@ -714,31 +714,31 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                                 </Box>
                               </Box>
                             </MenuItem>
-  </>
-)}
-{isUser && (
-  <MenuItem
-    onClick={() => { navigate('/subscription-plans'); handleUserMenuClose(); }}
-    sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
-  >
-    <BusinessIcon sx={{ mr: 2, fontSize: 20, color: '#9c27b0' }} />
-    <Typography variant="body2">Subscription Plans</Typography>
-  </MenuItem>
-)}
+                          </>
+                        )}
+                        {isUser && (
+                          <MenuItem
+                            onClick={() => { navigate('/subscription-plans'); handleUserMenuClose(); }}
+                            sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                          >
+                            <BusinessIcon sx={{ mr: 2, fontSize: 20, color: '#9c27b0' }} />
+                            <Typography variant="body2">Subscription Plans</Typography>
+                          </MenuItem>
+                        )}
 
-{isUser && (
-  <MenuItem
-    onClick={() => { navigate('/my-subscription'); handleUserMenuClose(); }}
-    sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
-  >
-    <CardMembershipIcon sx={{ mr: 2, fontSize: 20, color: '#ff9800' }} />
-    <Typography variant="body2">My Subscription</Typography>
-  </MenuItem>
-)}
+                        {isUser && (
+                          <MenuItem
+                            onClick={() => { navigate('/my-subscription'); handleUserMenuClose(); }}
+                            sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                          >
+                            <CardMembershipIcon sx={{ mr: 2, fontSize: 20, color: '#ff9800' }} />
+                            <Typography variant="body2">My Subscription</Typography>
+                          </MenuItem>
+                        )}
 
 
 
-                        
+
                         {/* {isOwner && (
                           <MenuItem 
                             onClick={handleAddPropertyClick}
@@ -754,31 +754,31 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
 
 
                         {isOwner && (
-  <>
-    <MenuItem
-      onClick={() => { setShowEditProfile(true); handleUserMenuClose(); }}
-      sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
-    >
-      <PersonIcon sx={{ mr: 2, fontSize: 20, color: '#1976d2' }} />
-      <Typography variant="body2">Edit Profile</Typography>
-    </MenuItem>
+                          <>
+                            <MenuItem
+                              onClick={() => { setShowEditProfile(true); handleUserMenuClose(); }}
+                              sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                            >
+                              <PersonIcon sx={{ mr: 2, fontSize: 20, color: '#1976d2' }} />
+                              <Typography variant="body2">Edit Profile</Typography>
+                            </MenuItem>
 
-    <MenuItem
-      onClick={handleAddPropertyClick}
-      sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
-    >
-      <AddIcon sx={{ mr: 2, fontSize: 20, color: '#4caf50' }} />
-      <Typography variant="body2">Add Property</Typography>
-    </MenuItem>
-  </>
-)}
+                            <MenuItem
+                              onClick={handleAddPropertyClick}
+                              sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                            >
+                              <AddIcon sx={{ mr: 2, fontSize: 20, color: '#4caf50' }} />
+                              <Typography variant="body2">Add Property</Typography>
+                            </MenuItem>
+                          </>
+                        )}
 
-                        
+
                         <Divider />
-                        
-                        <MenuItem 
+
+                        <MenuItem
                           onClick={handleLogout}
-                          sx={{ 
+                          sx={{
                             padding: '12px 20px',
                             color: '#f44336',
                             '&:hover': { backgroundColor: '#ffebee' }
@@ -792,11 +792,11 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                   </Box>
                 ) : (
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      variant="outlined" 
+                    <Button
+                      variant="outlined"
                       onClick={handleSignUpClick}
                       sx={{
-                        border : '1px solid #000 !important',
+                        border: '1px solid #000 !important',
                         color: '#000',
                         textTransform: 'none',
                         borderRadius: '8px',
@@ -805,11 +805,11 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
                     >
                       Sign Up
                     </Button>
-                    <Button 
-                      variant="contained" 
+                    <Button
+                      variant="contained"
                       onClick={handleLoginClick}
                       sx={{
-                          backgroundColor:'#4F4F4F !important',
+                        backgroundColor: '#4F4F4F !important',
                         color: '#fff',
                         textTransform: 'none',
                         borderRadius: '8px',
@@ -823,13 +823,13 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
 
                 {/* Only show "For Property Owners" button when user is NOT logged in */}
                 {!isAuthenticated && (
-                  <Button 
-                    variant="contained" 
+                  <Button
+                    variant="contained"
                     color="secondary"
                     onClick={handleOwnerSignUpClick}
-                    sx={{  
-                       backgroundColor:' #333333 !important',
-                        color: '#fff',
+                    sx={{
+                      backgroundColor: ' #333333 !important',
+                      color: '#fff',
                       textTransform: 'none',
                       borderRadius: '8px',
                       fontWeight: 500,
@@ -848,7 +848,6 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
               onClick={toggleMobileMenu}
               aria-label="Toggle mobile menu"
               sx={{
-                display: { xs: 'block', md: 'none' },
                 color: '#333'
               }}
             >
@@ -857,105 +856,105 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
           </div>
 
           {/* Mobile Navigation */}
-         <nav className={`header-nav mobile-nav ${isMobileMenuOpen ? 'active' : ''}`}>
-  <div className="mobile-nav-buttons">
-    {isAuthenticated ? (
-      <>
-        <div className="mobile-user-info">
-          <div className="mobile-user-avatar">
-            {getInitials(user?.name)}
-          </div>
-          <div className="mobile-user-details">
-            <p className="mobile-user-name">{user?.name}</p>
-            <p className="mobile-user-email">{user?.email}</p>
-            <p className="mobile-user-role">({user?.role})</p>
-          </div>
-        </div>
+          <nav className={`header-nav mobile-nav ${isMobileMenuOpen ? 'active' : ''}`}>
+            <div className="mobile-nav-buttons">
+              {isAuthenticated ? (
+                <>
+                  <div className="mobile-user-info">
+                    <div className="mobile-user-avatar">
+                      {getInitials(user?.name)}
+                    </div>
+                    <div className="mobile-user-details">
+                      <p className="mobile-user-name">{user?.name}</p>
+                      <p className="mobile-user-email">{user?.email}</p>
+                      <p className="mobile-user-role">({user?.role})</p>
+                    </div>
+                  </div>
 
-        {isUser && (
-          <>
-            <button
-              className="btn btn-secondary btn-mobile"
-              onClick={handleWishlistClick}
-            >
-              ❤️ Wishlist ({wishlistCount})
-            </button>
+                  {isUser && (
+                    <>
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={handleWishlistClick}
+                      >
+                        ❤️ Wishlist ({wishlistCount})
+                      </button>
 
-            <button
-              className="btn btn-secondary btn-mobile"
-              onClick={handleMyBookingsClick}
-            >
-              📅 My Bookings ({bookingsCount})
-              {pendingBookingsCount > 0 && (
-                <span
-                  style={{
-                    marginLeft: '8px',
-                    backgroundColor: '#ff9800',
-                    color: 'white',
-                    borderRadius: '10px',
-                    padding: '2px 6px',
-                    fontSize: '12px'
-                  }}
-                >
-                  {pendingBookingsCount} pending
-                </span>
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={handleMyBookingsClick}
+                      >
+                        📅 My Bookings ({bookingsCount})
+                        {pendingBookingsCount > 0 && (
+                          <span
+                            style={{
+                              marginLeft: '8px',
+                              backgroundColor: '#ff9800',
+                              color: 'white',
+                              borderRadius: '10px',
+                              padding: '2px 6px',
+                              fontSize: '12px'
+                            }}
+                          >
+                            {pendingBookingsCount} pending
+                          </span>
+                        )}
+                      </button>
+
+                      {/* 🔥 REPLACEMENT STARTS HERE */}
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={() => navigate('/subscription-plans')}
+                      >
+                        📌 Subscription Plans
+                      </button>
+
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={() => navigate('/my-subscriptions')}
+                      >
+                        🧾 My Subscriptions
+                      </button>
+                      {/* 🔥 REPLACEMENT ENDS HERE */}
+                    </>
+                  )}
+
+                  {isOwner && (
+                    <button
+                      className="btn btn-secondary btn-mobile"
+                      onClick={handleAddPropertyClick}
+                    >
+                      Add Property
+                    </button>
+                  )}
+
+                  <button className="btn btn-danger btn-mobile" onClick={handleLogout}>
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="btn color-change btn-mobile"
+                    onClick={handleSignUpClick}
+                  >
+                    Sign Up
+                  </button>
+
+                  <button
+                    className="btn color-change1 btn-mobile"
+                    onClick={handleLoginClick}
+                  >
+                    Login
+                  </button>
+
+                  <button className="btn color-change2 btn-mobile" onClick={handleOwnerSignUpClick}>
+                    For Property Owners
+                  </button>
+                </>
               )}
-            </button>
-
-            {/* 🔥 REPLACEMENT STARTS HERE */}
-            <button
-              className="btn btn-secondary btn-mobile"
-              onClick={() => navigate('/subscription-plans')}
-            >
-              📌 Subscription Plans
-            </button>
-
-            <button
-              className="btn btn-secondary btn-mobile"
-              onClick={() => navigate('/my-subscriptions')}
-            >
-              🧾 My Subscriptions
-            </button>
-            {/* 🔥 REPLACEMENT ENDS HERE */}
-          </>
-        )}
-
-        {isOwner && (
-          <button
-            className="btn btn-secondary btn-mobile"
-            onClick={handleAddPropertyClick}
-          >
-            Add Property
-          </button>
-        )}
-
-        <button className="btn btn-danger btn-mobile" onClick={handleLogout}>
-          Logout
-        </button>
-      </>
-    ) : (
-      <>
-        <button
-          className="btn color-change btn-mobile"
-          onClick={handleSignUpClick}
-        >
-          Sign Up
-        </button>
-
-        <button
-          className="btn color-change1 btn-mobile"
-          onClick={handleLoginClick}
-        >
-          Login
-        </button>
-
-        <button className="btn color-change2 btn-mobile" onClick={handleOwnerSignUpClick}>
-          For Property Owners
-        </button>
-      </>
-    )}
-  </div>
-</nav>
+            </div>
+          </nav>
 
         </div>
       </header>
@@ -998,25 +997,25 @@ const [showUserEditProfile, setShowUserEditProfile] = useState(false)
       )}
 
 
-{showEditProfile && (
-  <EditProfile
-    user={user}
-    onClose={() => setShowEditProfile(false)}
-    onSave={handleSaveProfile}
-  />
-)}
+      {showEditProfile && (
+        <EditProfile
+          user={user}
+          onClose={() => setShowEditProfile(false)}
+          onSave={handleSaveProfile}
+        />
+      )}
 
-{showUserEditProfile && (
-  <UserEditProfile
-    user={user}
-    onClose={() => setShowUserEditProfile(false)}
-    onSave={(updatedData) => {
-      console.log("User profile updated:", updatedData)
-      // TODO: call your API here
-      setShowUserEditProfile(false)
-    }}
-  />
-)}
+      {showUserEditProfile && (
+        <UserEditProfile
+          user={user}
+          onClose={() => setShowUserEditProfile(false)}
+          onSave={(updatedData) => {
+            console.log("User profile updated:", updatedData)
+            // TODO: call your API here
+            setShowUserEditProfile(false)
+          }}
+        />
+      )}
 
 
 
