@@ -5,7 +5,7 @@ import { handleApiError, getErrorMessage, validateApiResponse } from '../../../u
 import '../Owner/Owner.css';
 import '../Auth/Auth.css';
 import Compressor from 'compressorjs';
-
+import { toast } from "react";
 const AddPropertyModal = ({ onClose, onSuccess, token }) => {
   const [ownerData, setOwnerData] = useState({
     email: '',
@@ -43,7 +43,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ownerExists, setOwnerExists] = useState(false);
-  const [ownerInfo, setOwnerInfo] = useState(null);
+  const [ setOwnerInfo] = useState(null);
   const [checkingOwner, setCheckingOwner] = useState(false);
 
   const amenitiesList = [
@@ -232,10 +232,11 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
       }
       return uploadedUrls;
     } catch (error) {
-      throw error;
-    } finally {
-      setUploadingMedia(false);
-    }
+  console.error("Upload failed:", error);
+  toast.error("Failed to upload property");
+} finally {
+  setUploadingMedia(false);
+}
   };
 
    const validateForm = () => {
@@ -347,12 +348,12 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
       });
 
       let data;
-      try {
-        data = await response.json();
-        validateApiResponse(data);
-      } catch (parseError) {
-        throw new Error('Invalid response from server');
-      }
+     try {
+           data = await response.json();
+            validateApiResponse(data);
+            } catch {
+            throw new Error('Invalid response from server');
+          }
 
       if (!response.ok) {
         throw new Error(data.error?.message || handleApiError(null, response));
@@ -395,7 +396,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
             <p className="section-subtitle">Enter owner information</p>
 
             <div className="form-group">
-              <label htmlFor="email">Owner Email *</label>
+              <label htmlFor="email">Owner Email </label>
               <input
                 type="email"
                 id="email"
@@ -411,7 +412,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="name">Owner Name *</label>
+                <label htmlFor="name">Owner Name </label>
                 <input
                   type="text"
                   id="name"
@@ -419,13 +420,13 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   value={ownerData.name}
                   onChange={handleOwnerChange}
                   placeholder="John Doe"
-                  required
+                 // required
                   disabled={ownerExists}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="phone">Owner Phone *</label>
+                <label htmlFor="phone">Owner Phone </label>
                 <input
                   type="tel"
                   id="phone"
@@ -442,14 +443,14 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
               <>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="idProofType">ID Proof Type *</label>
+                    <label htmlFor="idProofType">ID Proof Type </label>
                     <select
                       id="idProofType"
                       name="idProofType"
                       value={ownerData.idProofType}
                       onChange={handleOwnerChange}
                       className="form-select"
-                      required
+                    //  required
                     >
                       {idProofTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
@@ -458,7 +459,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="idProofNumber">ID Proof Number *</label>
+                    <label htmlFor="idProofNumber">ID Proof Number </label>
                     <input
                       type="text"
                       id="idProofNumber"
@@ -466,13 +467,13 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                       value={ownerData.idProofNumber}
                       onChange={handleOwnerChange}
                       placeholder="1234-5678-9012"
-                      required
+                      //required
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="idProof">ID Proof Image *</label>
+                  <label htmlFor="idProof">ID Proof Image </label>
                   <div className="file-upload-area">
                     <input
                       type="file"
