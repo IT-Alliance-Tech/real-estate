@@ -28,7 +28,7 @@ export const API_CONFIG = {
     USERS: '/admin/users',
     PROPERTIES: '/admin/properties',
     REVIEW_PROPERTY: '/admin/properties/:id/review',
-    PUBLISH_PROPERTY: '/admin/properties/:id',
+    PUBLISH_PROPERTY: '/admin/properties/:id/status',
     BOOKINGS: '/booking/all',                    
     BOOKING_ANALYTICS: '/booking/analytics',     
     UPDATE_BOOKING: '/booking/:id/status',

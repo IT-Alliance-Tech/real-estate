@@ -1,6 +1,6 @@
-const Property = require('../models/Property');
-const Owner = require('../models/Owner');
-const { PROPERTY_STATUS } = require('../utils/constants');
+const Property = require("../models/Property");
+const Owner = require("../models/Owner");
+const { PROPERTY_STATUS } = require("../utils/constants");
 
 // Upload new property
 const uploadProperty = async (req, res) => {
@@ -15,22 +15,22 @@ const uploadProperty = async (req, res) => {
     bathrooms,
     area,
     amenities,
-    images
+    images,
   } = req.body;
 
   try {
     // Find owner profile
     const owner = await Owner.findOne({ user: req.user._id });
     console.log(owner);
-    
+
     if (!owner) {
       return res.status(403).json({
         statusCode: 403,
         success: false,
         error: {
-          message: 'Owner profile not found'
+          message: "Owner profile not found",
         },
-        data: null
+        data: null,
       });
     }
 
@@ -47,69 +47,95 @@ const uploadProperty = async (req, res) => {
       area,
       amenities: amenities || [],
       images: images || [],
-      status: PROPERTY_STATUS.PENDING
+      status: PROPERTY_STATUS.PENDING,
     });
 
-    response = await property.save();
-
+    const response = await property.save();
     console.log("Property saved:", response);
-    
-    
-    // Add property to owner's properties list
+
     owner.properties.push(property._id);
     await owner.save();
+
+    const populatedOwner = await Owner.findById(owner._id)
+      .populate({
+        path: "user",
+        select: "name email phone",
+      })
+      .lean();
+    // populate property.owner field with populatedOwner
+    const returnedProperty = {
+      id: property._id,
+      title: property.title,
+      description: property.description,
+      location: property.location,
+      rent: property.rent,
+      deposit: property.deposit,
+      propertyType: property.propertyType,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area,
+      amenities: property.amenities,
+      images: property.images,
+      status: property.status,
+      owner: populatedOwner
+        ? {
+            id: populatedOwner._id,
+            name:
+              (populatedOwner.user && populatedOwner.user.name) ||
+              populatedOwner.name ||
+              null,
+            email:
+              (populatedOwner.user && populatedOwner.user.email) ||
+              populatedOwner.email ||
+              null,
+            phone:
+              (populatedOwner.user && populatedOwner.user.phone) ||
+              populatedOwner.phone ||
+              null,
+            idProofType: populatedOwner.idProofType || null,
+            idProofNumber: populatedOwner.idProofNumber || null,
+            idProofImageUrl: populatedOwner.idProofImageUrl || null,
+          }
+        : property.owner,
+      createdAt: property.createdAt,
+    };
 
     res.status(201).json({
       statusCode: 201,
       success: true,
       error: null,
       data: {
-        message: 'Property uploaded successfully',
-        property: {
-          id: property._id,
-          title: property.title,
-          description: property.description,
-          location: property.location,
-          rent: property.rent,
-          deposit: property.deposit,
-          propertyType: property.propertyType,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          area: property.area,
-          amenities: property.amenities,
-          images: property.images,
-          status: property.status,
-          owner: property.owner,
-          createdAt: property.createdAt
-        }
-      }
+        message: "Property uploaded successfully",
+        property: returnedProperty,
+      },
     });
   } catch (error) {
-    console.error('Upload property error:', error);
+    console.error("Upload property error:", error);
     res.status(500).json({
       statusCode: 500,
       success: false,
       error: {
-        message: 'Internal server error',
-        details: error.message
+        message: "Internal server error",
+        details: error.message,
       },
-      data: null
+      data: null,
     });
   }
 };
-
 // Get owner's properties
 const getOwnerProperties = async (req, res) => {
   try {
-    const owner = await Owner.findOne({ user: req.user._id }).populate('properties');
+    const owner = await Owner.findOne({ user: req.user._id }).populate(
+      "properties"
+    );
     if (!owner) {
       return res.status(404).json({
         statusCode: 404,
         success: false,
         error: {
-          message: 'Owner profile not found'
+          message: "Owner profile not found",
         },
-        data: null
+        data: null,
       });
     }
 
@@ -118,8 +144,8 @@ const getOwnerProperties = async (req, res) => {
       success: true,
       error: null,
       data: {
-        message: 'Properties retrieved successfully',
-        properties: owner.properties.map(property => ({
+        message: "Properties retrieved successfully",
+        properties: owner.properties.map((property) => ({
           id: property._id,
           title: property.title,
           description: property.description,
@@ -134,37 +160,62 @@ const getOwnerProperties = async (req, res) => {
           images: property.images,
           status: property.status,
           createdAt: property.createdAt,
-          updatedAt: property.updatedAt
+          updatedAt: property.updatedAt,
         })),
-        totalProperties: owner.properties.length
-      }
+        totalProperties: owner.properties.length,
+      },
     });
   } catch (error) {
-    console.error('Get owner properties error:', error);
+    console.error("Get owner properties error:", error);
     res.status(500).json({
       statusCode: 500,
       success: false,
       error: {
-        message: 'Internal server error',
-        details: error.message
+        message: "Internal server error",
+        details: error.message,
       },
-      data: null
+      data: null,
     });
   }
 };
 
 const getProperty = async (req, res) => {
   try {
-    const property = await Property.findOne({ _id: req.params.id });
+    const property = await Property.findOne({ _id: req.params.id }).populate({
+      path: "owner",
+      populate: {
+        path: "user",
+        model: "User",
+        select: "name email phone",
+      },
+    });
+
     if (!property) {
       return res.status(404).json({
         statusCode: 404,
         success: false,
         error: {
-          message: 'Property not found'
+          message: "Property not found",
         },
-        data: null
+        data: null,
       });
+    }
+
+    // Build owner object for response (prefer user fields if populated)
+    let ownerObj = null;
+    if (property.owner) {
+      const owner = property.owner;
+      const user = owner.user || {};
+      ownerObj = {
+        id: owner._id,
+        name: user.name || owner.name || null,
+        email: user.email || owner.email || null,
+        phone: user.phone || owner.phone || null,
+        idProofType: owner.idProofType || null,
+        idProofNumber: owner.idProofNumber || null,
+        idProofImageUrl: owner.idProofImageUrl || null,
+        verified: owner.verified || false,
+      };
     }
 
     res.status(200).json({
@@ -172,7 +223,7 @@ const getProperty = async (req, res) => {
       success: true,
       error: null,
       data: {
-        message: 'Property retrieved successfully',
+        message: "Property retrieved successfully",
         property: {
           id: property._id,
           title: property.title,
@@ -188,20 +239,21 @@ const getProperty = async (req, res) => {
           images: property.images,
           status: property.status,
           createdAt: property.createdAt,
-          updatedAt: property.updatedAt
-        }
-      }
+          updatedAt: property.updatedAt,
+          owner: ownerObj,
+        },
+      },
     });
   } catch (error) {
-    console.error('Get property error:', error);
+    console.error("Get property error:", error);
     res.status(500).json({
       statusCode: 500,
       success: false,
       error: {
-        message: 'Internal server error',
-        details: error.message
+        message: "Internal server error",
+        details: error.message,
       },
-      data: null
+      data: null,
     });
   }
 };
@@ -219,16 +271,25 @@ const updateProperty = async (req, res) => {
     bathrooms,
     area,
     amenities,
-    images
+    images,
   } = req.body;
 
   const allowedUpdates = [
-    'title', 'description', 'location', 'rent', 'deposit',
-    'propertyType', 'bedrooms', 'bathrooms', 'area', 'amenities', 'images'
+    "title",
+    "description",
+    "location",
+    "rent",
+    "deposit",
+    "propertyType",
+    "bedrooms",
+    "bathrooms",
+    "area",
+    "amenities",
+    "images",
   ];
 
   // Validate only allowed fields are being updated
-  const isValidOperation = Object.keys(req.body).every(update =>
+  const isValidOperation = Object.keys(req.body).every((update) =>
     allowedUpdates.includes(update)
   );
   if (!isValidOperation) {
@@ -236,9 +297,10 @@ const updateProperty = async (req, res) => {
       statusCode: 400,
       success: false,
       error: {
-        message: 'Invalid updates! Allowed fields: ' + allowedUpdates.join(', ')
+        message:
+          "Invalid updates! Allowed fields: " + allowedUpdates.join(", "),
       },
-      data: null
+      data: null,
     });
   }
 
@@ -250,16 +312,16 @@ const updateProperty = async (req, res) => {
         statusCode: 403,
         success: false,
         error: {
-          message: 'Owner profile not found'
+          message: "Owner profile not found",
         },
-        data: null
+        data: null,
       });
     }
 
     // Find property belonging to owner
     const property = await Property.findOne({
       _id: req.params.id,
-      owner: owner._id
+      owner: owner._id,
     });
 
     if (!property) {
@@ -267,9 +329,10 @@ const updateProperty = async (req, res) => {
         statusCode: 404,
         success: false,
         error: {
-          message: 'Property not found or you do not have permission to update this property'
+          message:
+            "Property not found or you do not have permission to update this property",
         },
-        data: null
+        data: null,
       });
     }
 
@@ -302,7 +365,7 @@ const updateProperty = async (req, res) => {
       success: true,
       error: null,
       data: {
-        message: 'Property updated successfully',
+        message: "Property updated successfully",
         property: {
           id: property._id,
           title: property.title,
@@ -319,20 +382,20 @@ const updateProperty = async (req, res) => {
           status: property.status,
           owner: property.owner,
           createdAt: property.createdAt,
-          updatedAt: property.updatedAt
-        }
-      }
+          updatedAt: property.updatedAt,
+        },
+      },
     });
   } catch (error) {
-    console.error('Update property error:', error);
+    console.error("Update property error:", error);
     res.status(500).json({
       statusCode: 500,
       success: false,
       error: {
-        message: 'Internal server error',
-        details: error.message
+        message: "Internal server error",
+        details: error.message,
       },
-      data: null
+      data: null,
     });
   }
 };
@@ -345,9 +408,9 @@ const deleteProperty = async (req, res) => {
         statusCode: 404,
         success: false,
         error: {
-          message: 'Property not found'
+          message: "Property not found",
         },
-        data: null
+        data: null,
       });
     }
 
@@ -357,19 +420,19 @@ const deleteProperty = async (req, res) => {
       success: true,
       error: null,
       data: {
-        message: 'Property deleted successfully'
-      }
+        message: "Property deleted successfully",
+      },
     });
   } catch (error) {
-    console.error('Delete property error:', error);
+    console.error("Delete property error:", error);
     res.status(500).json({
       statusCode: 500,
       success: false,
       error: {
-        message: 'Internal server error',
-        details: error.message
+        message: "Internal server error",
+        details: error.message,
       },
-      data: null
+      data: null,
     });
   }
 };
@@ -379,5 +442,5 @@ module.exports = {
   getOwnerProperties,
   updateProperty,
   getProperty,
-  deleteProperty
+  deleteProperty,
 };

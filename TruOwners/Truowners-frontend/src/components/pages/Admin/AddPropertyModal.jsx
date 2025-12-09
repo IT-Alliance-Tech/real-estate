@@ -1,107 +1,228 @@
-import React, { useState } from 'react';
-import { buildApiUrl, API_CONFIG } from '../../../config/api';
-import { uploadFile, generateFileName } from '../../../config/supabase';
-import { handleApiError, getErrorMessage, validateApiResponse } from '../../../utils/errorHandler';
-import '../Owner/Owner.css';
-import '../Auth/Auth.css';
-import Compressor from 'compressorjs';
+import React, { useState, useEffect } from "react";
+import { buildApiUrl } from "../../../config/api";
+import { uploadFile, generateFileName } from "../../../config/supabase";
+import {
+  handleApiError,
+  getErrorMessage,
+  validateApiResponse,
+} from "../../../utils/errorHandler";
+import "../Owner/Owner.css";
+import "../Auth/Auth.css";
+import Compressor from "compressorjs";
 
-const AddPropertyModal = ({ onClose, onSuccess, token }) => {
+const AddPropertyModal = ({
+  onClose,
+  onSuccess,
+  token,
+  mode = "create",
+  property,
+}) => {
+  const isEdit = mode === "edit";
+
   const [ownerData, setOwnerData] = useState({
-    email: '',
-    name: '',
-    phone: '',
-    idProofType: 'Aadhar',
-    idProofNumber: '',
-    idProofImageUrl: ''
+    email: "",
+    name: "",
+    phone: "",
+    idProofType: "",
+    idProofNumber: "",
+    idProofImageUrl: "",
   });
 
   const [propertyData, setPropertyData] = useState({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
     location: {
-      address: '',
-      city: '',
-      state: '',
-      country: '',
-      pincode: ''
+      address: "",
+      city: "",
+      state: "",
+      country: "",
+      pincode: "",
     },
-    rent: '',
-    deposit: '',
-    propertyType: 'apartment',
-    bedrooms: '',
-    bathrooms: '',
-    area: '',
-    amenities: []
+    rent: "",
+    deposit: "",
+    propertyType: "apartment",
+    bedrooms: "",
+    bathrooms: "",
+    area: "",
+    amenities: [],
+    images: [],
   });
 
   const [idProofFile, setIdProofFile] = useState(null);
-  const [idProofPreview, setIdProofPreview] = useState('');
+  const [idProofPreview, setIdProofPreview] = useState("");
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [ownerExists, setOwnerExists] = useState(false);
-  const [ownerInfo, setOwnerInfo] = useState(null);
   const [checkingOwner, setCheckingOwner] = useState(false);
 
   const amenitiesList = [
-    'WiFi', 'Parking', 'Gym', 'Swimming Pool', 'Security', 'Elevator',
-    'Balcony', 'Garden', 'Furnished', 'Air Conditioning', 'Heating',
-    'Laundry', 'Pet Friendly', 'Near Metro', 'Shopping Mall', 'Hospital'
+    "WiFi",
+    "Parking",
+    "Gym",
+    "Swimming Pool",
+    "Security",
+    "Elevator",
+    "Balcony",
+    "Garden",
+    "Furnished",
+    "Air Conditioning",
+    "Heating",
+    "Laundry",
+    "Pet Friendly",
+    "Near Metro",
+    "Shopping Mall",
+    "Hospital",
   ];
 
-  const idProofTypes = ['Aadhar', 'Passport', 'Driving License', 'Voter ID'];
+  const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"];
 
   const allowedTypes = {
-    images: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
-    videos: ['video/mp4', 'video/webm', 'video/mov', 'video/avi']
+    images: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    videos: ["video/mp4", "video/webm", "video/mov", "video/avi"],
   };
 
-  // Check if owner exists when email is entered
+  // 🔹 Prefill when in edit mode
+  useEffect(() => {
+    if (!isEdit || !property) return;
+
+    // Owner
+    const owner = property.owner || {};
+
+    setOwnerData({
+      email: owner.email || owner.user?.email || "",
+      name: owner.name || owner.user?.name || "",
+      phone:
+        owner.phone ||
+        owner.user?.phone ||
+        owner.mobile ||
+        owner.user?.mobile ||
+        "",
+      idProofType:
+        owner.idProofType ||
+        owner.id_proof_type ||
+        owner.user?.idProofType ||
+        owner.user?.id_proof_type ||
+        "",
+      idProofNumber:
+        owner.idProofNumber ||
+        owner.id_proof_number ||
+        owner.user?.idProofNumber ||
+        owner.user?.id_proof_number ||
+        "",
+      idProofImageUrl:
+        owner.idProofImageUrl ||
+        owner.id_proof_image_url ||
+        owner.id_proof_image ||
+        owner.user?.idProofImageUrl ||
+        owner.user?.id_proof_image_url ||
+        owner.user?.id_proof_image ||
+        "",
+    });
+
+    // If property has an owner object (existing owner), mark as exists
+    setOwnerExists(!!owner._id || !!owner.email);
+
+    // Also set the ID preview immediately from property (avoid waiting for ownerData state)
+    setIdProofPreview(
+      owner.idProofImageUrl ||
+        owner.id_proof_image_url ||
+        owner.id_proof_image ||
+        owner.user?.idProofImageUrl ||
+        owner.user?.id_proof_image_url ||
+        ""
+    );
+
+    // Property
+    setPropertyData({
+      title: property.title || "",
+      description: property.description || "",
+      location: {
+        address: property.location?.address || "",
+        city: property.location?.city || "",
+        state: property.location?.state || "",
+        country: property.location?.country || "",
+        pincode: property.location?.pincode || "",
+      },
+      rent: property.rent || "",
+      deposit: property.deposit || "",
+      propertyType: property.propertyType || "apartment",
+      bedrooms: property.bedrooms || "",
+      bathrooms: property.bathrooms || "",
+      area: property.area || "",
+      amenities: property.amenities || [],
+      images: property.images || [],
+    });
+
+    const existingImgs = (property.images || []).map((url, idx) => ({
+      id: `existing-${idx}`,
+      file: null,
+      type: "image",
+      url,
+      name: url.split("/").pop(),
+      existing: true,
+    }));
+
+    setMediaPreviews((prev) => {
+      const freshUploads = prev.filter((p) => !p.existing);
+      return [...existingImgs, ...freshUploads];
+    });
+
+    setMediaFiles([]);
+  }, [isEdit, property]);
+
   const handleEmailBlur = async () => {
-    if (!ownerData.email || !ownerData.email.includes('@')) return;
+    if (isEdit) return;
+    if (!ownerData.email || !ownerData.email.includes("@")) return;
 
     setCheckingOwner(true);
-    setError('');
+    setError("");
     try {
-      const response = await fetch(buildApiUrl(`/admin/check-owner?email=${ownerData.email}`), {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await fetch(
+        buildApiUrl(`/admin/check-owner?email=${ownerData.email}`),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
 
       if (response.ok) {
         const data = await response.json();
+
         if (data.success && data.data.exists) {
           setOwnerExists(true);
-          setOwnerInfo(data.data.owner);
-          // Populate owner data from existing owner
-          setOwnerData(prev => ({
+
+          setOwnerData((prev) => ({
             ...prev,
-            name: data.data.owner.name || '',
-            phone: data.data.owner.phone || ''
+            name: data.data.owner?.name || "",
+            phone: data.data.owner?.phone || "",
+            idProofType: data.data.owner?.idProofType || "",
+            idProofNumber: data.data.owner?.idProofNumber || "",
+            idProofImageUrl: data.data.owner?.idProofImageUrl || "",
           }));
-          setError('✓ Owner found. Property will be linked to existing owner.');
+
+          setError("✓ Owner found. Property will be linked to existing owner.");
         } else {
           setOwnerExists(false);
-          setOwnerInfo(null);
-          // Clear owner fields for new owner
-          setOwnerData(prev => ({
+
+          setOwnerData((prev) => ({
             ...prev,
-            name: '',
-            phone: '',
-            idProofType: 'Aadhar',
-            idProofNumber: '',
-            idProofImageUrl: ''
+            name: "",
+            phone: "",
+            idProofType: "",
+            idProofNumber: "",
+            idProofImageUrl: "",
           }));
-          setError('');
+
+          setError("");
         }
       }
     } catch (err) {
-      console.error('Error checking owner:', err);
-      setError('Failed to check owner. Please try again.');
+      console.error("Error checking owner:", err);
+      setError("Failed to check owner. Please try again.");
     } finally {
       setCheckingOwner(false);
     }
@@ -109,31 +230,31 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
 
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
-    setOwnerData(prev => ({ ...prev, [name]: value }));
-    if (error) setError('');
+    setOwnerData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   };
 
   const handlePropertyChange = (e) => {
     const { name, value } = e.target;
-    setPropertyData(prev => ({ ...prev, [name]: value }));
-    if (error) setError('');
+    setPropertyData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   };
 
   const handleLocationChange = (e) => {
     const { name, value } = e.target;
-    setPropertyData(prev => ({
+    setPropertyData((prev) => ({
       ...prev,
-      location: { ...prev.location, [name]: value }
+      location: { ...prev.location, [name]: value },
     }));
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleAmenityToggle = (amenity) => {
-    setPropertyData(prev => ({
+    setPropertyData((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity],
     }));
   };
 
@@ -142,7 +263,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
     if (!file) return;
 
     if (!allowedTypes.images.includes(file.type)) {
-      setError('ID Proof must be an image file');
+      setError("ID Proof must be an image file");
       return;
     }
 
@@ -158,7 +279,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    files.forEach(file => {
+    files.forEach((file) => {
       const isImage = allowedTypes.images.includes(file.type);
       const isVideo = allowedTypes.videos.includes(file.type);
 
@@ -173,23 +294,23 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
           maxWidth: 1920,
           maxHeight: 1080,
           success(compressedFile) {
-            addValidFile(compressedFile, 'image');
+            addValidFile(compressedFile, "image");
           },
           error(err) {
-            console.error('Compression failed:', err);
+            console.error("Compression failed:", err);
             setError(`${file.name}: Compression failed`);
-          }
+          },
         });
       } else if (isVideo) {
-        addValidFile(file, 'video');
+        addValidFile(file, "video");
       }
     });
 
-    e.target.value = '';
+    e.target.value = "";
   };
 
-  function addValidFile(file, type) {
-    setMediaFiles(prev => [...prev, file]);
+  const addValidFile = (file, type) => {
+    setMediaFiles((prev) => [...prev, file]);
     const reader = new FileReader();
     reader.onload = (event) => {
       const preview = {
@@ -197,19 +318,26 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
         file,
         type,
         url: event.target.result,
-        name: file.name
+        name: file.name,
       };
-      setMediaPreviews(prev => [...prev, preview]);
+      setMediaPreviews((prev) => [...prev, preview]);
     };
     reader.readAsDataURL(file);
-  }
+  };
 
   const removeMedia = (id) => {
-    setMediaPreviews(prev => prev.filter(preview => preview.id !== id));
-    setMediaFiles(prev => {
-      const preview = mediaPreviews.find(p => p.id === id);
-      return prev.filter(file => file !== preview?.file);
-    });
+    const preview = mediaPreviews.find((p) => p.id === id);
+    if (!preview) return;
+    if (preview.existing) {
+      setPropertyData((prev) => ({
+        ...prev,
+        images: (prev.images || []).filter((url) => url !== preview.url),
+      }));
+    } else {
+      setMediaFiles((prevFiles) => prevFiles.filter((f) => f !== preview.file));
+    }
+
+    setMediaPreviews((prev) => prev.filter((p) => p.id !== id));
   };
 
   const uploadAllMedia = async () => {
@@ -221,7 +349,10 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
     try {
       for (let i = 0; i < mediaFiles.length; i++) {
         const file = mediaFiles[i];
-        const fileName = generateFileName(file.name, propertyData.title || 'property');
+        const fileName = generateFileName(
+          file.name,
+          propertyData.title || "property"
+        );
         const uploadResult = await uploadFile(file, fileName);
 
         if (uploadResult.success) {
@@ -232,59 +363,45 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
       }
       return uploadedUrls;
     } catch (error) {
-      throw error;
+      console.error("Upload failed:", error);
+      setError("Failed to upload property media");
+      return [];
     } finally {
       setUploadingMedia(false);
     }
   };
 
-   const validateForm = () => {
-  // //   // Validate owner fields
-  // //   if (!ownerData.email || !ownerData.email.includes('@')) {
-  // //     setError('Valid owner email is required');
-  // //     return false;
-  // //   }
-    
-  //   // Only validate owner details if owner doesn't exist
-  //   if (!ownerExists) {
-  //     if (!ownerData.name.trim()) {
-  //       setError('Owner name is required');
-  //       return false;
-  //     }
-  //     // if (!ownerData.phone.trim()) {
-  //     //   setError('Owner phone is required');
-  //     //   return false;
-  //     // }
-  //     if (!ownerData.idProofType) {
-  //       setError('ID Proof type is required');
-  //       return false;
-  //     }
-  //     if (!ownerData.idProofNumber.trim()) {
-  //       setError('ID Proof number is required');
-  //       return false;
-  //     }
-  //     if (!idProofFile) {
-  //       setError('ID Proof image is required for new owners');
-  //       return false;
-  //     }
-  //   }
-
-    // Validate property fields
+  const validateForm = () => {
     if (!propertyData.title.trim()) {
-      setError('Property title is required');
+      setError("Property title is required");
       return false;
     }
-    if (!propertyData.location.address.trim() || !propertyData.location.city.trim() ||
-        !propertyData.location.state.trim() || !propertyData.location.country.trim()) {
-      setError('Complete location information is required');
+    if (
+      !propertyData.location.address.trim() ||
+      !propertyData.location.city.trim() ||
+      !propertyData.location.state.trim() ||
+      !propertyData.location.country.trim()
+    ) {
+      setError("Complete location information is required");
       return false;
     }
     if (!propertyData.rent || propertyData.rent <= 0) {
-      setError('Valid rent amount is required');
+      setError("Valid rent amount is required");
       return false;
     }
-    if (mediaFiles.length === 0) {
-      setError('At least one property image is required');
+
+    // Images validation
+    if (!isEdit && mediaFiles.length === 0) {
+      setError("At least one property image is required");
+      return false;
+    }
+
+    if (
+      isEdit &&
+      mediaFiles.length === 0 &&
+      (!propertyData.images || propertyData.images.length === 0)
+    ) {
+      setError("At least one property image is required");
       return false;
     }
 
@@ -297,61 +414,99 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
     if (!validateForm()) return;
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      // Upload ID proof if new owner
+      // Upload ID proof if new file selected
       let idProofUrl = ownerData.idProofImageUrl;
-      if (!ownerExists && idProofFile) {
-        const idProofFileName = generateFileName(idProofFile.name, `idproof_${ownerData.email}`);
+      if (idProofFile) {
+        const idProofFileName = generateFileName(
+          idProofFile.name,
+          `idproof_${ownerData.email || "owner"}`
+        );
         const idProofResult = await uploadFile(idProofFile, idProofFileName);
         if (!idProofResult.success) {
-          throw new Error('Failed to upload ID proof');
+          throw new Error("Failed to upload ID proof");
         }
         idProofUrl = idProofResult.url;
       }
 
-      // Upload property media
+      // Upload new media
       const mediaUrls = await uploadAllMedia();
 
-      // Submit to backend
-      const response = await fetch(buildApiUrl('/admin/properties'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          owner: {
-            email: ownerData.email,
-            name: ownerData.name,
-            phone: ownerData.phone,
-            idProofType: ownerData.idProofType,
-            idProofNumber: ownerData.idProofNumber,
-            idProofImageUrl: idProofUrl
-          },
-          property: {
-            title: propertyData.title,
-            description: propertyData.description,
-            location: propertyData.location,
-            rent: parseInt(propertyData.rent),
-            deposit: parseInt(propertyData.deposit) || 0,
-            propertyType: propertyData.propertyType,
-            bedrooms: parseInt(propertyData.bedrooms) || 0,
-            bathrooms: parseInt(propertyData.bathrooms) || 0,
-            area: parseInt(propertyData.area) || 0,
-            amenities: propertyData.amenities,
-            images: mediaUrls
+      const finalImages = isEdit
+        ? [...(propertyData.images || []), ...mediaUrls]
+        : mediaUrls;
+
+      const payload = isEdit
+        ? {
+            property: {
+              title: propertyData.title,
+              description: propertyData.description,
+              location: propertyData.location,
+              rent: parseInt(propertyData.rent),
+              deposit: parseInt(propertyData.deposit) || 0,
+              propertyType: propertyData.propertyType,
+              bedrooms: parseInt(propertyData.bedrooms) || 0,
+              bathrooms: parseInt(propertyData.bathrooms) || 0,
+              area: parseInt(propertyData.area) || 0,
+              amenities: propertyData.amenities,
+              images: finalImages,
+            },
+            owner: {
+              email: ownerData.email,
+              name: ownerData.name,
+              phone: ownerData.phone,
+              idProofType: ownerData.idProofType,
+              idProofNumber: ownerData.idProofNumber,
+              idProofImageUrl: idProofUrl,
+            },
           }
-        })
+        : {
+            owner: {
+              email: ownerData.email,
+              name: ownerData.name,
+              phone: ownerData.phone,
+              idProofType: ownerData.idProofType,
+              idProofNumber: ownerData.idProofNumber,
+              idProofImageUrl: idProofUrl,
+            },
+            property: {
+              title: propertyData.title,
+              description: propertyData.description,
+              location: propertyData.location,
+              rent: parseInt(propertyData.rent),
+              deposit: parseInt(propertyData.deposit) || 0,
+              propertyType: propertyData.propertyType,
+              bedrooms: parseInt(propertyData.bedrooms) || 0,
+              bathrooms: parseInt(propertyData.bathrooms) || 0,
+              area: parseInt(propertyData.area) || 0,
+              amenities: propertyData.amenities,
+              images: finalImages,
+            },
+          };
+
+      const url = isEdit
+        ? buildApiUrl(`/admin/properties/${property.id}`)
+        : buildApiUrl("/admin/properties");
+
+      const method = isEdit ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
 
       let data;
       try {
         data = await response.json();
         validateApiResponse(data);
-      } catch (parseError) {
-        throw new Error('Invalid response from server');
+      } catch {
+        throw new Error("Invalid response from server");
       }
 
       if (!response.ok) {
@@ -365,8 +520,8 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
         throw new Error(getErrorMessage(data));
       }
     } catch (err) {
-      console.error('Add property error:', err);
-      setError(err.message || 'Failed to add property. Please try again.');
+      console.error("Add/Edit property error:", err);
+      setError(err.message || "Failed to save property. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -376,16 +531,24 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
     <div className="auth-overlay">
       <div className="auth-modal property-modal">
         <div className="auth-header">
-          <h2>Add Property with Owner</h2>
-          <p>Create a new property and owner profile</p>
-          <button className="auth-close" onClick={onClose}>×</button>
+          <h2>
+            {isEdit ? "Edit Property Details" : "Add Property with Owner"}
+          </h2>
+
+          {!isEdit && <p>Create a new property and owner profile</p>}
+
+          <button className="auth-close" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <form className="auth-form property-form" onSubmit={handleSubmit}>
           {error && (
-            <div className={error.startsWith('✓') ? "auth-success" : "auth-error"}>
-              <span>{error.startsWith('✓') ? '✓' : '⚠️'}</span>
-              <div style={{ whiteSpace: 'pre-line' }}>{error}</div>
+            <div
+              className={error.startsWith("✓") ? "auth-success" : "auth-error"}
+            >
+              <span>{error.startsWith("✓") ? "✓" : "⚠️"}</span>
+              <div style={{ whiteSpace: "pre-line" }}>{error}</div>
             </div>
           )}
 
@@ -395,14 +558,14 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
             <p className="section-subtitle">Enter owner information</p>
 
             <div className="form-group">
-              <label htmlFor="email">Owner Email *</label>
+              <label htmlFor="email">Owner Email </label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={ownerData.email}
                 onChange={handleOwnerChange}
-                onBlur={handleEmailBlur}
+                onBlur={!isEdit ? handleEmailBlur : undefined}
                 placeholder="owner@example.com"
                 disabled={checkingOwner}
               />
@@ -411,7 +574,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="name">Owner Name *</label>
+                <label htmlFor="name">Owner Name </label>
                 <input
                   type="text"
                   id="name"
@@ -419,13 +582,12 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   value={ownerData.name}
                   onChange={handleOwnerChange}
                   placeholder="John Doe"
-                  required
-                  disabled={ownerExists}
+                  disabled={ownerExists && !isEdit}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="phone">Owner Phone *</label>
+                <label htmlFor="phone">Owner Phone </label>
                 <input
                   type="tel"
                   id="phone"
@@ -433,32 +595,35 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   value={ownerData.phone}
                   onChange={handleOwnerChange}
                   placeholder="+1234567890"
-                  disabled={ownerExists}
+                  disabled={ownerExists && !isEdit}
                 />
               </div>
             </div>
 
-            {!ownerExists && (
+            {(isEdit || !ownerExists) && (
               <>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="idProofType">ID Proof Type *</label>
+                    <label htmlFor="idProofType">ID Proof Type </label>
                     <select
                       id="idProofType"
                       name="idProofType"
                       value={ownerData.idProofType}
                       onChange={handleOwnerChange}
                       className="form-select"
-                      required
+                      disabled={ownerExists && !isEdit ? true : false}
                     >
-                      {idProofTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                      <option value="">Select ID Proof</option>
+                      {idProofTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="idProofNumber">ID Proof Number *</label>
+                    <label htmlFor="idProofNumber">ID Proof Number </label>
                     <input
                       type="text"
                       id="idProofNumber"
@@ -466,20 +631,21 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                       value={ownerData.idProofNumber}
                       onChange={handleOwnerChange}
                       placeholder="1234-5678-9012"
-                      required
+                      disabled={ownerExists && !isEdit ? true : false}
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="idProof">ID Proof Image *</label>
+                  <label htmlFor="idProof">ID Proof Image </label>
                   <div className="file-upload-area">
                     <input
                       type="file"
                       id="idProof"
-                      accept={allowedTypes.images.join(',')}
+                      accept={allowedTypes.images.join(",")}
                       onChange={handleIdProofChange}
                       className="file-input"
+                      disabled={ownerExists && !isEdit ? true : false}
                     />
                     <label htmlFor="idProof" className="file-upload-label">
                       <div className="upload-icon">📄</div>
@@ -488,9 +654,20 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                       </div>
                     </label>
                   </div>
-                  {idProofPreview && (
+
+                  {/* preview uses idProofPreview (set in useEffect or FileReader) */}
+                  {(idProofPreview || ownerData.idProofImageUrl) && (
                     <div className="media-previews-container">
-                      <img src={idProofPreview} alt="ID Proof" style={{ maxWidth: '200px', marginTop: '10px' }} />
+                      <img
+                        src={idProofPreview || ownerData.idProofImageUrl}
+                        alt="ID Proof"
+                        style={{ maxWidth: "200px", marginTop: "10px" }}
+                        onClick={() => {
+                          const url =
+                            idProofPreview || ownerData.idProofImageUrl;
+                          if (url) window.open(url, "_blank");
+                        }}
+                      />
                     </div>
                   )}
                 </div>
@@ -498,7 +675,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
             )}
           </div>
 
-          {/* Property Details Section */}
+          {/* Property Information */}
           <div className="form-section">
             <h3 className="section-title">Property Information</h3>
 
@@ -698,7 +875,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
           <div className="form-section">
             <h3 className="section-title">Amenities</h3>
             <div className="amenities-grid">
-              {amenitiesList.map(amenity => (
+              {amenitiesList.map((amenity) => (
                 <label key={amenity} className="amenity-checkbox">
                   <input
                     type="checkbox"
@@ -720,7 +897,9 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                 <input
                   type="file"
                   id="media"
-                  accept={[...allowedTypes.images, ...allowedTypes.videos].join(',')}
+                  accept={[...allowedTypes.images, ...allowedTypes.videos].join(
+                    ","
+                  )}
                   multiple
                   onChange={handleMediaChange}
                   className="file-input"
@@ -737,12 +916,20 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                 <div className="media-previews-container">
                   <h4>Selected Media ({mediaPreviews.length})</h4>
                   <div className="media-previews-grid">
-                    {mediaPreviews.map(preview => (
+                    {mediaPreviews.map((preview) => (
                       <div key={preview.id} className="media-preview-item">
-                        {preview.type === 'image' ? (
-                          <img src={preview.url} alt={preview.name} className="media-preview-image" />
+                        {preview.type === "image" ? (
+                          <img
+                            src={preview.url}
+                            alt={preview.name}
+                            className="media-preview-image"
+                          />
                         ) : (
-                          <video src={preview.url} className="media-preview-video" controls />
+                          <video
+                            src={preview.url}
+                            className="media-preview-video"
+                            controls
+                          />
                         )}
                         <div className="media-preview-overlay">
                           <span className="media-name">{preview.name}</span>
@@ -775,15 +962,18 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
             ) : loading ? (
               <>
                 <span className="loading-spinner"></span>
-                Creating Property...
+                {isEdit ? "Updating Property..." : "Creating Property..."}
               </>
+            ) : isEdit ? (
+              "Update Property"
             ) : (
-              'Create Property'
+              "Create Property"
             )}
           </button>
         </form>
       </div>
     </div>
   );
-}
+};
+
 export default AddPropertyModal;
