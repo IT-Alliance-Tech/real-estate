@@ -7,6 +7,157 @@ const { PROPERTY_STATUS, BOOKING_STATUS } = require("../utils/constants");
 const UserSubscription = require("../models/UserSubscription");
 const PropertyView = require("../models/PropertyView");
 
+// ------------------------
+// COMMON HELPERS
+// ------------------------
+
+const isNonEmptyString = (value) =>
+  typeof value === "string" && value.trim().length > 0;
+
+const isFilled = (value) =>
+  typeof value === "string" &&
+  value.trim() !== "" &&
+  value.trim().toLowerCase() !== "pending";
+
+const getUserFullName = (user) => {
+  if (!user) return null;
+  if (user.name) return user.name;
+  if (user.firstName || user.lastName) {
+    return `${user.firstName || ""} ${user.lastName || ""}`.trim();
+  }
+  return null;
+};
+
+const formatBasicOwner = (owner) => {
+  if (!owner) return null;
+  const user = owner.user || {};
+  const name = owner.name || getUserFullName(user) || null;
+  const email = owner.email || user.email || null;
+  const phone = owner.phone || user.phone || owner.mobile || null;
+  const verified =
+    typeof owner.verified === "boolean" ? owner.verified : !!user.verified;
+  return {
+    id: owner._id,
+    name,
+    email,
+    phone,
+    verified,
+  };
+};
+
+const formatOwnerWithIdProof = (owner) => {
+  if (!owner) return null;
+  const user = owner.user || {};
+  const name = owner.name || getUserFullName(user) || null;
+  const email = owner.email || user.email || null;
+  const phone = owner.phone || user.phone || owner.mobile || null;
+
+  // Try owner fields first, else check possible snake_case fields
+  const idProofType =
+    owner.idProofType || owner.id_proof_type || owner.id_proof || null;
+  const idProofNumber =
+    owner.idProofNumber || owner.id_proof_number || owner.id_proof_no || null;
+  const idProofImageUrl =
+    owner.idProofImageUrl ||
+    owner.id_proof_image_url ||
+    owner.id_proof_image ||
+    null;
+
+  return {
+    id: owner._id,
+    name,
+    email,
+    phone,
+    idProofType,
+    idProofNumber,
+    idProofImageUrl,
+  };
+};
+
+const formatAdminProperty = (property) => {
+  if (!property) return null;
+
+  return {
+    id: property._id,
+    title: property.title,
+    description: property.description,
+    location: property.location,
+    rent: property.rent,
+    deposit: property.deposit,
+    listingType: property.listingType,
+    category: property.category,
+    propertyType: property.propertyType,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    area: property.area,
+    amenities: property.amenities,
+    images: property.images,
+    status: property.status,
+    createdAt: property.createdAt,
+    owner: formatOwnerWithIdProof(property.owner),
+  };
+};
+
+const buildPropertyFiltersForAdmin = (query) => {
+  const {
+    title,
+    propertyId,
+    status,
+    propertyType,
+    minRent,
+    maxRent,
+    bedrooms,
+    bathrooms,
+  } = query;
+
+  const filters = {};
+
+  if (propertyId && mongoose.Types.ObjectId.isValid(propertyId)) {
+    filters._id = propertyId;
+  }
+
+  if (status) {
+    filters.status = status;
+  }
+
+  if (propertyType) {
+    filters.propertyType = new RegExp(propertyType, "i");
+  }
+
+  if (title) {
+    filters.title = new RegExp(title, "i");
+  }
+
+  if (minRent || maxRent) {
+    filters.rent = {};
+    if (minRent) filters.rent.$gte = parseInt(minRent, 10);
+    if (maxRent) filters.rent.$lte = parseInt(maxRent, 10);
+  }
+
+  if (bedrooms) {
+    filters.bedrooms = parseInt(bedrooms, 10);
+  }
+
+  if (bathrooms) {
+    filters.bathrooms = parseInt(bathrooms, 10);
+  }
+
+  return filters;
+};
+
+const getPaginationMeta = (pageNum, limitNum, totalCount) => {
+  const totalPages = Math.ceil(totalCount / limitNum);
+
+  return {
+    currentPage: pageNum,
+    totalPages,
+    totalProperties: totalCount,
+    propertiesPerPage: limitNum,
+    hasNextPage: pageNum < totalPages,
+    hasPrevPage: pageNum > 1,
+  };
+};
+
 //create a minimal/placeholder owner so property.owner is not null
 const createPlaceholderOwner = async () => {
   const owner = new Owner({
@@ -23,12 +174,15 @@ const createPlaceholderOwner = async () => {
   return owner;
 };
 
+// ------------------------
+// CONTROLLERS
+// ------------------------
+
 // Create property with owner details (Admin only)
 const createPropertyWithOwner = async (req, res) => {
   try {
     const { owner: ownerData = null, property: propertyData } = req.body;
 
-    // Property data mandatory
     if (!propertyData) {
       return res.status(400).json({
         statusCode: 400,
@@ -38,7 +192,6 @@ const createPropertyWithOwner = async (req, res) => {
       });
     }
 
-    // Mandatory property fields
     const requiredFields = ["title", "rent", "location"];
     for (const field of requiredFields) {
       if (!propertyData[field]) {
@@ -55,9 +208,86 @@ const createPropertyWithOwner = async (req, res) => {
     let user = null;
     let isNewOwner = false;
 
-    // Create property – owner is ALWAYS set (real or placeholder)
+    const hasOwnerPayload = ownerData && Object.keys(ownerData).length > 0;
+
+    const hasOwnerEmail = hasOwnerPayload && isNonEmptyString(ownerData.email);
+
+    if (hasOwnerEmail) {
+      const normalizedEmail = ownerData.email.toLowerCase();
+
+      user = await User.findOne({ email: normalizedEmail });
+
+      if (user) {
+        if (user.role !== "owner") {
+          return res.status(400).json({
+            statusCode: 400,
+            success: false,
+            error: {
+              message: "User with this email exists but is not an owner",
+            },
+            data: null,
+          });
+        }
+
+        owner = await Owner.findOne({ user: user._id });
+
+        if (!owner) {
+          owner = await Owner.create({
+            user: user._id,
+            name: ownerData.name || user.name || "",
+            email: normalizedEmail,
+            phone: ownerData.phone || user.phone || "",
+            idProofType: ownerData.idProofType || "pending",
+            idProofNumber: ownerData.idProofNumber || "pending",
+            idProofImageUrl: ownerData.idProofImageUrl || "pending",
+            verified: false,
+            properties: [],
+          });
+          isNewOwner = true;
+        } else {
+          const updatedFields = {};
+          if (ownerData.name) updatedFields.name = ownerData.name;
+          if (ownerData.phone) updatedFields.phone = ownerData.phone;
+          if (ownerData.idProofType)
+            updatedFields.idProofType = ownerData.idProofType;
+          if (ownerData.idProofNumber)
+            updatedFields.idProofNumber = ownerData.idProofNumber;
+          if (ownerData.idProofImageUrl)
+            updatedFields.idProofImageUrl = ownerData.idProofImageUrl;
+
+          if (Object.keys(updatedFields).length > 0) {
+            Object.assign(owner, updatedFields);
+            await owner.save();
+          }
+        }
+      } else {
+        user = await User.create({
+          email: normalizedEmail,
+          name: ownerData.name || "",
+          phone: ownerData.phone || "",
+          role: "owner",
+          verified: false,
+          password: Math.random().toString(36).slice(-8),
+        });
+
+        owner = await Owner.create({
+          user: user._id,
+          name: ownerData.name || "",
+          email: normalizedEmail,
+          phone: ownerData.phone || "",
+          idProofType: ownerData.idProofType || "pending",
+          idProofNumber: ownerData.idProofNumber || "pending",
+          idProofImageUrl: ownerData.idProofImageUrl || "pending",
+          verified: false,
+          properties: [],
+        });
+
+        isNewOwner = true;
+      }
+    }
+
     const property = await Property.create({
-       owner: owner ? owner._id : null,
+      owner: owner ? owner._id : null,
       title: propertyData.title,
       description: propertyData.description || "",
       location: propertyData.location,
@@ -112,7 +342,6 @@ const createPropertyWithOwner = async (req, res) => {
   }
 };
 
-// Check if owner exists by email
 const checkOwnerExists = async (req, res) => {
   try {
     const { email } = req.query;
@@ -126,7 +355,6 @@ const checkOwnerExists = async (req, res) => {
       });
     }
 
-    // Check if user with this email exists and has owner role
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
@@ -153,7 +381,6 @@ const checkOwnerExists = async (req, res) => {
       });
     }
 
-    // Check if owner profile exists
     const owner = await Owner.findOne({ user: user._id });
 
     return res.status(200).json({
@@ -257,12 +484,11 @@ const reviewProperty = async (req, res) => {
   }
 };
 
-// Publish property
+// Publish / update property status
 const updatePropertyStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    // Allow only valid statuses
     if (
       !status ||
       ![
@@ -284,7 +510,7 @@ const updatePropertyStatus = async (req, res) => {
       populate: {
         path: "user",
         model: "User",
-        select: "name firstName lastName email phone",
+        select: "name firstName lastName email phone verified",
       },
     });
 
@@ -297,7 +523,6 @@ const updatePropertyStatus = async (req, res) => {
       });
     }
 
-    // Prevent redundant updates
     if (property.status === status) {
       return res.status(200).json({
         statusCode: 200,
@@ -310,27 +535,43 @@ const updatePropertyStatus = async (req, res) => {
       });
     }
 
-    // Status transition rules
-    if (
-      status === PROPERTY_STATUS.PUBLISHED &&
-      property.status !== PROPERTY_STATUS.APPROVED
-    ) {
-      return res.status(400).json({
-        statusCode: 400,
-        success: false,
-        error: { message: "Only approved properties can be published" },
-        data: null,
-      });
-    }
+    if (status === PROPERTY_STATUS.PUBLISHED) {
+      const owner = property.owner;
+      const ownerVerified =
+        !!owner && (owner.verified === true || !!owner.user?.verified === true);
 
-    // When publishing, owner details must be complete
-    if (status === PROPERTY_STATUS.PUBLISHED && !hasOwnerDetails(property)) {
-      return res.status(400).json({
-        statusCode: 400,
-        success: false,
-        error: { message: "Owner contact information not updated" },
-        data: null,
-      });
+      // If owner is not verified, only APPROVED properties can be published
+      if (!ownerVerified && property.status !== PROPERTY_STATUS.APPROVED) {
+        return res.status(400).json({
+          statusCode: 400,
+          success: false,
+          error: { message: "Only approved properties can be published" },
+          data: null,
+        });
+      }
+
+      // If owner is verified, require only email + phone (so admin can publish quickly)
+      if (ownerVerified) {
+        const email = owner.email || owner.user?.email;
+        const phone = owner.phone || owner.user?.phone || owner.mobile;
+        if (!isFilled(email) || !isFilled(phone)) {
+          return res.status(400).json({
+            statusCode: 400,
+            success: false,
+            error: { message: "Owner email/phone must be present for publish" },
+            data: null,
+          });
+        }
+      } else {
+        if (!hasOwnerDetails(property)) {
+          return res.status(400).json({
+            statusCode: 400,
+            success: false,
+            error: { message: "Owner contact information not updated" },
+            data: null,
+          });
+        }
+      }
     }
 
     if (
@@ -345,7 +586,6 @@ const updatePropertyStatus = async (req, res) => {
       });
     }
 
-    // REJECTED is always allowed
     property.status = status;
     await property.save();
 
@@ -386,11 +626,6 @@ const hasOwnerDetails = (property) => {
   const phone = user.phone || owner.phone || owner.mobile;
 
   const { idProofType, idProofNumber, idProofImageUrl } = owner;
-
-  const isFilled = (value) =>
-    typeof value === "string" &&
-    value.trim() !== "" &&
-    value.trim().toLowerCase() !== "pending";
 
   return (
     isFilled(name) &&
@@ -471,7 +706,7 @@ const manageSiteVisit = async (req, res) => {
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
+    const users = await User.find({}).select("-password").lean();
 
     res.status(200).json({
       statusCode: 200,
@@ -526,204 +761,38 @@ const getAllPropertiesForAdmin = async (req, res) => {
       sortOrder = "desc",
     } = req.query;
 
-    // Validate pagination parameters
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Cap at 100
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
     const skip = (pageNum - 1) * limitNum;
 
-    // Validate sort parameters
     const allowedSortFields = ["createdAt", "updatedAt", "rent", "title"];
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
     const sortDirection = sortOrder === "asc" ? 1 : -1;
 
-    // Build property filters
-    let propertyFilters = {};
+    const propertyFilters = buildPropertyFiltersForAdmin({
+      title,
+      propertyId,
+      status,
+      propertyType,
+      minRent,
+      maxRent,
+      bedrooms,
+      bathrooms,
+    });
 
-    if (propertyId && mongoose.Types.ObjectId.isValid(propertyId)) {
-      propertyFilters._id = propertyId;
-    }
-    if (status && Object.values(PROPERTY_STATUS).includes(status)) {
-      propertyFilters.status = status;
-    }
-    if (propertyType) {
-      propertyFilters.propertyType = new RegExp(propertyType, "i");
-    }
-    if (title) {
-      propertyFilters.title = new RegExp(title, "i");
-    }
-    if (minRent || maxRent) {
-      propertyFilters.rent = {};
-      if (minRent && !isNaN(minRent)) {
-        propertyFilters.rent.$gte = parseInt(minRent);
-      }
-      if (maxRent && !isNaN(maxRent)) {
-        propertyFilters.rent.$lte = parseInt(maxRent);
-      }
-    }
-    if (bedrooms && !isNaN(bedrooms)) {
-      propertyFilters.bedrooms = parseInt(bedrooms);
-    }
-    if (bathrooms && !isNaN(bathrooms)) {
-      propertyFilters.bathrooms = parseInt(bathrooms);
-    }
-
-    // Build user filters for aggregation
-    let userMatchStage = {};
-    if (customerEmail) {
-      userMatchStage.email = new RegExp(customerEmail, "i");
-    }
-    if (customerPhone) {
-      userMatchStage.phone = new RegExp(customerPhone, "i");
-    }
-    if (customerName) {
-      userMatchStage.$or = [
-        { "userData.firstName": new RegExp(customerName, "i") },
-        { "userData.lastName": new RegExp(customerName, "i") },
-        { "userData.name": new RegExp(customerName, "i") },
-        {
-          $expr: {
-            $regexMatch: {
-              input: {
-                $concat: ["$userData.firstName", " ", "$userData.lastName"],
-              },
-              regex: customerName,
-              options: "i",
-            },
-          },
-        },
-      ];
-    }
-
-    const hasUserFilters = customerEmail || customerPhone || customerName;
-
-    let properties, totalCount;
-
-    if (hasUserFilters) {
-      // Aggregation pipeline when filtering by user data
-      const pipeline = [
-        { $match: propertyFilters },
-        {
-          $lookup: {
-            from: "owners",
-            localField: "owner",
-            foreignField: "_id",
-            as: "ownerData",
-          },
-        },
-        { $unwind: { path: "$ownerData", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: "users",
-            localField: "ownerData.user",
-            foreignField: "_id",
-            as: "userData",
-          },
-        },
-        { $unwind: { path: "$userData", preserveNullAndEmptyArrays: true } },
-        ...(Object.keys(userMatchStage).length > 0
-          ? [{ $match: userMatchStage }]
-          : []),
-        { $sort: { [sortField]: sortDirection } },
-        {
-          $facet: {
-            data: [{ $skip: skip }, { $limit: limitNum }],
-            totalCount: [{ $count: "count" }],
-          },
-        },
-      ];
-
-      const result = await Property.aggregate(pipeline);
-      properties = result[0].data;
-      totalCount = result[0].totalCount[0]?.count || 0;
-
-      properties = properties.map((prop) => ({
-        ...prop,
-        owner: prop.ownerData
-          ? {
-              ...prop.ownerData,
-              user: prop.userData || null,
-            }
-          : null,
-      }));
-    } else {
-      // Normal find when no user filters
-      const countPromise = Property.countDocuments(propertyFilters);
-      const propertiesPromise = Property.find(propertyFilters)
+    const [totalCount, properties] = await Promise.all([
+      Property.countDocuments(propertyFilters),
+      Property.find(propertyFilters)
         .populate({
           path: "owner",
-          populate: {
-            path: "user",
-            model: "User",
-            select: "firstName lastName name email phone verified role",
-          },
+          populate: { path: "user", model: "User", select: "name email phone" },
         })
-        .sort({ [sortField]: sortDirection })
+        .sort()
         .skip(skip)
-        .limit(limitNum);
+        .limit(limitNum)
+        .lean(),
+    ]);
 
-      [totalCount, properties] = await Promise.all([
-        countPromise,
-        propertiesPromise,
-      ]);
-    }
-
-    // Status breakdown
-    const statusBreakdownPipeline = [
-      { $match: hasUserFilters ? {} : propertyFilters },
-      ...(hasUserFilters
-        ? [
-            {
-              $lookup: {
-                from: "owners",
-                localField: "owner",
-                foreignField: "_id",
-                as: "ownerData",
-              },
-            },
-            {
-              $unwind: { path: "$ownerData", preserveNullAndEmptyArrays: true },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "ownerData.user",
-                foreignField: "_id",
-                as: "userData",
-              },
-            },
-            {
-              $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
-            },
-            ...(Object.keys(userMatchStage).length > 0
-              ? [{ $match: userMatchStage }]
-              : []),
-          ]
-        : []),
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-        },
-      },
-    ];
-
-    const statusBreakdownResult = await Property.aggregate(
-      statusBreakdownPipeline
-    );
-    const statusBreakdown = statusBreakdownResult.reduce(
-      (acc, item) => {
-        acc[item._id] = item.count;
-        return acc;
-      },
-      {
-        [PROPERTY_STATUS.PENDING]: 0,
-        [PROPERTY_STATUS.APPROVED]: 0,
-        [PROPERTY_STATUS.PUBLISHED]: 0,
-        [PROPERTY_STATUS.REJECTED]: 0,
-      }
-    );
-
-    // Format response
     const formattedProperties = properties.map((property) => ({
       id: property._id,
       title: property.title,
@@ -740,67 +809,186 @@ const getAllPropertiesForAdmin = async (req, res) => {
       status: property.status,
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
-      owner:
-        property.owner && property.owner.user
-          ? {
-              id: property.owner.user._id,
-              firstName: property.owner.user.firstName,
-              lastName: property.owner.user.lastName,
-              name: property.owner.user.name,
-              email: property.owner.user.email,
-              phone: property.owner.user.phone,
-              verified: property.owner.user.verified,
-              role: property.owner.user.role,
-            }
-          : null,
+      owner: property.owner ? formatOwnerWithIdProof(property.owner) : null,
     }));
 
-    const totalPages = Math.ceil(totalCount / limitNum);
-    const hasNextPage = pageNum < totalPages;
-    const hasPrevPage = pageNum > 1;
+    const pagination = getPaginationMeta(pageNum, limitNum, totalCount);
 
-    res.status(200).json({
+    return res.status(200).json({
       statusCode: 200,
       success: true,
       error: null,
       data: {
         message: "Properties retrieved successfully",
         properties: formattedProperties,
-        pagination: {
-          currentPage: pageNum,
-          totalPages,
-          totalProperties: totalCount,
-          propertiesPerPage: limitNum,
-          hasNextPage,
-          hasPrevPage,
-        },
-        filters: {
-          propertyId: propertyId || null,
-          customerEmail: customerEmail || null,
-          customerName: customerName || null,
-          customerPhone: customerPhone || null,
-          status: status || null,
-          propertyType: propertyType || null,
-          rentRange: { min: minRent || null, max: maxRent || null },
-          bedrooms: bedrooms || null,
-          bathrooms: bathrooms || null,
-        },
-        sorting: {
-          sortBy: sortField,
-          sortOrder: sortOrder,
-        },
-        statusBreakdown,
+        pagination,
       },
     });
   } catch (error) {
-    console.error("Get all properties for admin error:", error);
-    res.status(500).json({
+    console.error("ERROR in getAllPropertiesForAdmin:", error);
+    return res.status(500).json({
       statusCode: 500,
       success: false,
-      error: {
-        message: "Internal server error",
-        details: error.message,
+      error: { message: "Internal server error", details: error.message },
+      data: null,
+    });
+  }
+};
+
+// Get single property for admin (for edit screen)
+const getPropertyByIdForAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const property = await Property.findById(id).populate({
+      path: "owner",
+      populate: {
+        path: "user",
+        model: "User",
+        select: "name email phone",
       },
+    });
+
+    if (!property) {
+      return res.status(404).json({
+        statusCode: 404,
+        success: false,
+        error: { message: "Property not found" },
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      success: true,
+      error: null,
+      data: {
+        message: "Property retrieved successfully",
+        property: formatAdminProperty(property),
+      },
+    });
+  } catch (error) {
+    console.error("Get property by id for admin error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      success: false,
+      error: { message: "Internal server error", details: error.message },
+      data: null,
+    });
+  }
+};
+
+// Update property details for admin
+const updatePropertyForAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { property: propertyData = {}, owner: ownerData = {} } = req.body;
+
+    console.log("Admin update property payload:", { propertyData, ownerData });
+
+    let property = await Property.findById(id).populate("owner");
+
+    if (!property) {
+      return res.status(404).json({
+        statusCode: 404,
+        success: false,
+        error: { message: "Property not found" },
+        data: null,
+      });
+    }
+
+    const updatableFields = [
+      "title",
+      "description",
+      "location",
+      "rent",
+      "deposit",
+      "listingType",
+      "category",
+      "propertyType",
+      "bedrooms",
+      "bathrooms",
+      "area",
+      "amenities",
+      "images",
+    ];
+
+    updatableFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(propertyData, field)) {
+        property[field] = propertyData[field];
+      }
+    });
+
+    await property.save();
+
+    const hasOwnerPayload =
+      ownerData &&
+      Object.values(ownerData).some(
+        (v) => v !== undefined && v !== null && v !== ""
+      );
+
+    if (!property.owner && hasOwnerPayload) {
+      const newOwner = await Owner.create({
+        name: ownerData.name || "",
+        email: ownerData.email || "",
+        phone: ownerData.phone || "",
+        idProofType: ownerData.idProofType || "pending",
+        idProofNumber: ownerData.idProofNumber || "pending",
+        idProofImageUrl: ownerData.idProofImageUrl || "pending",
+        verified: false,
+        properties: [],
+      });
+
+      property.owner = newOwner._id;
+      await property.save();
+    }
+
+    if (property.owner && hasOwnerPayload) {
+      const owner = await Owner.findById(property.owner);
+
+      if (owner) {
+        const ownerUpdatableFields = [
+          "name",
+          "email",
+          "phone",
+          "idProofType",
+          "idProofNumber",
+          "idProofImageUrl",
+        ];
+
+        ownerUpdatableFields.forEach((field) => {
+          if (
+            Object.prototype.hasOwnProperty.call(ownerData, field) &&
+            ownerData[field] !== undefined &&
+            ownerData[field] !== null &&
+            ownerData[field] !== ""
+          ) {
+            owner[field] = ownerData[field];
+          }
+        });
+
+        await owner.save();
+        console.log("Owner after update:", owner.toObject());
+      }
+    }
+
+    property = await Property.findById(id).populate("owner");
+
+    return res.status(200).json({
+      statusCode: 200,
+      success: true,
+      error: null,
+      data: {
+        message: "Property updated successfully",
+        property: formatAdminProperty(property),
+      },
+    });
+  } catch (error) {
+    console.error("Update property for admin error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      success: false,
+      error: { message: "Internal server error", details: error.message },
       data: null,
     });
   }
@@ -812,7 +1000,8 @@ const getAllBookings = async (req, res) => {
     const bookings = await Booking.find({})
       .populate("user")
       .populate("property")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       statusCode: 200,
@@ -822,17 +1011,21 @@ const getAllBookings = async (req, res) => {
         message: "Bookings retrieved successfully",
         bookings: bookings.map((booking) => ({
           id: booking._id,
-          user: {
-            id: booking.user._id,
-            name: booking.user.name,
-            email: booking.user.email,
-          },
-          property: {
-            id: booking.property._id,
-            title: booking.property.title,
-            location: booking.property.location,
-            rent: booking.property.rent,
-          },
+          user: booking.user
+            ? {
+                id: booking.user._id,
+                name: booking.user.name,
+                email: booking.user.email,
+              }
+            : null,
+          property: booking.property
+            ? {
+                id: booking.property._id,
+                title: booking.property.title,
+                location: booking.property.location,
+                rent: booking.property.rent,
+              }
+            : null,
           visitDate: booking.visitDate,
           status: booking.status,
           message: booking.message,
@@ -870,16 +1063,17 @@ const getAllBookings = async (req, res) => {
 // Get users with subscription details
 const getUsersWithSubscriptions = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
+    const users = await User.find({}).select("-password").lean();
 
-    // Fetch active subscriptions for all users
-    // This could be optimized with aggregation, but loop is fine for reasonable user count
     const usersWithSubs = await Promise.all(
       users.map(async (user) => {
         const activeSub = await UserSubscription.findOne({
           user: user._id,
           status: "active",
-        }).populate("plan");
+        })
+          .populate("plan")
+          .lean();
+
         return {
           id: user._id,
           name: user.name,
@@ -922,7 +1116,8 @@ const getAllPayments = async (req, res) => {
     const payments = await Payment.find({})
       .populate("user", "name email phone")
       .populate("plan", "name price")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -967,23 +1162,23 @@ const getUserHistory = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(userId).select("-password").lean();
     if (!user) {
       return res
         .status(404)
         .json({ success: false, error: { message: "User not found" } });
     }
 
-    // 1. Subscription History
     const subscriptions = await UserSubscription.find({ user: userId })
       .populate("plan")
-      .sort({ startDate: -1 });
+      .sort({ startDate: -1 })
+      .lean();
 
-    // 2. Property View History
     const propertyViews = await PropertyView.find({ user: userId })
       .populate("property", "title location rent propertyType")
       .populate("subscription")
-      .sort({ viewedAt: -1 });
+      .sort({ viewedAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -1030,6 +1225,8 @@ module.exports = {
   manageSiteVisit,
   getAllUsers,
   getAllPropertiesForAdmin,
+  getPropertyByIdForAdmin,
+  updatePropertyForAdmin,
   getAllBookings,
   getUsersWithSubscriptions,
   getUserHistory,
