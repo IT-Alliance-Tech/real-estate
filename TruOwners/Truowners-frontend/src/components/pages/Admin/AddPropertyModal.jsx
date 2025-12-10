@@ -38,6 +38,8 @@ const AddPropertyModal = ({
       country: "",
       pincode: "",
     },
+    listingType: "rent",
+    price: "",
     rent: "",
     deposit: "",
     propertyType: "apartment",
@@ -128,11 +130,11 @@ const AddPropertyModal = ({
     // Also set the ID preview immediately from property (avoid waiting for ownerData state)
     setIdProofPreview(
       owner.idProofImageUrl ||
-        owner.id_proof_image_url ||
-        owner.id_proof_image ||
-        owner.user?.idProofImageUrl ||
-        owner.user?.id_proof_image_url ||
-        ""
+      owner.id_proof_image_url ||
+      owner.id_proof_image ||
+      owner.user?.idProofImageUrl ||
+      owner.user?.id_proof_image_url ||
+      ""
     );
 
     // Property
@@ -146,6 +148,8 @@ const AddPropertyModal = ({
         country: property.location?.country || "",
         pincode: property.location?.pincode || "",
       },
+      listingType: property.listingType || "rent",
+      price: property.price || "",
       rent: property.rent || "",
       deposit: property.deposit || "",
       propertyType: property.propertyType || "apartment",
@@ -385,9 +389,16 @@ const AddPropertyModal = ({
       setError("Complete location information is required");
       return false;
     }
-    if (!propertyData.rent || propertyData.rent <= 0) {
-      setError("Valid rent amount is required");
-      return false;
+    if (propertyData.listingType === "rent") {
+      if (!propertyData.rent || propertyData.rent <= 0) {
+        setError("Valid rent amount is required");
+        return false;
+      }
+    } else {
+      if (!propertyData.price || propertyData.price <= 0) {
+        setError("Valid amount is required");
+        return false;
+      }
     }
 
     // Images validation
@@ -440,51 +451,55 @@ const AddPropertyModal = ({
 
       const payload = isEdit
         ? {
-            property: {
-              title: propertyData.title,
-              description: propertyData.description,
-              location: propertyData.location,
-              rent: parseInt(propertyData.rent),
-              deposit: parseInt(propertyData.deposit) || 0,
-              propertyType: propertyData.propertyType,
-              bedrooms: parseInt(propertyData.bedrooms) || 0,
-              bathrooms: parseInt(propertyData.bathrooms) || 0,
-              area: parseInt(propertyData.area) || 0,
-              amenities: propertyData.amenities,
-              images: finalImages,
-            },
-            owner: {
-              email: ownerData.email,
-              name: ownerData.name,
-              phone: ownerData.phone,
-              idProofType: ownerData.idProofType,
-              idProofNumber: ownerData.idProofNumber,
-              idProofImageUrl: idProofUrl,
-            },
-          }
+          property: {
+            title: propertyData.title,
+            description: propertyData.description,
+            location: propertyData.location,
+            listingType: propertyData.listingType,
+            rent: propertyData.listingType === 'rent' ? parseInt(propertyData.rent) : undefined,
+            deposit: propertyData.listingType === 'rent' ? (parseInt(propertyData.deposit) || 0) : undefined,
+            price: propertyData.listingType !== 'rent' ? (parseInt(propertyData.price) || 0) : undefined,
+            propertyType: propertyData.propertyType,
+            bedrooms: parseInt(propertyData.bedrooms) || 0,
+            bathrooms: parseInt(propertyData.bathrooms) || 0,
+            area: parseInt(propertyData.area) || 0,
+            amenities: propertyData.amenities,
+            images: finalImages,
+          },
+          owner: {
+            email: ownerData.email,
+            name: ownerData.name,
+            phone: ownerData.phone,
+            idProofType: ownerData.idProofType,
+            idProofNumber: ownerData.idProofNumber,
+            idProofImageUrl: idProofUrl,
+          },
+        }
         : {
-            owner: {
-              email: ownerData.email,
-              name: ownerData.name,
-              phone: ownerData.phone,
-              idProofType: ownerData.idProofType,
-              idProofNumber: ownerData.idProofNumber,
-              idProofImageUrl: idProofUrl,
-            },
-            property: {
-              title: propertyData.title,
-              description: propertyData.description,
-              location: propertyData.location,
-              rent: parseInt(propertyData.rent),
-              deposit: parseInt(propertyData.deposit) || 0,
-              propertyType: propertyData.propertyType,
-              bedrooms: parseInt(propertyData.bedrooms) || 0,
-              bathrooms: parseInt(propertyData.bathrooms) || 0,
-              area: parseInt(propertyData.area) || 0,
-              amenities: propertyData.amenities,
-              images: finalImages,
-            },
-          };
+          owner: {
+            email: ownerData.email,
+            name: ownerData.name,
+            phone: ownerData.phone,
+            idProofType: ownerData.idProofType,
+            idProofNumber: ownerData.idProofNumber,
+            idProofImageUrl: idProofUrl,
+          },
+          property: {
+            title: propertyData.title,
+            description: propertyData.description,
+            location: propertyData.location,
+            listingType: propertyData.listingType,
+            rent: propertyData.listingType === 'rent' ? parseInt(propertyData.rent) : undefined,
+            deposit: propertyData.listingType === 'rent' ? (parseInt(propertyData.deposit) || 0) : undefined,
+            price: propertyData.listingType !== 'rent' ? (parseInt(propertyData.price) || 0) : undefined,
+            propertyType: propertyData.propertyType,
+            bedrooms: parseInt(propertyData.bedrooms) || 0,
+            bathrooms: parseInt(propertyData.bathrooms) || 0,
+            area: parseInt(propertyData.area) || 0,
+            amenities: propertyData.amenities,
+            images: finalImages,
+          },
+        };
 
       const url = isEdit
         ? buildApiUrl(`/admin/properties/${property.id}`)
@@ -843,31 +858,71 @@ const AddPropertyModal = ({
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="rent">Monthly Rent (₹) *</label>
-                <input
-                  type="number"
-                  id="rent"
-                  name="rent"
-                  value={propertyData.rent}
+                <label htmlFor="listingType">Property For *</label>
+                <select
+                  id="listingType"
+                  name="listingType"
+                  value={propertyData.listingType}
                   onChange={handlePropertyChange}
-                  placeholder="25000"
-                  min="1"
-                  required
-                />
+                  className="form-select"
+                >
+                  <option value="rent">Rent</option>
+                  <option value="sell">Sell</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="lease">Lease</option>
+                </select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="deposit">Security Deposit (₹)</label>
-                <input
-                  type="number"
-                  id="deposit"
-                  name="deposit"
-                  value={propertyData.deposit}
-                  onChange={handlePropertyChange}
-                  placeholder="50000"
-                  min="0"
-                />
-              </div>
+              {propertyData.listingType === "rent" ? (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="rent">Monthly Rent (₹) *</label>
+                    <input
+                      type="number"
+                      id="rent"
+                      name="rent"
+                      value={propertyData.rent}
+                      onChange={handlePropertyChange}
+                      placeholder="25000"
+                      min="1"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="deposit">Security Deposit (₹)</label>
+                    <input
+                      type="number"
+                      id="deposit"
+                      name="deposit"
+                      value={propertyData.deposit}
+                      onChange={handlePropertyChange}
+                      placeholder="50000"
+                      min="0"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="form-group">
+                  <label htmlFor="price">
+                    {propertyData.listingType === "sell"
+                      ? "Sale Price"
+                      : propertyData.listingType === "lease"
+                        ? "Lease Amount"
+                        : "Commercial Price"}{" "}
+                    (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    value={propertyData.price}
+                    onChange={handlePropertyChange}
+                    placeholder="5000000"
+                    min="1"
+                    required
+                  />
+                </div>
+              )}
             </div>
           </div>
 

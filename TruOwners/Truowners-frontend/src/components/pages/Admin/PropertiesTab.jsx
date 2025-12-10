@@ -549,9 +549,8 @@ const PropertiesTab = () => {
             onSuccess={(data) => {
               setSnackbar({
                 open: true,
-                message: `Property ${
-                  editMode ? "updated" : "created"
-                } successfully${data.isNewOwner ? " with new owner" : ""}`,
+                message: `Property ${editMode ? "updated" : "created"
+                  } successfully${data.isNewOwner ? " with new owner" : ""}`,
                 severity: "success",
               });
               fetchProperties();
@@ -923,7 +922,7 @@ const PropertiesTab = () => {
                 <TableCell>Contact</TableCell>
                 <TableCell>Location</TableCell>
                 <TableCell>Details</TableCell>
-                <TableCell>Rent</TableCell>
+                <TableCell>Amount</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Created</TableCell>
                 <TableCell>Actions</TableCell>
@@ -1040,11 +1039,15 @@ const PropertiesTab = () => {
                       fontWeight={600}
                       color="primary"
                     >
-                      {formatCurrency(property.rent)}
+                      {property.listingType === 'rent'
+                        ? formatCurrency(property.rent)
+                        : formatCurrency(property.price)}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      /month
-                    </Typography>
+                    {property.listingType === 'rent' && (
+                      <Typography variant="caption" color="text.secondary">
+                        /month
+                      </Typography>
+                    )}
                   </TableCell>
 
                   <TableCell>
@@ -1339,16 +1342,22 @@ const PropertiesTab = () => {
 
                 <Box display="flex" alignItems="baseline" gap={2} mb={3}>
                   <Typography variant="h3" color="primary" fontWeight={700}>
-                    {formatCurrency(selectedProperty.rent)}
+                    {selectedProperty.listingType === 'rent'
+                      ? formatCurrency(selectedProperty.rent)
+                      : formatCurrency(selectedProperty.price)}
                   </Typography>
-                  <Typography variant="h6" color="text.secondary">
-                    per month
-                  </Typography>
+                  {selectedProperty.listingType === 'rent' && (
+                    <Typography variant="h6" color="text.secondary">
+                      per month
+                    </Typography>
+                  )}
                 </Box>
 
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Security Deposit: {formatCurrency(selectedProperty.deposit)}
-                </Typography>
+                {selectedProperty.listingType === 'rent' && (
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Security Deposit: {formatCurrency(selectedProperty.deposit)}
+                  </Typography>
+                )}
 
                 {/* Property Features */}
                 <Paper
@@ -1461,7 +1470,7 @@ const PropertiesTab = () => {
                             <Chip
                               label={
                                 selectedProperty.owner.verified ||
-                                selectedProperty.owner.user?.verified
+                                  selectedProperty.owner.user?.verified
                                   ? "Verified"
                                   : "Unverified"
                               }
@@ -1549,69 +1558,69 @@ const PropertiesTab = () => {
                           {/* ID Proof Image */}
                           {(selectedProperty.owner.idProofImageUrl ||
                             selectedProperty.owner.id_proof_image_url) && (
-                            <ListItem>
-                              <ListItemAvatar>
-                                <Avatar sx={{ width: 32, height: 32 }}>
-                                  <CameraAltIcon sx={{ fontSize: 16 }} />
-                                </Avatar>
-                              </ListItemAvatar>
+                              <ListItem>
+                                <ListItemAvatar>
+                                  <Avatar sx={{ width: 32, height: 32 }}>
+                                    <CameraAltIcon sx={{ fontSize: 16 }} />
+                                  </Avatar>
+                                </ListItemAvatar>
 
-                              <ListItemText
-                                primary="ID Proof Image"
-                                secondary={
-                                  <Box
-                                    mt={1}
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 1,
-                                    }}
-                                  >
+                                <ListItemText
+                                  primary="ID Proof Image"
+                                  secondary={
                                     <Box
-                                      component="img"
-                                      src={
-                                        selectedProperty.owner
-                                          .idProofImageUrl ||
-                                        selectedProperty.owner
-                                          .id_proof_image_url
-                                      }
-                                      alt="ID Proof"
+                                      mt={1}
                                       sx={{
-                                        width: 120,
-                                        height: "auto",
-                                        borderRadius: 1,
-                                        boxShadow: 1,
-                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
                                       }}
-                                      onClick={() =>
-                                        window.open(
-                                          selectedProperty.owner
-                                            .idProofImageUrl ||
-                                            selectedProperty.owner
-                                              .id_proof_image_url,
-                                          "_blank"
-                                        )
-                                      }
-                                    />
-                                    <Button
-                                      size="small"
-                                      onClick={() =>
-                                        window.open(
-                                          selectedProperty.owner
-                                            .idProofImageUrl ||
-                                            selectedProperty.owner
-                                              .id_proof_image_url,
-                                          "_blank"
-                                        )
-                                      }
                                     >
-                                      View
-                                    </Button>
-                                  </Box>
-                                }
-                              />
-                            </ListItem>
-                          )}
+                                      <Box
+                                        component="img"
+                                        src={
+                                          selectedProperty.owner
+                                            .idProofImageUrl ||
+                                          selectedProperty.owner
+                                            .id_proof_image_url
+                                        }
+                                        alt="ID Proof"
+                                        sx={{
+                                          width: 120,
+                                          height: "auto",
+                                          borderRadius: 1,
+                                          boxShadow: 1,
+                                          cursor: "pointer",
+                                        }}
+                                        onClick={() =>
+                                          window.open(
+                                            selectedProperty.owner
+                                              .idProofImageUrl ||
+                                            selectedProperty.owner
+                                              .id_proof_image_url,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                      <Button
+                                        size="small"
+                                        onClick={() =>
+                                          window.open(
+                                            selectedProperty.owner
+                                              .idProofImageUrl ||
+                                            selectedProperty.owner
+                                              .id_proof_image_url,
+                                            "_blank"
+                                          )
+                                        }
+                                      >
+                                        View
+                                      </Button>
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                            )}
                         </List>
                       </Stack>
                     ) : (
@@ -1654,7 +1663,7 @@ const PropertiesTab = () => {
                           primary="Last Updated"
                           secondary={new Date(
                             selectedProperty.updatedAt ||
-                              selectedProperty.createdAt
+                            selectedProperty.createdAt
                           ).toLocaleString()}
                         />
                       </ListItem>

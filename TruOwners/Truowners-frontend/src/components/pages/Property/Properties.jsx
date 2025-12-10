@@ -559,6 +559,7 @@ const PropertiesPage = () => {
                           onClick={() => handlePropertyClick(property)}
                           onLoginRequired={handleLoginRequired}
                           isAuthenticated={isAuthenticated}
+                          postType={property?.listingType ?? "Rent"}
                         />
                         {/* Insert banner after the 2nd card (index === 1) */}
                         {index === 1 && (

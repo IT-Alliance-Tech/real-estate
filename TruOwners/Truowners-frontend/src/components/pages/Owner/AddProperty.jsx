@@ -18,6 +18,8 @@ const AddProperty = ({ onClose, onSuccess }) => {
       pincode: '',
       googleMapsLink: ''
     },
+    listingType: 'rent',
+    price: '',
     rent: '',
     deposit: '',
     propertyType: 'apartment',
@@ -26,13 +28,13 @@ const AddProperty = ({ onClose, onSuccess }) => {
     area: '',
     amenities: []
   })
-  
+
   // Media file states
   const [mediaFiles, setMediaFiles] = useState([])
   const [mediaPreviews, setMediaPreviews] = useState([])
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({})
-  
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { token } = useAuth()
@@ -79,7 +81,7 @@ const AddProperty = ({ onClose, onSuccess }) => {
         googleMapsLink: link
       }
     }))
-    
+
     // Try to extract location info from Google Maps link
     if (link.includes('maps.google.com') || link.includes('goo.gl/maps')) {
       // Show a helper message
@@ -104,84 +106,84 @@ const AddProperty = ({ onClose, onSuccess }) => {
     }))
   }
   const handleMediaChange = (e) => {
-  const files = Array.from(e.target.files)
-  if (files.length === 0) return
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
 
-  const validFiles = []
-  const errors = []
+    const validFiles = []
+    const errors = []
 
-  files.forEach(file => {
-    const isImage = allowedTypes.images.includes(file.type)
-    const isVideo = allowedTypes.videos.includes(file.type)
+    files.forEach(file => {
+      const isImage = allowedTypes.images.includes(file.type)
+      const isVideo = allowedTypes.videos.includes(file.type)
 
-    if (!isImage && !isVideo) {
-      errors.push(`${file.name}: Invalid file type. Only images and videos are allowed.`)
-      return
-    }
-
-    // max size in bytes
-    const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024
-
-    if (isImage) {
-      // compress image before pushing
-      new Compressor(file, {
-        quality: 0.6, // adjust 0.1 - 1.0
-        maxWidth: 1920, // optional resize
-        maxHeight: 1080,
-        success(compressedFile) {
-
-          console.log(compressedFile.size,"====", isImage, "====", maxSize, "======", file.size);
-          
-          if (compressedFile.size > maxSize) {
-            errors.push(`${file.name}: Could not compress below ${maxSize / (1024*1024)}MB`)
-            return
-          }
-          addValidFile(compressedFile, 'image')
-        },
-        error(err) {
-          console.error('Compression failed:', err.message)
-          errors.push(`${file.name}: Compression failed`)
-        }
-      })
-    } else if (isVideo) {
-      // ⚠️ browser-side video compression needs ffmpeg.wasm
-      // For now just push if under limit
-      if (file.size > maxSize) {
-        errors.push(`${file.name}: Video too large (needs ffmpeg or server-side compression)`)
+      if (!isImage && !isVideo) {
+        errors.push(`${file.name}: Invalid file type. Only images and videos are allowed.`)
         return
       }
-      addValidFile(file, 'video')
-    }
-  })
 
-  if (errors.length > 0) {
-    setError(errors.join('\n'))
-  }
+      // max size in bytes
+      const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024
 
-  // helper to create preview + store file
-  function addValidFile(file, type) {
-    setMediaFiles(prev => [...prev, file])
+      if (isImage) {
+        // compress image before pushing
+        new Compressor(file, {
+          quality: 0.6, // adjust 0.1 - 1.0
+          maxWidth: 1920, // optional resize
+          maxHeight: 1080,
+          success(compressedFile) {
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const preview = {
-        id: Date.now() + Math.random(),
-        file,
-        type,
-        url: event.target.result,
-        name: file.name
+            console.log(compressedFile.size, "====", isImage, "====", maxSize, "======", file.size);
+
+            if (compressedFile.size > maxSize) {
+              errors.push(`${file.name}: Could not compress below ${maxSize / (1024 * 1024)}MB`)
+              return
+            }
+            addValidFile(compressedFile, 'image')
+          },
+          error(err) {
+            console.error('Compression failed:', err.message)
+            errors.push(`${file.name}: Compression failed`)
+          }
+        })
+      } else if (isVideo) {
+        // ⚠️ browser-side video compression needs ffmpeg.wasm
+        // For now just push if under limit
+        if (file.size > maxSize) {
+          errors.push(`${file.name}: Video too large (needs ffmpeg or server-side compression)`)
+          return
+        }
+        addValidFile(file, 'video')
       }
-      setMediaPreviews(prev => [...prev, preview])
+    })
+
+    if (errors.length > 0) {
+      setError(errors.join('\n'))
     }
-    reader.readAsDataURL(file)
+
+    // helper to create preview + store file
+    function addValidFile(file, type) {
+      setMediaFiles(prev => [...prev, file])
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const preview = {
+          id: Date.now() + Math.random(),
+          file,
+          type,
+          url: event.target.result,
+          name: file.name
+        }
+        setMediaPreviews(prev => [...prev, preview])
+      }
+      reader.readAsDataURL(file)
+    }
+
+    // reset input
+    e.target.value = ''
   }
 
-  // reset input
-  e.target.value = ''
-}
 
-
-const removeMedia = (id) => {
+  const removeMedia = (id) => {
     setMediaPreviews(prev => prev.filter(preview => preview.id !== id))
     setMediaFiles(prev => {
       const preview = mediaPreviews.find(p => p.id === id)
@@ -204,7 +206,7 @@ const removeMedia = (id) => {
       for (let i = 0; i < mediaFiles.length; i++) {
         const file = mediaFiles[i]
         const fileName = generateFileName(file.name, formData.title || 'property')
-        
+
         // Update progress
         setUploadProgress(prev => ({
           ...prev,
@@ -212,7 +214,7 @@ const removeMedia = (id) => {
         }))
 
         const uploadResult = await uploadFile(file, fileName)
-        
+
         if (uploadResult.success) {
           uploadedUrls.push(uploadResult.url)
           setUploadProgress(prev => ({
@@ -262,13 +264,21 @@ const removeMedia = (id) => {
       setError('Pincode is required')
       return false
     }
-    if (!formData.rent || formData.rent <= 0) {
-      setError('Valid rent amount is required')
-      return false
-    }
-    if (!formData.deposit || formData.deposit <= 0) {
-      setError('Valid deposit amount is required')
-      return false
+    if (formData.listingType === 'rent') {
+      if (!formData.rent || formData.rent <= 0) {
+        setError('Valid rent amount is required')
+        return false
+      }
+      if (!formData.deposit || formData.deposit <= 0) {
+        setError('Valid deposit amount is required')
+        return false
+      }
+    } else {
+      // For sell, lease, commercial
+      if (!formData.price || formData.price <= 0) {
+        setError('Valid amount is required')
+        return false
+      }
     }
     if (!formData.bedrooms || formData.bedrooms <= 0) {
       setError('Number of bedrooms is required')
@@ -291,16 +301,16 @@ const removeMedia = (id) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
-  
+
     setLoading(true)
     setError('')
-  
+
     try {
       // Upload all media files first
       const mediaUrls = await uploadAllMedia()
-      
+
       const response = await fetch(buildApiUrl(API_CONFIG.OWNER.PROPERTIES), {
         method: 'POST',
         headers: {
@@ -311,8 +321,10 @@ const removeMedia = (id) => {
           title: formData.title,
           description: formData.description,
           location: formData.location, // Send structured location object
-          rent: parseInt(formData.rent),
-          deposit: parseInt(formData.deposit),
+          listingType: formData.listingType,
+          rent: formData.listingType === 'rent' ? parseInt(formData.rent) : undefined,
+          deposit: formData.listingType === 'rent' ? parseInt(formData.deposit) : undefined,
+          price: formData.listingType !== 'rent' ? parseInt(formData.price) : undefined,
           propertyType: formData.propertyType,
           bedrooms: parseInt(formData.bedrooms),
           bathrooms: parseInt(formData.bathrooms),
@@ -321,7 +333,7 @@ const removeMedia = (id) => {
           images: mediaUrls
         }),
       })
-  
+
       let data
       try {
         data = await response.json()
@@ -329,11 +341,11 @@ const removeMedia = (id) => {
       } catch (parseError) {
         throw new Error('Invalid response from server')
       }
-  
+
       if (!response.ok) {
         throw new Error(data.error || handleApiError(null, response))
       }
-  
+
       if (data.success) {
         // **Enhanced success handling with verification message**
         const enhancedData = {
@@ -351,7 +363,7 @@ const removeMedia = (id) => {
       setLoading(false)
     }
   }
-  
+
 
   return (
     <div className="auth-overlay">
@@ -375,7 +387,7 @@ const removeMedia = (id) => {
           {/* Basic Information */}
           <div className="form-section">
             <h3 className="section-title">Basic Information</h3>
-            
+
             <div className="form-group">
               <label htmlFor="title">Property Title *</label>
               <input
@@ -407,7 +419,7 @@ const removeMedia = (id) => {
           <div className="form-section">
             <h3 className="section-title">Location Information</h3>
             <p className="section-subtitle">Provide detailed address information for your property</p>
-            
+
             <div className="form-group">
               <label htmlFor="address">Street Address *</label>
               <input
@@ -520,7 +532,7 @@ const removeMedia = (id) => {
           {/* Property Details */}
           <div className="form-section">
             <h3 className="section-title">Property Details</h3>
-            
+
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="propertyType">Property Type *</label>
@@ -584,34 +596,73 @@ const removeMedia = (id) => {
               </div>
             </div>
 
+            {/* Listing Type & Pricing */}
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="rent">Monthly Rent (₹) *</label>
-                <input
-                  type="number"
-                  id="rent"
-                  name="rent"
-                  value={formData.rent}
+                <label htmlFor="listingType">Property For *</label>
+                <select
+                  id="listingType"
+                  name="listingType"
+                  value={formData.listingType}
                   onChange={handleInputChange}
-                  placeholder="e.g., 25000"
-                  min="1"
+                  className="form-select"
                   required
-                />
+                >
+                  <option value="rent">Rent</option>
+                  <option value="sell">Sell</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="lease">Lease</option>
+                </select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="deposit">Security Deposit (₹) *</label>
-                <input
-                  type="number"
-                  id="deposit"
-                  name="deposit"
-                  value={formData.deposit}
-                  onChange={handleInputChange}
-                  placeholder="e.g., 50000"
-                  min="1"
-                  required
-                />
-              </div>
+              {formData.listingType === 'rent' ? (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="rent">Monthly Rent (₹) *</label>
+                    <input
+                      type="number"
+                      id="rent"
+                      name="rent"
+                      value={formData.rent}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 25000"
+                      min="1"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="deposit">Security Deposit (₹) *</label>
+                    <input
+                      type="number"
+                      id="deposit"
+                      name="deposit"
+                      value={formData.deposit}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 50000"
+                      min="1"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="form-group">
+                  <label htmlFor="price">
+                    {formData.listingType === 'sell' ? 'Sale Price' :
+                      formData.listingType === 'lease' ? 'Lease Amount' :
+                        'Commercial Price'} (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 5000000"
+                    min="1"
+                    required
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -619,7 +670,7 @@ const removeMedia = (id) => {
           <div className="form-section">
             <h3 className="section-title">Amenities</h3>
             <p className="section-subtitle">Select all amenities available in your property</p>
-            
+
             <div className="amenities-grid">
               {amenitiesList.map(amenity => (
                 <label key={amenity} className="amenity-checkbox">
@@ -639,10 +690,10 @@ const removeMedia = (id) => {
           <div className="form-section">
             <h3 className="section-title">Property Media</h3>
             <p className="section-subtitle">Upload high-quality images and videos to showcase your property</p>
-            
+
             <div className="form-group">
               <label htmlFor="media">Upload Images & Videos *</label>
-              
+
               {/* File Upload Area */}
               <div className="file-upload-area">
                 <input
@@ -674,19 +725,19 @@ const removeMedia = (id) => {
                     {mediaPreviews.map(preview => (
                       <div key={preview.id} className="media-preview-item">
                         {preview.type === 'image' ? (
-                          <img 
-                            src={preview.url} 
+                          <img
+                            src={preview.url}
                             alt={preview.name}
                             className="media-preview-image"
                           />
                         ) : (
-                          <video 
+                          <video
                             src={preview.url}
                             className="media-preview-video"
                             controls
                           />
                         )}
-                        
+
                         <div className="media-preview-overlay">
                           <span className="media-name">{preview.name}</span>
                           <button
@@ -702,7 +753,7 @@ const removeMedia = (id) => {
                         {/* Upload Progress */}
                         {uploadingMedia && uploadProgress[preview.name] !== undefined && (
                           <div className="upload-progress">
-                            <div 
+                            <div
                               className="upload-progress-bar"
                               style={{ width: `${uploadProgress[preview.name]}%` }}
                             />
@@ -716,8 +767,8 @@ const removeMedia = (id) => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary btn-full"
             disabled={loading || uploadingMedia || mediaFiles.length === 0}
           >

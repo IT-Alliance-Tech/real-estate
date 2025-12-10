@@ -16,11 +16,12 @@ const propertySchema = new Schema({
       lng: Number
     }
   },
-  rent: { type: Number, required: true },
+  rent: { type: Number }, // Made optional as it's not needed for sale
+  price: { type: Number }, // Unified field for Sale Price, Commercial Price, Lease Amount
   deposit: { type: Number },
   listingType: { 
     type: String, 
-    enum: ['rent', 'sell', 'lease'], 
+    enum: ['rent', 'sell', 'lease', 'commercial'], 
     default: 'rent' 
   },
   category: { 

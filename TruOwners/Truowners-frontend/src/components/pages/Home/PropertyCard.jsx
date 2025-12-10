@@ -205,8 +205,8 @@ const PropertyCard = ({
   const area = formatNumber(property?.area);
 
   return (
-    <motion.div 
-      className="property-card" 
+    <motion.div
+      className="property-card"
       onClick={handleViewDetailsClick}
       whileHover={{ y: -10 }}
       transition={{ type: "spring", stiffness: 300 }}
@@ -224,8 +224,8 @@ const PropertyCard = ({
             !isAuthenticated
               ? "Login to add to wishlist"
               : wishlisted
-              ? "Remove from wishlist"
-              : "Add to wishlist"
+                ? "Remove from wishlist"
+                : "Add to wishlist"
           }
           isWishlisted={wishlisted && isAuthenticated}
           disabled={!propertyId}
@@ -289,20 +289,18 @@ const PropertyCard = ({
         >
 
           {/* ---------- UPDATED CONDITIONAL LOGIC ---------- */}
-          {property?.rent
-            ? (
-                <span className="property-card__price">
-                  {formatCurrency(property.rent)}
-                </span>
-              )
-            : null}
+          {property?.rent || property?.price ? (
+            <span className="property-card__price">
+              {formatCurrency(property.rent || property.price)}
+            </span>
+          ) : null}
 
           {postType && postType.trim() !== ""
             ? (
-                <span className="property-card__status-all">
-                  {postType}
-                </span>
-              )
+              <span className="property-card__status-all">
+                {postType}
+              </span>
+            )
             : null}
           {/* ---------- END UPDATE ---------- */}
 
@@ -336,9 +334,8 @@ const PropertyCard = ({
 
         <div className="property-card__actions">
           <motion.button
-            className={`property-card__action-btn ${
-              isAuthenticated ? "authenticated" : "unauthenticated"
-            } rounded-2`}
+            className={`property-card__action-btn ${isAuthenticated ? "authenticated" : "unauthenticated"
+              } rounded-2`}
             onClick={handleViewDetailsClick}
             type="button"
             disabled={!propertyId}
@@ -348,8 +345,8 @@ const PropertyCard = ({
             {!propertyId
               ? "Property Unavailable"
               : isAuthenticated
-              ? "View Details"
-              : "Login to View Details"}
+                ? "View Details"
+                : "Login to View Details"}
           </motion.button>
         </div>
       </div>

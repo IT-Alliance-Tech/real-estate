@@ -85,6 +85,7 @@ const formatAdminProperty = (property) => {
     rent: property.rent,
     deposit: property.deposit,
     listingType: property.listingType,
+    price: property.price,
     category: property.category,
     propertyType: property.propertyType,
     bedrooms: property.bedrooms,
@@ -213,7 +214,7 @@ const createPropertyWithOwner = async (req, res) => {
       });
     }
 
-    const requiredFields = ["title", "rent", "location"];
+    const requiredFields = ["title", "location"];
     for (const field of requiredFields) {
       if (!propertyData[field]) {
         return res.status(400).json({
@@ -223,6 +224,24 @@ const createPropertyWithOwner = async (req, res) => {
           data: null,
         });
       }
+    }
+
+    if (propertyData.listingType === 'rent' && !propertyData.rent) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        error: { message: `Property rent is required` },
+        data: null,
+      });
+    }
+
+    if (propertyData.listingType !== 'rent' && !propertyData.price) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        error: { message: `Property price/amount is required` },
+        data: null,
+      });
     }
 
     let owner = null;
@@ -313,9 +332,10 @@ const createPropertyWithOwner = async (req, res) => {
       description: propertyData.description || "",
       location: propertyData.location,
       pincode: propertyData.pincode || "",
-      rent: propertyData.rent,
-      deposit: propertyData.deposit || 0,
+      rent: propertyData.listingType === 'rent' ? propertyData.rent : undefined,
+      deposit: propertyData.listingType === 'rent' ? (propertyData.deposit || 0) : undefined,
       listingType: propertyData.listingType || "rent",
+      price: propertyData.listingType !== 'rent' ? propertyData.price : undefined,
       category: propertyData.category || "residential",
       propertyType: propertyData.propertyType || "apartment",
       bedrooms: propertyData.bedrooms || 0,
@@ -906,6 +926,8 @@ const getAllPropertiesForAdmin = async (req, res) => {
       location: property.location,
       rent: property.rent,
       deposit: property.deposit,
+      listingType: property.listingType,
+      price: property.price,
       propertyType: property.propertyType,
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,

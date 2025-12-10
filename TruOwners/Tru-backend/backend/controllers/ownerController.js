@@ -10,6 +10,8 @@ const uploadProperty = async (req, res) => {
     location,
     rent,
     deposit,
+    listingType,
+    price,
     propertyType,
     bedrooms,
     bathrooms,
@@ -39,8 +41,10 @@ const uploadProperty = async (req, res) => {
       title,
       description,
       location,
-      rent,
-      deposit,
+      rent: listingType === 'rent' ? rent : undefined,
+      deposit: listingType === 'rent' ? deposit : undefined,
+      listingType,
+      price: listingType !== 'rent' ? price : undefined,
       propertyType,
       bedrooms,
       bathrooms,
@@ -70,6 +74,8 @@ const uploadProperty = async (req, res) => {
       location: property.location,
       rent: property.rent,
       deposit: property.deposit,
+      listingType: property.listingType,
+      price: property.price,
       propertyType: property.propertyType,
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
@@ -152,6 +158,8 @@ const getOwnerProperties = async (req, res) => {
           location: property.location,
           rent: property.rent,
           deposit: property.deposit,
+          listingType: property.listingType,
+          price: property.price,
           propertyType: property.propertyType,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
@@ -231,6 +239,8 @@ const getProperty = async (req, res) => {
           location: property.location,
           rent: property.rent,
           deposit: property.deposit,
+          listingType: property.listingType,
+          price: property.price,
           propertyType: property.propertyType,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
@@ -266,6 +276,8 @@ const updateProperty = async (req, res) => {
     location,
     rent,
     deposit,
+    listingType,
+    price,
     propertyType,
     bedrooms,
     bathrooms,
@@ -280,6 +292,8 @@ const updateProperty = async (req, res) => {
     "location",
     "rent",
     "deposit",
+    "listingType",
+    "price",
     "propertyType",
     "bedrooms",
     "bathrooms",
@@ -350,6 +364,8 @@ const updateProperty = async (req, res) => {
     if (location !== undefined) property.location = location;
     if (rent !== undefined) property.rent = rent;
     if (deposit !== undefined) property.deposit = deposit;
+    if (listingType !== undefined) property.listingType = listingType;
+    if (price !== undefined) property.price = price;
     if (propertyType !== undefined) property.propertyType = propertyType;
     if (bedrooms !== undefined) property.bedrooms = bedrooms;
     if (bathrooms !== undefined) property.bathrooms = bathrooms;
@@ -373,6 +389,8 @@ const updateProperty = async (req, res) => {
           location: property.location,
           rent: property.rent,
           deposit: property.deposit,
+          listingType: property.listingType,
+          price: property.price,
           propertyType: property.propertyType,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,

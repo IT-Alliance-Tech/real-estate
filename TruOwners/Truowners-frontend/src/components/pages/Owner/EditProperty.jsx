@@ -19,15 +19,17 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       pincode: '',
       googleMapsLink: ''
     },
+    listingType: 'rent',
     rent: '',
     deposit: '',
+    price: '',
     propertyType: 'apartment',
     bedrooms: '',
     bathrooms: '',
     area: '',
     amenities: []
   });
-  
+
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -35,7 +37,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [successProperty, setSuccessProperty] = useState(null);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { token } = useAuth();
@@ -64,8 +66,10 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
           pincode: property.location?.pincode || '',
           googleMapsLink: property.location?.googleMapsLink || ''
         },
+        listingType: property.listingType || 'rent',
         rent: property.rent || '',
         deposit: property.deposit || '',
+        price: property.price || '',
         propertyType: property.propertyType || 'apartment',
         bedrooms: property.bedrooms || '',
         bathrooms: property.bathrooms || '',
@@ -148,7 +152,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     files.forEach(file => {
       const isImage = allowedTypes.images.includes(file.type);
       const isVideo = allowedTypes.videos.includes(file.type);
-      
+
       if (!isImage && !isVideo) {
         errors.push(`${file.name}: Invalid file type. Only images and videos are allowed.`);
         return;
@@ -170,7 +174,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
 
     if (validFiles.length > 0) {
       setMediaFiles(prev => [...prev, ...validFiles]);
-      
+
       validFiles.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -193,13 +197,13 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
 
   const removeMedia = (id) => {
     const preview = mediaPreviews.find(p => p.id === id);
-    
+
     if (preview?.isExisting) {
       setExistingImages(prev => prev.filter(img => img !== preview.url));
     } else if (preview?.isNew) {
       setMediaFiles(prev => prev.filter(file => file !== preview?.file));
     }
-    
+
     setMediaPreviews(prev => prev.filter(p => p.id !== id));
   };
 
@@ -213,14 +217,14 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       for (let i = 0; i < mediaFiles.length; i++) {
         const file = mediaFiles[i];
         const fileName = generateFileName(file.name, formData.title || 'property');
-        
+
         setUploadProgress(prev => ({
           ...prev,
           [file.name]: 0
         }));
 
         const uploadResult = await uploadFile(file, fileName);
-        
+
         if (uploadResult.success) {
           uploadedUrls.push(uploadResult.url);
           setUploadProgress(prev => ({
@@ -266,13 +270,20 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       setError('Country is required');
       return false;
     }
-    if (!formData.rent || formData.rent <= 0) {
-      setError('Valid rent amount is required');
-      return false;
-    }
-    if (!formData.deposit || formData.deposit <= 0) {
-      setError('Valid deposit amount is required');
-      return false;
+    if (formData.listingType === 'rent') {
+      if (!formData.rent || formData.rent <= 0) {
+        setError('Valid rent amount is required');
+        return false;
+      }
+      if (!formData.deposit || formData.deposit <= 0) {
+        setError('Valid deposit amount is required');
+        return false;
+      }
+    } else {
+      if (!formData.price || formData.price <= 0) {
+        setError('Valid amount is required');
+        return false;
+      }
     }
     if (!formData.bedrooms || formData.bedrooms <= 0) {
       setError('Number of bedrooms is required');
@@ -293,118 +304,122 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     return true;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log('EditProperty: handleSubmit called');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('EditProperty: handleSubmit called');
 
-  if (!validateForm()) {
-    console.log('EditProperty: Validation failed');
-    return;
-  }
+    if (!validateForm()) {
+      console.log('EditProperty: Validation failed');
+      return;
+    }
 
-  setLoading(true);
-  setError('');
+    setLoading(true);
+    setError('');
 
-  try {
-    // Upload any new media files
-    console.log('EditProperty: Uploading media...');
-    const newMediaUrls = await uploadAllMedia();
-    const allMediaUrls = [...existingImages, ...newMediaUrls];
-    console.log('EditProperty: Media uploaded', allMediaUrls);
-
-    // Send PATCH request to update property
-    console.log('EditProperty: Sending PATCH request to', `${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`);
-    const response = await fetch(`${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        title: formData.title,
-        description: formData.description,
-        location: {
-          address: formData.location.address,
-          city: formData.location.city,
-          state: formData.location.state,
-          country: formData.location.country,
-          pincode: formData.location.pincode,
-          googleMapsLink: formData.location.googleMapsLink
-        },
-        rent: parseInt(formData.rent),
-        deposit: parseInt(formData.deposit),
-        propertyType: formData.propertyType,
-        bedrooms: parseInt(formData.bedrooms),
-        bathrooms: parseInt(formData.bathrooms),
-        area: parseInt(formData.area),
-        amenities: formData.amenities,
-        images: allMediaUrls
-      }),
-    });
-
-    let data;
     try {
-      data = await response.json();
-      validateApiResponse(data);
-      console.log('EditProperty: API Response', data);
-    } catch (parseError) {
-      console.error('EditProperty: JSON parse error', parseError);
-      throw new Error('Invalid response from server');
-    }
+      // Upload any new media files
+      console.log('EditProperty: Uploading media...');
+      const newMediaUrls = await uploadAllMedia();
+      const allMediaUrls = [...existingImages, ...newMediaUrls];
+      console.log('EditProperty: Media uploaded', allMediaUrls);
 
-    if (!response.ok) {
-      throw new Error(data.error || handleApiError(null, response));
-    }
-
-    if (data.success) {
-      console.log('EditProperty: Success', data.data);
-      // Update state for further edits (keeps form editable)
-      setFormData({
-        title: data.data.title || '',
-        description: data.data.description || '',
-        location: {
-          address: data.data.location?.address || '',
-          city: data.data.location?.city || '',
-          state: data.data.location?.state || '',
-          country: data.data.location?.country || '',
-          pincode: data.data.location?.pincode || '',
-          googleMapsLink: data.data.location?.googleMapsLink || ''
+      // Send PATCH request to update property
+      console.log('EditProperty: Sending PATCH request to', `${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`);
+      const response = await fetch(`${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        rent: data.data.rent || '',
-        deposit: data.data.deposit || '',
-        propertyType: data.data.propertyType || 'apartment',
-        bedrooms: data.data.bedrooms || '',
-        bathrooms: data.data.bathrooms || '',
-        area: data.data.area || '',
-        amenities: data.data.amenities || []
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          location: {
+            address: formData.location.address,
+            city: formData.location.city,
+            state: formData.location.state,
+            country: formData.location.country,
+            pincode: formData.location.pincode,
+            googleMapsLink: formData.location.googleMapsLink
+          },
+          listingType: formData.listingType,
+          rent: formData.listingType === 'rent' ? parseInt(formData.rent) : undefined,
+          deposit: formData.listingType === 'rent' ? parseInt(formData.deposit) : undefined,
+          price: formData.listingType !== 'rent' ? parseInt(formData.price) : undefined,
+          propertyType: formData.propertyType,
+          bedrooms: parseInt(formData.bedrooms),
+          bathrooms: parseInt(formData.bathrooms),
+          area: parseInt(formData.area),
+          amenities: formData.amenities,
+          images: allMediaUrls
+        }),
       });
 
-      setExistingImages(data.data.images || []);
-      const previews = (data.data.images || []).map((image, index) => ({
-        id: `existing-${index}`,
-        type: 'image',
-        url: image,
-        name: `image-${index}`,
-        isExisting: true
-      }));
-      setMediaPreviews(previews);
+      let data;
+      try {
+        data = await response.json();
+        validateApiResponse(data);
+        console.log('EditProperty: API Response', data);
+      } catch (parseError) {
+        console.error('EditProperty: JSON parse error', parseError);
+        throw new Error('Invalid response from server');
+      }
 
-      setSuccessProperty(data.data);
-      setShowSuccess(true);
+      if (!response.ok) {
+        throw new Error(data.error || handleApiError(null, response));
+      }
 
-      // Call callbacks but do NOT close form (we want user to keep editing)
-      onSuccess && onSuccess({ property: data.data });
-      onComplete && onComplete();
-    } else {
-      throw new Error(getErrorMessage(data));
+      if (data.success) {
+        console.log('EditProperty: Success', data.data);
+        // Update state for further edits (keeps form editable)
+        setFormData({
+          title: data.data.title || '',
+          description: data.data.description || '',
+          location: {
+            address: data.data.location?.address || '',
+            city: data.data.location?.city || '',
+            state: data.data.location?.state || '',
+            country: data.data.location?.country || '',
+            pincode: data.data.location?.pincode || '',
+            googleMapsLink: data.data.location?.googleMapsLink || ''
+          },
+          listingType: data.data.listingType || 'rent',
+          rent: data.data.rent || '',
+          deposit: data.data.deposit || '',
+          price: data.data.price || '',
+          propertyType: data.data.propertyType || 'apartment',
+          bedrooms: data.data.bedrooms || '',
+          bathrooms: data.data.bathrooms || '',
+          area: data.data.area || '',
+          amenities: data.data.amenities || []
+        });
+
+        setExistingImages(data.data.images || []);
+        const previews = (data.data.images || []).map((image, index) => ({
+          id: `existing-${index}`,
+          type: 'image',
+          url: image,
+          name: `image-${index}`,
+          isExisting: true
+        }));
+        setMediaPreviews(previews);
+
+        setSuccessProperty(data.data);
+        setShowSuccess(true);
+
+        // Call callbacks but do NOT close form (we want user to keep editing)
+        onSuccess && onSuccess({ property: data.data });
+        onComplete && onComplete();
+      } else {
+        throw new Error(getErrorMessage(data));
+      }
+    } catch (err) {
+      console.error('Edit property error:', err);
+      setError(err.message || 'Failed to update property. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Edit property error:', err);
-    setError(err.message || 'Failed to update property. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Auto-dismiss the success toast after a short time (non-blocking)
   useEffect(() => {
@@ -417,7 +432,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     <>
       {/* NOTE: success notification is rendered INSIDE the modal as a non-blocking toast
           so it does NOT block editing. */}
-      
+
       {/* ✅ Edit Property Modal */}
       <div className="auth-overlay">
         {/* The modal container — sits ABOVE the overlay */}
@@ -429,7 +444,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
                 onClose={() => setShowSuccess(false)}
                 property={successProperty}
                 message="Property updated successfully!"
-                // If PropertySuccessModal expects an overlay, ensure it can render without its own backdrop.
+              // If PropertySuccessModal expects an overlay, ensure it can render without its own backdrop.
               />
             </div>
           )}
@@ -652,33 +667,76 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="rent">Monthly Rent (₹) *</label>
-                  <input
-                    type="number"
-                    id="rent"
-                    name="rent"
-                    value={formData.rent}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 25000"
-                    min="1"
-                    required
-                  />
-                </div>
+              {/* Listing Type & Pricing */}
+              <div className="form-section">
+                <h3 className="section-title">Pricing & Type</h3>
 
                 <div className="form-group">
-                  <label htmlFor="deposit">Security Deposit (₹) *</label>
-                  <input
-                    type="number"
-                    id="deposit"
-                    name="deposit"
-                    value={formData.deposit}
+                  <label htmlFor="listingType">Property For *</label>
+                  <select
+                    id="listingType"
+                    name="listingType"
+                    value={formData.listingType}
                     onChange={handleInputChange}
-                    placeholder="e.g., 50000"
-                    min="1"
+                    className="form-select"
                     required
-                  />
+                  >
+                    <option value="rent">Rent</option>
+                    <option value="sell">Sell</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="lease">Lease</option>
+                  </select>
+                </div>
+
+                <div className="form-row">
+                  {formData.listingType === 'rent' ? (
+                    <>
+                      <div className="form-group">
+                        <label htmlFor="rent">Monthly Rent (₹) *</label>
+                        <input
+                          type="number"
+                          id="rent"
+                          name="rent"
+                          value={formData.rent}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 25000"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="deposit">Security Deposit (₹) *</label>
+                        <input
+                          type="number"
+                          id="deposit"
+                          name="deposit"
+                          value={formData.deposit}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 50000"
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="form-group">
+                      <label htmlFor="price">
+                        {formData.listingType === 'sell' ? 'Sale Price' :
+                          formData.listingType === 'lease' ? 'Lease Amount' :
+                            'Commercial Price'} (₹) *
+                      </label>
+                      <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 5000000"
+                        min="1"
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
