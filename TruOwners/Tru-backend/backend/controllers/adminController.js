@@ -323,7 +323,7 @@ const createPropertyWithOwner = async (req, res) => {
       area: propertyData.area || 0,
       amenities: propertyData.amenities || [],
       images: propertyData.images || [],
-      status: PROPERTY_STATUS.APPROVED,
+      status: PROPERTY_STATUS.PENDING,
     });
 
     if (owner) {
