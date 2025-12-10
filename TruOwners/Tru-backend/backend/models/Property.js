@@ -9,6 +9,7 @@ const propertySchema = new Schema({
     address: String,
     city: String,
     state: String,
+    pincode: String,
     country: String,
     coordinates: {
       lat: Number,
