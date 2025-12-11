@@ -367,7 +367,7 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
                   onClick={() => handlePropertyClick(property)}
                   onLoginRequired={handleLoginRequired}
                   isAuthenticated={isAuthenticated}
-                  postType={property?.post_type ?? "Rent"}
+                  postType={property?.listingType ?? "Rent"}
                 />
               </motion.div>
             ))}

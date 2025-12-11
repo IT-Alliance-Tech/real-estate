@@ -12,7 +12,9 @@ router.use(adminAuth);
 router.get('/check-owner', adminController.checkOwnerExists);
 router.post('/properties', adminController.createPropertyWithOwner);
 router.patch('/properties/:id/review', adminController.reviewProperty);
-router.put('/properties/:id', adminController.updatePropertyStatus);
+router.put('/properties/:id/status', adminController.updatePropertyStatus);
+router.get('/properties/:id', adminController.getPropertyByIdForAdmin);
+router.put('/properties/:id', adminController.updatePropertyForAdmin);
 
 // Booking management
 router.patch('/bookings/:id', adminController.manageSiteVisit);

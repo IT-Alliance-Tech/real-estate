@@ -472,7 +472,7 @@ const PropertyDetailsModal = ({ property, onClose, onUpdate, onSuccessAction }) 
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Property ID
                   </Typography>
-                 <Typography variant="h6" sx={{fontSize:'12px'}}>
+                  <Typography variant="h6" sx={{ fontSize: '12px' }}>
                     {(property.id)}
                   </Typography>
                 </Paper>
@@ -519,24 +519,26 @@ const PropertyDetailsModal = ({ property, onClose, onUpdate, onSuccessAction }) 
               <Grid item xs={12} md={6}>
                 <Paper sx={{ p: 2, height: '100%' }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Monthly Rent
+                    {property.listingType === 'rent' ? 'Monthly Rent' : 'Price'}
                   </Typography>
                   <Typography variant="h6" color="primary" fontWeight={600}>
-                    {formatCurrency(property.rent)}
+                    {property.listingType === 'rent' ? formatCurrency(property.rent) : formatCurrency(property.price)}
                   </Typography>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ p: 2, height: '100%' }}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Security Deposit
-                  </Typography>
-                  <Typography variant="h6">
-                    {formatCurrency(property.deposit)}
-                  </Typography>
-                </Paper>
-              </Grid>
+              {property.listingType === 'rent' && (
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2, height: '100%' }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Security Deposit
+                    </Typography>
+                    <Typography variant="h6">
+                      {formatCurrency(property.deposit)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
 
               <Grid item xs={6} md={3}>
                 <Paper sx={{ p: 2, height: '100%' }}>
@@ -611,7 +613,7 @@ const PropertyDetailsModal = ({ property, onClose, onUpdate, onSuccessAction }) 
           {/* Amenities */}
           {property.amenities && property.amenities.length > 0 && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom  sx={{color:'#2F80ED'}} >
+              <Typography variant="h6" gutterBottom sx={{ color: '#2F80ED' }} >
                 Amenities
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>

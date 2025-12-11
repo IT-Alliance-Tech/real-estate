@@ -629,7 +629,7 @@ const PropertyDetailsPage = () => {
     const num = parseInt(amount) || 0
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 0
     }).format(num)
   }
@@ -1037,12 +1037,16 @@ const PropertyDetailsPage = () => {
               <div className="pricing-card">
                 <div className="rent-info">
                   <div className="rent-amount">
-                    <span className="rent-price">{formatCurrency(property.rent)}</span>
-                    <span className="rent-period">/month</span>
+                    <span className="rent-price">{formatCurrency(property.rent || property.price)}</span>
+                    {(property.listingType === 'rent' || (!property.listingType && property.rent)) &&
+                      <span className="rent-period">/month</span>
+                    }
                   </div>
-                  <div className="deposit-amount">
-                    Security Deposit: {formatCurrency(property.deposit)}
-                  </div>
+                  {(property.listingType === 'rent' || (!property.listingType && property.rent)) && property.deposit && (
+                    <div className="deposit-amount">
+                      Security Deposit: {formatCurrency(property.deposit)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Add another wishlist button in sidebar for easier access */}
@@ -1212,6 +1216,7 @@ const PropertyDetailsPage = () => {
                         onClick={() => handlePropertyClick(item)}
                         // onLoginRequired={handleLoginRequired}
                         isAuthenticated={isAuthenticated}
+                        postType={item?.listingType ?? "Rent"}
                       /></div>
                   </div>
                 )

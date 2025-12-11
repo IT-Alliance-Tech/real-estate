@@ -668,6 +668,7 @@ const HomePage = () => {
                     onClick={() => handlePropertyClick(property)}
                     onLoginRequired={handleLoginRequired}
                     isAuthenticated={isAuthenticated}
+                    postType={property?.listingType ?? "Rent"}
                   />
                 </motion.div>
               ))}

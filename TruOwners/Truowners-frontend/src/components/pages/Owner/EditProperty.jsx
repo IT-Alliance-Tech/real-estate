@@ -6,6 +6,7 @@ import { handleApiError, getErrorMessage, validateApiResponse } from '../../../u
 import './Owner.css';
 import '../Auth/Auth.css';
 import PropertySuccessModal from './PropertySuccessModal';
+import Compressor from 'compressorjs';
 
 const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
   const [formData, setFormData] = useState({
@@ -19,15 +20,26 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       pincode: '',
       googleMapsLink: ''
     },
+    listingType: 'rent',
     rent: '',
     deposit: '',
+    price: '',
     propertyType: 'apartment',
     bedrooms: '',
     bathrooms: '',
     area: '',
-    amenities: []
+    amenities: [],
+    // Owner Details
+    ownerPhone: '',
+    idProofType: 'Aadhar',
+    idProofNumber: ''
   });
-  
+
+  const [idProofFile, setIdProofFile] = useState(null);
+  const [idProofPreview, setIdProofPreview] = useState(null);
+  const [uploadingIdProof, setUploadingIdProof] = useState(false);
+  const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"];
+
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -35,7 +47,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [successProperty, setSuccessProperty] = useState(null);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { token } = useAuth();
@@ -64,14 +76,25 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
           pincode: property.location?.pincode || '',
           googleMapsLink: property.location?.googleMapsLink || ''
         },
+        listingType: property.listingType || 'rent',
         rent: property.rent || '',
         deposit: property.deposit || '',
+        price: property.price || '',
         propertyType: property.propertyType || 'apartment',
         bedrooms: property.bedrooms || '',
         bathrooms: property.bathrooms || '',
         area: property.area || '',
-        amenities: property.amenities || []
+        area: property.area || '',
+        amenities: property.amenities || [],
+        // Owner Details Prefill
+        ownerPhone: property.ownerDetails?.phone || '',
+        idProofType: property.ownerDetails?.idProofType || 'Aadhar',
+        idProofNumber: property.ownerDetails?.idProofNumber || ''
       });
+
+      if (property.ownerDetails?.idProofImageUrl) {
+        setIdProofPreview(property.ownerDetails.idProofImageUrl);
+      }
 
       if (property.images && property.images.length > 0) {
         setExistingImages(property.images);
@@ -148,7 +171,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     files.forEach(file => {
       const isImage = allowedTypes.images.includes(file.type);
       const isVideo = allowedTypes.videos.includes(file.type);
-      
+
       if (!isImage && !isVideo) {
         errors.push(`${file.name}: Invalid file type. Only images and videos are allowed.`);
         return;
@@ -170,7 +193,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
 
     if (validFiles.length > 0) {
       setMediaFiles(prev => [...prev, ...validFiles]);
-      
+
       validFiles.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -191,15 +214,56 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     e.target.value = '';
   };
 
+  const handleIdProofChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!allowedTypes.images.includes(file.type)) {
+      setError('Invalid ID Proof file type. Only images are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ID Proof image too large. Max 5MB.');
+      return;
+    }
+
+    new Compressor(file, {
+      quality: 0.6,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      success(compressedFile) {
+        setIdProofFile(compressedFile);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setIdProofPreview(event.target.result);
+        };
+        reader.readAsDataURL(compressedFile);
+        if (error) setError('');
+      },
+      error(err) {
+        console.error('ID Proof compression failed:', err.message);
+        setError('ID Proof compression failed');
+      }
+    });
+  };
+
+  const removeIdProof = () => {
+    setIdProofFile(null);
+    setIdProofPreview(null);
+    const fileInput = document.getElementById('idProofImage');
+    if (fileInput) fileInput.value = '';
+  };
+
   const removeMedia = (id) => {
     const preview = mediaPreviews.find(p => p.id === id);
-    
+
     if (preview?.isExisting) {
       setExistingImages(prev => prev.filter(img => img !== preview.url));
     } else if (preview?.isNew) {
       setMediaFiles(prev => prev.filter(file => file !== preview?.file));
     }
-    
+
     setMediaPreviews(prev => prev.filter(p => p.id !== id));
   };
 
@@ -213,14 +277,14 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       for (let i = 0; i < mediaFiles.length; i++) {
         const file = mediaFiles[i];
         const fileName = generateFileName(file.name, formData.title || 'property');
-        
+
         setUploadProgress(prev => ({
           ...prev,
           [file.name]: 0
         }));
 
         const uploadResult = await uploadFile(file, fileName);
-        
+
         if (uploadResult.success) {
           uploadedUrls.push(uploadResult.url);
           setUploadProgress(prev => ({
@@ -266,13 +330,20 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       setError('Country is required');
       return false;
     }
-    if (!formData.rent || formData.rent <= 0) {
-      setError('Valid rent amount is required');
-      return false;
-    }
-    if (!formData.deposit || formData.deposit <= 0) {
-      setError('Valid deposit amount is required');
-      return false;
+    if (formData.listingType === 'rent') {
+      if (!formData.rent || formData.rent <= 0) {
+        setError('Valid rent amount is required');
+        return false;
+      }
+      if (!formData.deposit || formData.deposit <= 0) {
+        setError('Valid deposit amount is required');
+        return false;
+      }
+    } else {
+      if (!formData.price || formData.price <= 0) {
+        setError('Valid amount is required');
+        return false;
+      }
     }
     if (!formData.bedrooms || formData.bedrooms <= 0) {
       setError('Number of bedrooms is required');
@@ -290,121 +361,173 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       setError('At least one image is required');
       return false;
     }
+    // Owner Details Validation
+    if (!formData.ownerPhone.trim() || formData.ownerPhone.length < 10) {
+      setError('Valid Owner Phone is required');
+      return false;
+    }
+    if (!formData.idProofNumber.trim()) {
+      setError('ID Proof Number is required');
+      return false;
+    }
+    if (!idProofFile && !idProofPreview) {
+      setError('ID Proof Image is required');
+      return false;
+    }
     return true;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log('EditProperty: handleSubmit called');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('EditProperty: handleSubmit called');
 
-  if (!validateForm()) {
-    console.log('EditProperty: Validation failed');
-    return;
-  }
+    if (!validateForm()) {
+      console.log('EditProperty: Validation failed');
+      return;
+    }
 
-  setLoading(true);
-  setError('');
+    setLoading(true);
+    setError('');
 
-  try {
-    // Upload any new media files
-    console.log('EditProperty: Uploading media...');
-    const newMediaUrls = await uploadAllMedia();
-    const allMediaUrls = [...existingImages, ...newMediaUrls];
-    console.log('EditProperty: Media uploaded', allMediaUrls);
-
-    // Send PATCH request to update property
-    console.log('EditProperty: Sending PATCH request to', `${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`);
-    const response = await fetch(`${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        title: formData.title,
-        description: formData.description,
-        location: {
-          address: formData.location.address,
-          city: formData.location.city,
-          state: formData.location.state,
-          country: formData.location.country,
-          pincode: formData.location.pincode,
-          googleMapsLink: formData.location.googleMapsLink
-        },
-        rent: parseInt(formData.rent),
-        deposit: parseInt(formData.deposit),
-        propertyType: formData.propertyType,
-        bedrooms: parseInt(formData.bedrooms),
-        bathrooms: parseInt(formData.bathrooms),
-        area: parseInt(formData.area),
-        amenities: formData.amenities,
-        images: allMediaUrls
-      }),
-    });
-
-    let data;
     try {
-      data = await response.json();
-      validateApiResponse(data);
-      console.log('EditProperty: API Response', data);
-    } catch (parseError) {
-      console.error('EditProperty: JSON parse error', parseError);
-      throw new Error('Invalid response from server');
-    }
+      // Upload any new media files
+      console.log('EditProperty: Uploading media...');
+      const newMediaUrls = await uploadAllMedia();
+      const allMediaUrls = [...existingImages, ...newMediaUrls];
+      console.log('EditProperty: Media uploaded', allMediaUrls);
 
-    if (!response.ok) {
-      throw new Error(data.error || handleApiError(null, response));
-    }
+      // Upload ID Proof if changed
+      let idProofUrl = property.ownerDetails?.idProofImageUrl || '';
+      if (idProofFile) {
+        setUploadingIdProof(true);
+        const fileName = generateFileName(idProofFile.name, 'id-proof');
+        const uploadResult = await uploadFile(idProofFile, fileName);
+        setUploadingIdProof(false);
+        if (uploadResult.success) {
+          idProofUrl = uploadResult.url;
+        } else {
+          throw new Error(`Failed to upload ID Proof: ${uploadResult.error}`);
+        }
+      } else if (!idProofPreview) {
+        // If preview is cleared and no new file, it means removed
+        idProofUrl = '';
+      }
 
-    if (data.success) {
-      console.log('EditProperty: Success', data.data);
-      // Update state for further edits (keeps form editable)
-      setFormData({
-        title: data.data.title || '',
-        description: data.data.description || '',
-        location: {
-          address: data.data.location?.address || '',
-          city: data.data.location?.city || '',
-          state: data.data.location?.state || '',
-          country: data.data.location?.country || '',
-          pincode: data.data.location?.pincode || '',
-          googleMapsLink: data.data.location?.googleMapsLink || ''
+      // Send PATCH request to update property
+      console.log('EditProperty: Sending PATCH request to', `${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`);
+      const response = await fetch(`${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        rent: data.data.rent || '',
-        deposit: data.data.deposit || '',
-        propertyType: data.data.propertyType || 'apartment',
-        bedrooms: data.data.bedrooms || '',
-        bathrooms: data.data.bathrooms || '',
-        area: data.data.area || '',
-        amenities: data.data.amenities || []
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          location: {
+            address: formData.location.address,
+            city: formData.location.city,
+            state: formData.location.state,
+            country: formData.location.country,
+            pincode: formData.location.pincode,
+            googleMapsLink: formData.location.googleMapsLink
+          },
+          listingType: formData.listingType,
+          rent: formData.listingType === 'rent' ? parseInt(formData.rent) : undefined,
+          deposit: formData.listingType === 'rent' ? parseInt(formData.deposit) : undefined,
+          price: formData.listingType !== 'rent' ? parseInt(formData.price) : undefined,
+          propertyType: formData.propertyType,
+          bedrooms: parseInt(formData.bedrooms),
+          bathrooms: parseInt(formData.bathrooms),
+          area: parseInt(formData.area),
+          amenities: formData.amenities,
+          area: parseInt(formData.area),
+          amenities: formData.amenities,
+          images: allMediaUrls,
+          // Owner Per-Property Details
+          ownerDetails: {
+            phone: formData.ownerPhone,
+            idProofType: formData.idProofType,
+            idProofNumber: formData.idProofNumber,
+            idProofImageUrl: idProofUrl
+          }
+        }),
       });
 
-      setExistingImages(data.data.images || []);
-      const previews = (data.data.images || []).map((image, index) => ({
-        id: `existing-${index}`,
-        type: 'image',
-        url: image,
-        name: `image-${index}`,
-        isExisting: true
-      }));
-      setMediaPreviews(previews);
+      let data;
+      try {
+        data = await response.json();
+        validateApiResponse(data);
+        console.log('EditProperty: API Response', data);
+      } catch (parseError) {
+        console.error('EditProperty: JSON parse error', parseError);
+        throw new Error('Invalid response from server');
+      }
 
-      setSuccessProperty(data.data);
-      setShowSuccess(true);
+      if (!response.ok) {
+        throw new Error(data.error || handleApiError(null, response));
+      }
 
-      // Call callbacks but do NOT close form (we want user to keep editing)
-      onSuccess && onSuccess({ property: data.data });
-      onComplete && onComplete();
-    } else {
-      throw new Error(getErrorMessage(data));
+      if (data.success) {
+        console.log('EditProperty: Success', data.data);
+        // Update state for further edits (keeps form editable)
+        setFormData({
+          title: data.data.title || '',
+          description: data.data.description || '',
+          location: {
+            address: data.data.location?.address || '',
+            city: data.data.location?.city || '',
+            state: data.data.location?.state || '',
+            country: data.data.location?.country || '',
+            pincode: data.data.location?.pincode || '',
+            googleMapsLink: data.data.location?.googleMapsLink || ''
+          },
+          listingType: data.data.listingType || 'rent',
+          rent: data.data.rent || '',
+          deposit: data.data.deposit || '',
+          price: data.data.price || '',
+          propertyType: data.data.propertyType || 'apartment',
+          bedrooms: data.data.bedrooms || '',
+          bathrooms: data.data.bathrooms || '',
+          area: data.data.area || '',
+          amenities: data.data.amenities || [],
+          ownerPhone: data.data.ownerDetails?.phone || '',
+          idProofType: data.data.ownerDetails?.idProofType || 'Aadhar',
+          idProofNumber: data.data.ownerDetails?.idProofNumber || ''
+        });
+
+        if (data.data.ownerDetails?.idProofImageUrl) {
+          setIdProofPreview(data.data.ownerDetails.idProofImageUrl);
+        } else {
+          setIdProofPreview(null);
+        }
+
+        setExistingImages(data.data.images || []);
+        const previews = (data.data.images || []).map((image, index) => ({
+          id: `existing-${index}`,
+          type: 'image',
+          url: image,
+          name: `image-${index}`,
+          isExisting: true
+        }));
+        setMediaPreviews(previews);
+
+        setSuccessProperty(data.data);
+        setShowSuccess(true);
+
+        // Call callbacks but do NOT close form (we want user to keep editing)
+        onSuccess && onSuccess({ property: data.data });
+        onComplete && onComplete();
+      } else {
+        throw new Error(getErrorMessage(data));
+      }
+    } catch (err) {
+      console.error('Edit property error:', err);
+      setError(err.message || 'Failed to update property. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Edit property error:', err);
-    setError(err.message || 'Failed to update property. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Auto-dismiss the success toast after a short time (non-blocking)
   useEffect(() => {
@@ -417,7 +540,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     <>
       {/* NOTE: success notification is rendered INSIDE the modal as a non-blocking toast
           so it does NOT block editing. */}
-      
+
       {/* ✅ Edit Property Modal */}
       <div className="auth-overlay">
         {/* The modal container — sits ABOVE the overlay */}
@@ -429,7 +552,7 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
                 onClose={() => setShowSuccess(false)}
                 property={successProperty}
                 message="Property updated successfully!"
-                // If PropertySuccessModal expects an overlay, ensure it can render without its own backdrop.
+              // If PropertySuccessModal expects an overlay, ensure it can render without its own backdrop.
               />
             </div>
           )}
@@ -453,6 +576,72 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
             {/* --- Basic Information --- */}
             <div className="form-section">
               <h3 className="section-title">Basic Information</h3>
+
+              {/* Owner Details Section */}
+              <div className="form-section">
+                <h4 className="section-subtitle" style={{ marginTop: 0, marginBottom: '1rem', color: '#666' }}>Owner Verification Details (Private)</h4>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="ownerPhone">Owner Phone *</label>
+                    <input
+                      type="tel"
+                      id="ownerPhone"
+                      name="ownerPhone"
+                      value={formData.ownerPhone}
+                      onChange={handleInputChange}
+                      placeholder="Enter phone number"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="idProofType">ID Proof Type *</label>
+                    <select
+                      id="idProofType"
+                      name="idProofType"
+                      value={formData.idProofType}
+                      onChange={handleInputChange}
+                      className="form-select"
+                      required
+                    >
+                      {idProofTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="idProofNumber">ID Proof Number *</label>
+                    <input
+                      type="text"
+                      id="idProofNumber"
+                      name="idProofNumber"
+                      value={formData.idProofNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter ID Number"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="idProofImage">ID Proof Image *</label>
+                    {!idProofPreview && (
+                      <input
+                        type="file"
+                        id="idProofImage"
+                        accept="image/*"
+                        onChange={handleIdProofChange}
+                        required={!idProofPreview}
+                      />
+                    )}
+                    {idProofPreview && (
+                      <div className="media-preview-item" style={{ width: '100px', height: '100px', position: 'relative' }}>
+                        <img src={idProofPreview} alt="ID Proof" className="media-preview-image" />
+                        <button type="button" className="remove-media-btn" onClick={removeIdProof}>×</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="form-group">
                 <label htmlFor="title">Property Title *</label>
@@ -652,33 +841,76 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="rent">Monthly Rent (₹) *</label>
-                  <input
-                    type="number"
-                    id="rent"
-                    name="rent"
-                    value={formData.rent}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 25000"
-                    min="1"
-                    required
-                  />
-                </div>
+              {/* Listing Type & Pricing */}
+              <div className="form-section">
+                <h3 className="section-title">Pricing & Type</h3>
 
                 <div className="form-group">
-                  <label htmlFor="deposit">Security Deposit (₹) *</label>
-                  <input
-                    type="number"
-                    id="deposit"
-                    name="deposit"
-                    value={formData.deposit}
+                  <label htmlFor="listingType">Property For *</label>
+                  <select
+                    id="listingType"
+                    name="listingType"
+                    value={formData.listingType}
                     onChange={handleInputChange}
-                    placeholder="e.g., 50000"
-                    min="1"
+                    className="form-select"
                     required
-                  />
+                  >
+                    <option value="rent">Rent</option>
+                    <option value="sell">Sell</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="lease">Lease</option>
+                  </select>
+                </div>
+
+                <div className="form-row">
+                  {formData.listingType === 'rent' ? (
+                    <>
+                      <div className="form-group">
+                        <label htmlFor="rent">Monthly Rent (₹) *</label>
+                        <input
+                          type="number"
+                          id="rent"
+                          name="rent"
+                          value={formData.rent}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 25000"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="deposit">Security Deposit (₹) *</label>
+                        <input
+                          type="number"
+                          id="deposit"
+                          name="deposit"
+                          value={formData.deposit}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 50000"
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="form-group">
+                      <label htmlFor="price">
+                        {formData.listingType === 'sell' ? 'Sale Price' :
+                          formData.listingType === 'lease' ? 'Lease Amount' :
+                            'Commercial Price'} (₹) *
+                      </label>
+                      <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 5000000"
+                        min="1"
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

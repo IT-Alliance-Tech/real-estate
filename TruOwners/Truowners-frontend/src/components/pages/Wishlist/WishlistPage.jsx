@@ -160,7 +160,7 @@ const WishlistPage = () => {
               <div className="empty-icon">💔</div>
               <h2>Your wishlist is empty</h2>
               <p>Start exploring properties and add your favorites to your wishlist!</p>
-              <button 
+              <button
                 className="btn btn-primary explore-btn"
                 onClick={() => navigate('/')}
               >
@@ -176,8 +176,9 @@ const WishlistPage = () => {
                   isInWishlist={true}
                   onWishlistToggle={() => handleRemoveFromWishlist(property.id)}
                   onClick={() => handlePropertyClick(property)}
-                  onLoginRequired={() => {}} // Not needed since user is already authenticated
+                  onLoginRequired={() => { }} // Not needed since user is already authenticated
                   isAuthenticated={true}
+                  postType={property?.listingType ?? "Rent"}
                 />
               ))}
             </div>

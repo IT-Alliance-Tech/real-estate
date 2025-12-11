@@ -29,6 +29,21 @@ const viewOwnerDetails = async (req, res) => {
       });
     }
 
+    // Helper to construct owner response
+    const constructOwnerResponse = (property, ownerProfile) => {
+       const userDetails = ownerProfile && ownerProfile.user ? ownerProfile.user : {};
+       const ownerDetails = property.ownerDetails || {};
+       
+       return {
+          name: ownerDetails.name || userDetails.name || ownerProfile.name || 'N/A',
+          email: ownerDetails.email || userDetails.email || ownerProfile.email || 'N/A',
+          phone: ownerDetails.phone || userDetails.phone || ownerProfile.phone || 'N/A',
+          // Include ID Proof info if needed, though usually not shown to regular users 
+          // verified status comes from the Owner profile usually
+          verified: ownerProfile.verified
+       };
+    };
+
     // 2. Check if already viewed in THIS subscription
     const existingView = await PropertyView.findOne({
       user: userId,
@@ -44,10 +59,12 @@ const viewOwnerDetails = async (req, res) => {
       // Fetch owner user details
       const ownerProfile = await Owner.findById(property.owner).populate('user', 'name email phone');
       
+      const finalOwnerDetails = constructOwnerResponse(property, ownerProfile);
+
       return res.status(200).json({
         success: true,
         data: {
-          owner: ownerProfile.user,
+          owner: finalOwnerDetails,
           message: 'Owner details retrieved (already viewed)'
         }
       });
@@ -76,10 +93,12 @@ const viewOwnerDetails = async (req, res) => {
     const property = await Property.findById(propertyId).populate('owner');
     const ownerProfile = await Owner.findById(property.owner).populate('user', 'name email phone');
 
+    const finalOwnerDetails = constructOwnerResponse(property, ownerProfile);
+
     res.status(200).json({
       success: true,
       data: {
-        owner: ownerProfile.user,
+        owner: finalOwnerDetails,
         remainingContacts: subscription.plan.contactLimit - subscription.contactsViewed,
         message: 'Owner details retrieved successfully'
       }
