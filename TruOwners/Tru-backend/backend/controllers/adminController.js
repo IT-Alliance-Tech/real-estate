@@ -51,17 +51,26 @@ const formatOwnerWithIdProof = (property) => {
 
   if (!owner) return null;
   const user = owner.user || {};
-  
+
   // Prioritize property-specific ownerDetails
   const name = ownerDetails.name || owner.name || getUserFullName(user) || null;
   const email = ownerDetails.email || owner.email || user.email || null;
-  const phone = ownerDetails.phone || owner.phone || user.phone || owner.mobile || null;
+  const phone =
+    ownerDetails.phone || owner.phone || user.phone || owner.mobile || null;
 
   // Try owner fields first, else check possible snake_case fields
   const idProofType =
-    ownerDetails.idProofType || owner.idProofType || owner.id_proof_type || owner.id_proof || null;
+    ownerDetails.idProofType ||
+    owner.idProofType ||
+    owner.id_proof_type ||
+    owner.id_proof ||
+    null;
   const idProofNumber =
-    ownerDetails.idProofNumber || owner.idProofNumber || owner.id_proof_number || owner.id_proof_no || null;
+    ownerDetails.idProofNumber ||
+    owner.idProofNumber ||
+    owner.id_proof_number ||
+    owner.id_proof_no ||
+    null;
   const idProofImageUrl =
     ownerDetails.idProofImageUrl ||
     owner.idProofImageUrl ||
@@ -232,7 +241,7 @@ const createPropertyWithOwner = async (req, res) => {
       }
     }
 
-    if (propertyData.listingType === 'rent' && !propertyData.rent) {
+    if (propertyData.listingType === "rent" && !propertyData.rent) {
       return res.status(400).json({
         statusCode: 400,
         success: false,
@@ -241,7 +250,7 @@ const createPropertyWithOwner = async (req, res) => {
       });
     }
 
-    if (propertyData.listingType !== 'rent' && !propertyData.price) {
+    if (propertyData.listingType !== "rent" && !propertyData.price) {
       return res.status(400).json({
         statusCode: 400,
         success: false,
@@ -257,6 +266,7 @@ const createPropertyWithOwner = async (req, res) => {
     const hasOwnerPayload = ownerData && Object.keys(ownerData).length > 0;
 
     const hasOwnerEmail = hasOwnerPayload && isNonEmptyString(ownerData.email);
+    let normalizedEmail = null;
 
     if (hasOwnerEmail) {
       const normalizedEmail = ownerData.email.toLowerCase();
@@ -338,10 +348,14 @@ const createPropertyWithOwner = async (req, res) => {
       description: propertyData.description || "",
       location: propertyData.location,
       pincode: propertyData.pincode || "",
-      rent: propertyData.listingType === 'rent' ? propertyData.rent : undefined,
-      deposit: propertyData.listingType === 'rent' ? (propertyData.deposit || 0) : undefined,
+      rent: propertyData.listingType === "rent" ? propertyData.rent : undefined,
+      deposit:
+        propertyData.listingType === "rent"
+          ? propertyData.deposit || 0
+          : undefined,
       listingType: propertyData.listingType || "rent",
-      price: propertyData.listingType !== 'rent' ? propertyData.price : undefined,
+      price:
+        propertyData.listingType !== "rent" ? propertyData.price : undefined,
       category: propertyData.category || "residential",
       propertyType: propertyData.propertyType || "apartment",
       bedrooms: propertyData.bedrooms || 0,
@@ -358,7 +372,7 @@ const createPropertyWithOwner = async (req, res) => {
         idProofType: ownerData.idProofType || "pending",
         idProofNumber: ownerData.idProofNumber || "pending",
         idProofImageUrl: ownerData.idProofImageUrl || "pending",
-      }
+      },
     });
 
     if (owner) {
@@ -1090,7 +1104,7 @@ const updatePropertyForAdmin = async (req, res) => {
       if (!property.ownerDetails) {
         property.ownerDetails = {};
       }
-      
+
       const ownerDetailsFields = [
         "name",
         "email",
@@ -1109,7 +1123,7 @@ const updatePropertyForAdmin = async (req, res) => {
           property.ownerDetails[field] = ownerData[field];
         }
       });
-      
+
       await property.save();
 
       // Also update global owner for backward compatibility or if intended
