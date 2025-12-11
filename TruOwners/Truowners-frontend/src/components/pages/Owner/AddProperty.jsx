@@ -26,8 +26,17 @@ const AddProperty = ({ onClose, onSuccess }) => {
     bedrooms: '',
     bathrooms: '',
     area: '',
-    amenities: []
+    amenities: [],
+    // Owner Details
+    ownerPhone: '',
+    idProofType: 'Aadhar',
+    idProofNumber: ''
   })
+
+  const [idProofFile, setIdProofFile] = useState(null)
+  const [idProofPreview, setIdProofPreview] = useState(null)
+  const [uploadingIdProof, setUploadingIdProof] = useState(false)
+  const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"]
 
   // Media file states
   const [mediaFiles, setMediaFiles] = useState([])
@@ -182,6 +191,47 @@ const AddProperty = ({ onClose, onSuccess }) => {
     e.target.value = ''
   }
 
+  const handleIdProofChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!allowedTypes.images.includes(file.type)) {
+      setError('Invalid ID Proof file type. Only images are allowed.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit for ID proof
+      setError('ID Proof image too large. Max 5MB.')
+      return
+    }
+
+    new Compressor(file, {
+      quality: 0.6,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      success(compressedFile) {
+        setIdProofFile(compressedFile)
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          setIdProofPreview(event.target.result)
+        }
+        reader.readAsDataURL(compressedFile)
+        if (error) setError('')
+      },
+      error(err) {
+        console.error('ID Proof compression failed:', err.message)
+        setError('ID Proof compression failed')
+      }
+    })
+  }
+
+  const removeIdProof = () => {
+    setIdProofFile(null)
+    setIdProofPreview(null)
+    const fileInput = document.getElementById('idProofImage')
+    if (fileInput) fileInput.value = ''
+  }
+
 
   const removeMedia = (id) => {
     setMediaPreviews(prev => prev.filter(preview => preview.id !== id))
@@ -248,6 +298,19 @@ const AddProperty = ({ onClose, onSuccess }) => {
       setError('Property address is required')
       return false
     }
+    // Owner Details Validation
+    if (!formData.ownerPhone.trim() || formData.ownerPhone.length < 10) {
+      setError('Valid Owner Phone is required')
+      return false
+    }
+    if (!formData.idProofNumber.trim()) {
+      setError('ID Proof Number is required')
+      return false
+    }
+    if (!idProofFile && !idProofPreview) {
+      setError('ID Proof Image is required')
+      return false
+    }
     if (!formData.location.city.trim()) {
       setError('City is required')
       return false
@@ -311,6 +374,20 @@ const AddProperty = ({ onClose, onSuccess }) => {
       // Upload all media files first
       const mediaUrls = await uploadAllMedia()
 
+      // Upload ID Proof
+      let idProofUrl = ''
+      if (idProofFile) {
+        setUploadingIdProof(true)
+        const fileName = generateFileName(idProofFile.name, 'id-proof')
+        const uploadResult = await uploadFile(idProofFile, fileName)
+        setUploadingIdProof(false)
+        if (uploadResult.success) {
+          idProofUrl = uploadResult.url
+        } else {
+          throw new Error(`Failed to upload ID Proof: ${uploadResult.error}`)
+        }
+      }
+
       const response = await fetch(buildApiUrl(API_CONFIG.OWNER.PROPERTIES), {
         method: 'POST',
         headers: {
@@ -330,7 +407,12 @@ const AddProperty = ({ onClose, onSuccess }) => {
           bathrooms: parseInt(formData.bathrooms),
           area: parseInt(formData.area),
           amenities: formData.amenities,
-          images: mediaUrls
+          images: mediaUrls,
+          // Owner Per-Property Details
+          ownerPhone: formData.ownerPhone,
+          ownerIdProofType: formData.idProofType,
+          ownerIdProofNumber: formData.idProofNumber,
+          ownerIdProofImageUrl: idProofUrl
         }),
       })
 
@@ -387,6 +469,72 @@ const AddProperty = ({ onClose, onSuccess }) => {
           {/* Basic Information */}
           <div className="form-section">
             <h3 className="section-title">Basic Information</h3>
+
+            {/* Owner Details Section */}
+            <div className="form-section">
+              <h4 className="section-subtitle" style={{ marginTop: 0, marginBottom: '1rem', color: '#666' }}>Owner Verification Details (Private)</h4>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="ownerPhone">Owner Phone *</label>
+                  <input
+                    type="tel"
+                    id="ownerPhone"
+                    name="ownerPhone"
+                    value={formData.ownerPhone}
+                    onChange={handleInputChange}
+                    placeholder="Enter phone number"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="idProofType">ID Proof Type *</label>
+                  <select
+                    id="idProofType"
+                    name="idProofType"
+                    value={formData.idProofType}
+                    onChange={handleInputChange}
+                    className="form-select"
+                    required
+                  >
+                    {idProofTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="idProofNumber">ID Proof Number *</label>
+                  <input
+                    type="text"
+                    id="idProofNumber"
+                    name="idProofNumber"
+                    value={formData.idProofNumber}
+                    onChange={handleInputChange}
+                    placeholder="Enter ID Number"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="idProofImage">ID Proof Image *</label>
+                  {!idProofPreview && (
+                    <input
+                      type="file"
+                      id="idProofImage"
+                      accept="image/*"
+                      onChange={handleIdProofChange}
+                      required={!idProofPreview}
+                    />
+                  )}
+                  {idProofPreview && (
+                    <div className="media-preview-item" style={{ width: '100px', height: '100px', position: 'relative' }}>
+                      <img src={idProofPreview} alt="ID Proof" className="media-preview-image" />
+                      <button type="button" className="remove-media-btn" onClick={removeIdProof}>×</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             <div className="form-group">
               <label htmlFor="title">Property Title *</label>
@@ -770,12 +918,12 @@ const AddProperty = ({ onClose, onSuccess }) => {
           <button
             type="submit"
             className="btn btn-primary btn-full"
-            disabled={loading || uploadingMedia || mediaFiles.length === 0}
+            disabled={loading || uploadingMedia || uploadingIdProof || mediaFiles.length === 0}
           >
-            {uploadingMedia ? (
+            {uploadingMedia || uploadingIdProof ? (
               <>
                 <span className="loading-spinner"></span>
-                Uploading Media...
+                Uploading Media/ID...
               </>
             ) : loading ? (
               <>

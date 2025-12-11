@@ -18,6 +18,11 @@ const uploadProperty = async (req, res) => {
     area,
     amenities,
     images,
+    // Owner Details (Per Property)
+    ownerPhone,
+    ownerIdProofType,
+    ownerIdProofNumber,
+    ownerIdProofImageUrl,
   } = req.body;
 
   try {
@@ -51,6 +56,12 @@ const uploadProperty = async (req, res) => {
       area,
       amenities: amenities || [],
       images: images || [],
+      ownerDetails: {
+        phone: ownerPhone,
+        idProofType: ownerIdProofType,
+        idProofNumber: ownerIdProofNumber,
+        idProofImageUrl: ownerIdProofImageUrl,
+      },
       status: PROPERTY_STATUS.PENDING,
     });
 
@@ -98,11 +109,17 @@ const uploadProperty = async (req, res) => {
               (populatedOwner.user && populatedOwner.user.phone) ||
               populatedOwner.phone ||
               null,
-            idProofType: populatedOwner.idProofType || null,
-            idProofNumber: populatedOwner.idProofNumber || null,
-            idProofImageUrl: populatedOwner.idProofImageUrl || null,
+            idProofType: property.ownerDetails?.idProofType || populatedOwner.idProofType || null,
+            idProofNumber: property.ownerDetails?.idProofNumber || populatedOwner.idProofNumber || null,
+            idProofImageUrl: property.ownerDetails?.idProofImageUrl || populatedOwner.idProofImageUrl || null,
+            // Use property-specific details if available, else fallback to profile
+            phone: property.ownerDetails?.phone ||
+              (populatedOwner.user && populatedOwner.user.phone) ||
+              populatedOwner.phone ||
+              null,
           }
         : property.owner,
+      ownerDetails: property.ownerDetails, // Include raw ownerDetails in response
       createdAt: property.createdAt,
     };
 
@@ -219,10 +236,12 @@ const getProperty = async (req, res) => {
         name: user.name || owner.name || null,
         email: user.email || owner.email || null,
         phone: user.phone || owner.phone || null,
-        idProofType: owner.idProofType || null,
-        idProofNumber: owner.idProofNumber || null,
-        idProofImageUrl: owner.idProofImageUrl || null,
+        idProofType: property.ownerDetails?.idProofType || owner.idProofType || null,
+        idProofNumber: property.ownerDetails?.idProofNumber || owner.idProofNumber || null,
+        idProofImageUrl: property.ownerDetails?.idProofImageUrl || owner.idProofImageUrl || null,
         verified: owner.verified || false,
+        // Prefer property specific phone
+        phone: property.ownerDetails?.phone || user.phone || owner.phone || null,
       };
     }
 
@@ -300,6 +319,7 @@ const updateProperty = async (req, res) => {
     "area",
     "amenities",
     "images",
+    "ownerDetails",
   ];
 
   // Validate only allowed fields are being updated
@@ -372,6 +392,14 @@ const updateProperty = async (req, res) => {
     if (area !== undefined) property.area = area;
     if (amenities !== undefined) property.amenities = amenities || [];
     if (images !== undefined) property.images = images || [];
+    
+    // Update ownerDetails if provided
+    if (req.body.ownerDetails) {
+       property.ownerDetails = {
+         ...property.ownerDetails, // merge with existing
+         ...req.body.ownerDetails
+       }
+    }
 
     property.updatedAt = new Date();
     await property.save();

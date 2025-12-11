@@ -6,6 +6,7 @@ import { handleApiError, getErrorMessage, validateApiResponse } from '../../../u
 import './Owner.css';
 import '../Auth/Auth.css';
 import PropertySuccessModal from './PropertySuccessModal';
+import Compressor from 'compressorjs';
 
 const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
   const [formData, setFormData] = useState({
@@ -27,8 +28,17 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     bedrooms: '',
     bathrooms: '',
     area: '',
-    amenities: []
+    amenities: [],
+    // Owner Details
+    ownerPhone: '',
+    idProofType: 'Aadhar',
+    idProofNumber: ''
   });
+
+  const [idProofFile, setIdProofFile] = useState(null);
+  const [idProofPreview, setIdProofPreview] = useState(null);
+  const [uploadingIdProof, setUploadingIdProof] = useState(false);
+  const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"];
 
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
@@ -74,8 +84,17 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
         bedrooms: property.bedrooms || '',
         bathrooms: property.bathrooms || '',
         area: property.area || '',
-        amenities: property.amenities || []
+        area: property.area || '',
+        amenities: property.amenities || [],
+        // Owner Details Prefill
+        ownerPhone: property.ownerDetails?.phone || '',
+        idProofType: property.ownerDetails?.idProofType || 'Aadhar',
+        idProofNumber: property.ownerDetails?.idProofNumber || ''
       });
+
+      if (property.ownerDetails?.idProofImageUrl) {
+        setIdProofPreview(property.ownerDetails.idProofImageUrl);
+      }
 
       if (property.images && property.images.length > 0) {
         setExistingImages(property.images);
@@ -195,6 +214,47 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
     e.target.value = '';
   };
 
+  const handleIdProofChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!allowedTypes.images.includes(file.type)) {
+      setError('Invalid ID Proof file type. Only images are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ID Proof image too large. Max 5MB.');
+      return;
+    }
+
+    new Compressor(file, {
+      quality: 0.6,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      success(compressedFile) {
+        setIdProofFile(compressedFile);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setIdProofPreview(event.target.result);
+        };
+        reader.readAsDataURL(compressedFile);
+        if (error) setError('');
+      },
+      error(err) {
+        console.error('ID Proof compression failed:', err.message);
+        setError('ID Proof compression failed');
+      }
+    });
+  };
+
+  const removeIdProof = () => {
+    setIdProofFile(null);
+    setIdProofPreview(null);
+    const fileInput = document.getElementById('idProofImage');
+    if (fileInput) fileInput.value = '';
+  };
+
   const removeMedia = (id) => {
     const preview = mediaPreviews.find(p => p.id === id);
 
@@ -301,6 +361,19 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       setError('At least one image is required');
       return false;
     }
+    // Owner Details Validation
+    if (!formData.ownerPhone.trim() || formData.ownerPhone.length < 10) {
+      setError('Valid Owner Phone is required');
+      return false;
+    }
+    if (!formData.idProofNumber.trim()) {
+      setError('ID Proof Number is required');
+      return false;
+    }
+    if (!idProofFile && !idProofPreview) {
+      setError('ID Proof Image is required');
+      return false;
+    }
     return true;
   };
 
@@ -322,6 +395,23 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
       const newMediaUrls = await uploadAllMedia();
       const allMediaUrls = [...existingImages, ...newMediaUrls];
       console.log('EditProperty: Media uploaded', allMediaUrls);
+
+      // Upload ID Proof if changed
+      let idProofUrl = property.ownerDetails?.idProofImageUrl || '';
+      if (idProofFile) {
+        setUploadingIdProof(true);
+        const fileName = generateFileName(idProofFile.name, 'id-proof');
+        const uploadResult = await uploadFile(idProofFile, fileName);
+        setUploadingIdProof(false);
+        if (uploadResult.success) {
+          idProofUrl = uploadResult.url;
+        } else {
+          throw new Error(`Failed to upload ID Proof: ${uploadResult.error}`);
+        }
+      } else if (!idProofPreview) {
+        // If preview is cleared and no new file, it means removed
+        idProofUrl = '';
+      }
 
       // Send PATCH request to update property
       console.log('EditProperty: Sending PATCH request to', `${buildApiUrl(API_CONFIG.OWNER.PROPERTIES)}/${property.id}`);
@@ -351,7 +441,16 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
           bathrooms: parseInt(formData.bathrooms),
           area: parseInt(formData.area),
           amenities: formData.amenities,
-          images: allMediaUrls
+          area: parseInt(formData.area),
+          amenities: formData.amenities,
+          images: allMediaUrls,
+          // Owner Per-Property Details
+          ownerDetails: {
+            phone: formData.ownerPhone,
+            idProofType: formData.idProofType,
+            idProofNumber: formData.idProofNumber,
+            idProofImageUrl: idProofUrl
+          }
         }),
       });
 
@@ -391,8 +490,17 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
           bedrooms: data.data.bedrooms || '',
           bathrooms: data.data.bathrooms || '',
           area: data.data.area || '',
-          amenities: data.data.amenities || []
+          amenities: data.data.amenities || [],
+          ownerPhone: data.data.ownerDetails?.phone || '',
+          idProofType: data.data.ownerDetails?.idProofType || 'Aadhar',
+          idProofNumber: data.data.ownerDetails?.idProofNumber || ''
         });
+
+        if (data.data.ownerDetails?.idProofImageUrl) {
+          setIdProofPreview(data.data.ownerDetails.idProofImageUrl);
+        } else {
+          setIdProofPreview(null);
+        }
 
         setExistingImages(data.data.images || []);
         const previews = (data.data.images || []).map((image, index) => ({
@@ -468,6 +576,72 @@ const EditProperty = ({ property, onClose, onSuccess, onComplete }) => {
             {/* --- Basic Information --- */}
             <div className="form-section">
               <h3 className="section-title">Basic Information</h3>
+
+              {/* Owner Details Section */}
+              <div className="form-section">
+                <h4 className="section-subtitle" style={{ marginTop: 0, marginBottom: '1rem', color: '#666' }}>Owner Verification Details (Private)</h4>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="ownerPhone">Owner Phone *</label>
+                    <input
+                      type="tel"
+                      id="ownerPhone"
+                      name="ownerPhone"
+                      value={formData.ownerPhone}
+                      onChange={handleInputChange}
+                      placeholder="Enter phone number"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="idProofType">ID Proof Type *</label>
+                    <select
+                      id="idProofType"
+                      name="idProofType"
+                      value={formData.idProofType}
+                      onChange={handleInputChange}
+                      className="form-select"
+                      required
+                    >
+                      {idProofTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="idProofNumber">ID Proof Number *</label>
+                    <input
+                      type="text"
+                      id="idProofNumber"
+                      name="idProofNumber"
+                      value={formData.idProofNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter ID Number"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="idProofImage">ID Proof Image *</label>
+                    {!idProofPreview && (
+                      <input
+                        type="file"
+                        id="idProofImage"
+                        accept="image/*"
+                        onChange={handleIdProofChange}
+                        required={!idProofPreview}
+                      />
+                    )}
+                    {idProofPreview && (
+                      <div className="media-preview-item" style={{ width: '100px', height: '100px', position: 'relative' }}>
+                        <img src={idProofPreview} alt="ID Proof" className="media-preview-image" />
+                        <button type="button" className="remove-media-btn" onClick={removeIdProof}>×</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="form-group">
                 <label htmlFor="title">Property Title *</label>

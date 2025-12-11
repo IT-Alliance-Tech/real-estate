@@ -16,6 +16,14 @@ const propertySchema = new Schema({
       lng: Number
     }
   },
+  ownerDetails: {
+    phone: String,
+    idProofType: String,
+    idProofNumber: String,
+    idProofImageUrl: String,
+    name: String, // Optional, can be used if different from profile
+    email: String // Optional
+  },
   rent: { type: Number }, // Made optional as it's not needed for sale
   price: { type: Number }, // Unified field for Sale Price, Commercial Price, Lease Amount
   deposit: { type: Number },

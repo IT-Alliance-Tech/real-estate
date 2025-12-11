@@ -45,19 +45,25 @@ const formatBasicOwner = (owner) => {
   };
 };
 
-const formatOwnerWithIdProof = (owner) => {
+const formatOwnerWithIdProof = (property) => {
+  const owner = property.owner;
+  const ownerDetails = property.ownerDetails || {};
+
   if (!owner) return null;
   const user = owner.user || {};
-  const name = owner.name || getUserFullName(user) || null;
-  const email = owner.email || user.email || null;
-  const phone = owner.phone || user.phone || owner.mobile || null;
+  
+  // Prioritize property-specific ownerDetails
+  const name = ownerDetails.name || owner.name || getUserFullName(user) || null;
+  const email = ownerDetails.email || owner.email || user.email || null;
+  const phone = ownerDetails.phone || owner.phone || user.phone || owner.mobile || null;
 
   // Try owner fields first, else check possible snake_case fields
   const idProofType =
-    owner.idProofType || owner.id_proof_type || owner.id_proof || null;
+    ownerDetails.idProofType || owner.idProofType || owner.id_proof_type || owner.id_proof || null;
   const idProofNumber =
-    owner.idProofNumber || owner.id_proof_number || owner.id_proof_no || null;
+    ownerDetails.idProofNumber || owner.idProofNumber || owner.id_proof_number || owner.id_proof_no || null;
   const idProofImageUrl =
+    ownerDetails.idProofImageUrl ||
     owner.idProofImageUrl ||
     owner.id_proof_image_url ||
     owner.id_proof_image ||
@@ -95,7 +101,7 @@ const formatAdminProperty = (property) => {
     images: property.images,
     status: property.status,
     createdAt: property.createdAt,
-    owner: formatOwnerWithIdProof(property.owner),
+    owner: formatOwnerWithIdProof(property),
   };
 };
 
@@ -342,8 +348,17 @@ const createPropertyWithOwner = async (req, res) => {
       bathrooms: propertyData.bathrooms || 0,
       area: propertyData.area || 0,
       amenities: propertyData.amenities || [],
+      amenities: propertyData.amenities || [],
       images: propertyData.images || [],
       status: PROPERTY_STATUS.PENDING,
+      ownerDetails: {
+        name: ownerData.name || "",
+        email: normalizedEmail || ownerData.email || "",
+        phone: ownerData.phone || "",
+        idProofType: ownerData.idProofType || "pending",
+        idProofNumber: ownerData.idProofNumber || "pending",
+        idProofImageUrl: ownerData.idProofImageUrl || "pending",
+      }
     });
 
     if (owner) {
@@ -937,7 +952,7 @@ const getAllPropertiesForAdmin = async (req, res) => {
       status: property.status,
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
-      owner: property.owner ? formatOwnerWithIdProof(property.owner) : null,
+      owner: property.owner ? formatOwnerWithIdProof(property) : null,
     }));
 
     const pagination = getPaginationMeta(pageNum, limitNum, totalCount);
@@ -1071,6 +1086,34 @@ const updatePropertyForAdmin = async (req, res) => {
     }
 
     if (property.owner && hasOwnerPayload) {
+      // Update property-specific owner details
+      if (!property.ownerDetails) {
+        property.ownerDetails = {};
+      }
+      
+      const ownerDetailsFields = [
+        "name",
+        "email",
+        "phone",
+        "idProofType",
+        "idProofNumber",
+        "idProofImageUrl",
+      ];
+
+      ownerDetailsFields.forEach((field) => {
+        if (
+          Object.prototype.hasOwnProperty.call(ownerData, field) &&
+          ownerData[field] !== undefined &&
+          ownerData[field] !== null
+        ) {
+          property.ownerDetails[field] = ownerData[field];
+        }
+      });
+      
+      await property.save();
+
+      // Also update global owner for backward compatibility or if intended
+      // But purely relying on the global owner update is what caused the issue + the mismatch
       const owner = await Owner.findById(property.owner);
 
       if (owner) {
