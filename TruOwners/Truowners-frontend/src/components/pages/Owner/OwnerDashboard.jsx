@@ -39,7 +39,7 @@ const OwnerDashboard = () => {
         fetchProperties()
     }, [])
 
-    
+
 
     const fetchProperties = async () => {
         setLoading(true)
@@ -95,7 +95,7 @@ const OwnerDashboard = () => {
         setShowPropertySuccess(true)
         fetchProperties()
     }
-    
+
 
 
     const handlePropertySuccess = (property) => {
@@ -334,12 +334,16 @@ const OwnerDashboard = () => {
 
                                             <div className="property-pricing">
                                                 <div className="rent">
-                                                    <strong>{formatCurrency(property.rent)}</strong>
-                                                    <span>/month</span>
+                                                    <strong>
+                                                        {property.rent ? formatCurrency(property.rent) : formatCurrency(property.price)}
+                                                    </strong>
+                                                    {property.listingType === 'rent' && <span>/month</span>}
                                                 </div>
-                                                <div className="deposit">
-                                                    Deposit: <strong> {formatCurrency(property.deposit)}</strong>
-                                                </div>
+                                                {property.listingType === 'rent' && property.deposit && (
+                                                    <div className="deposit">
+                                                        Deposit: <strong> {formatCurrency(property.deposit)}</strong>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="property-meta">
@@ -365,7 +369,7 @@ const OwnerDashboard = () => {
                                             )} */}
 
 
-  {/* {property.amenities && property.amenities.length > 0 && (
+                                            {/* {property.amenities && property.amenities.length > 0 && (
   <div
     className="property-amenities"
     ref={(el) => {
@@ -436,83 +440,83 @@ const OwnerDashboard = () => {
   </div>
 )}   */}
 
- 
- {property.amenities && property.amenities.length > 0 && (
-  <div
-    className="property-amenities"
-    ref={(el) => {
-      if (!el) return;
-      const containerWidth = el.clientWidth;
-      const gap = 8; // must match CSS
-      let usedWidth = 0;
-      let count = 0;
 
-      const measureWidth = (text) => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        ctx.font = "500 14px Inter, sans-serif";
-        const textWidth = ctx.measureText(text).width;
-        return Math.ceil(textWidth + 24 + 2); // padding + border
-      };
+                                            {property.amenities && property.amenities.length > 0 && (
+                                                <div
+                                                    className="property-amenities"
+                                                    ref={(el) => {
+                                                        if (!el) return;
+                                                        const containerWidth = el.clientWidth;
+                                                        const gap = 8; // must match CSS
+                                                        let usedWidth = 0;
+                                                        let count = 0;
 
-      const maxVisible = 2; // target max
+                                                        const measureWidth = (text) => {
+                                                            const canvas = document.createElement("canvas");
+                                                            const ctx = canvas.getContext("2d");
+                                                            ctx.font = "500 14px Inter, sans-serif";
+                                                            const textWidth = ctx.measureText(text).width;
+                                                            return Math.ceil(textWidth + 24 + 2); // padding + border
+                                                        };
 
-      for (let i = 0; i < property.amenities.length && count < maxVisible; i++) {
-        const chipWidth = measureWidth(property.amenities[i]);
-        const newWidth = count === 0 ? chipWidth : usedWidth + gap + chipWidth;
+                                                        const maxVisible = 2; // target max
 
-        const remaining = property.amenities.length - (i + 1);
-        let moreWidth = 0;
-        if (remaining > 0) {
-          moreWidth = gap + measureWidth(`+${remaining} more`);
-        }
+                                                        for (let i = 0; i < property.amenities.length && count < maxVisible; i++) {
+                                                            const chipWidth = measureWidth(property.amenities[i]);
+                                                            const newWidth = count === 0 ? chipWidth : usedWidth + gap + chipWidth;
 
-        if (newWidth + moreWidth <= containerWidth) {
-          usedWidth = newWidth;
-          count++;
-        } else {
-          break;
-        }
-      }
+                                                            const remaining = property.amenities.length - (i + 1);
+                                                            let moreWidth = 0;
+                                                            if (remaining > 0) {
+                                                                moreWidth = gap + measureWidth(`+${remaining} more`);
+                                                            }
 
-      // If we reached 4 but overflow happens, drop to 3
-      if (count === 3) {
-        const chip4Width = measureWidth(property.amenities[3]);
-        if (usedWidth + gap + chip4Width > containerWidth) {
-          count = 2;
-        }
-      }
+                                                            if (newWidth + moreWidth <= containerWidth) {
+                                                                usedWidth = newWidth;
+                                                                count++;
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        }
 
-      el.dataset.visibleCount = count;
-    }}
-  >
-    {property.amenities
-      .slice(
-        0,
-        parseInt(
-          document.querySelector(".property-amenities")?.dataset.visibleCount || 3
-        )
-      )
-      .map((amenity) => (
-        <span key={amenity} className="amenity-tag">
-          {amenity}
-        </span>
-      ))}
-    {property.amenities.length >
-      parseInt(
-        document.querySelector(".property-amenities")?.dataset.visibleCount || 3
-      ) && (
-      <span className="amenity-tag more">
-        +
-        {property.amenities.length -
-          parseInt(
-            document.querySelector(".property-amenities")?.dataset.visibleCount || 3
-          )}{" "}
-        more
-      </span>
-    )}
-  </div>
-)} 
+                                                        // If we reached 4 but overflow happens, drop to 3
+                                                        if (count === 3) {
+                                                            const chip4Width = measureWidth(property.amenities[3]);
+                                                            if (usedWidth + gap + chip4Width > containerWidth) {
+                                                                count = 2;
+                                                            }
+                                                        }
+
+                                                        el.dataset.visibleCount = count;
+                                                    }}
+                                                >
+                                                    {property.amenities
+                                                        .slice(
+                                                            0,
+                                                            parseInt(
+                                                                document.querySelector(".property-amenities")?.dataset.visibleCount || 3
+                                                            )
+                                                        )
+                                                        .map((amenity) => (
+                                                            <span key={amenity} className="amenity-tag">
+                                                                {amenity}
+                                                            </span>
+                                                        ))}
+                                                    {property.amenities.length >
+                                                        parseInt(
+                                                            document.querySelector(".property-amenities")?.dataset.visibleCount || 3
+                                                        ) && (
+                                                            <span className="amenity-tag more">
+                                                                +
+                                                                {property.amenities.length -
+                                                                    parseInt(
+                                                                        document.querySelector(".property-amenities")?.dataset.visibleCount || 3
+                                                                    )}{" "}
+                                                                more
+                                                            </span>
+                                                        )}
+                                                </div>
+                                            )}
 
 
 
