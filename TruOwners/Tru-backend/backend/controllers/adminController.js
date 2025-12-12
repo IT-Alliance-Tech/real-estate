@@ -269,7 +269,7 @@ const createPropertyWithOwner = async (req, res) => {
     let normalizedEmail = null;
 
     if (hasOwnerEmail) {
-      const normalizedEmail = ownerData.email.toLowerCase();
+      normalizedEmail = ownerData.email.toLowerCase();
 
       user = await User.findOne({ email: normalizedEmail });
 
