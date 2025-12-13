@@ -585,7 +585,7 @@ const AddPropertyModal = ({ onClose, onSuccess, token }) => {
                   placeholder="India"
                   required
                 />
-              </div>
+                         </div>
 
               <div className="form-group">
                 <label htmlFor="pincode">Pincode</label>
