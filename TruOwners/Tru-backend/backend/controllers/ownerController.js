@@ -96,7 +96,7 @@ const uploadProperty = async (req, res) => {
         idProofType: ownerIdProofType,
         idProofNumber: ownerIdProofNumber,
         idProofImageUrl: ownerIdProofImageUrl,
-        electricityBillNumber: ownerElectricityBillNumber || null,
+        electricityBill: ownerElectricityBillNumber || null,
         electricityBillImageUrl: ownerElectricityBillImageUrl || null,
       },
       status: PROPERTY_STATUS.PENDING,

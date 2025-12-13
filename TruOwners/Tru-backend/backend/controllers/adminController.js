@@ -46,59 +46,40 @@ const formatBasicOwner = (owner) => {
 };
 
 const formatOwnerWithIdProof = (property) => {
-  const owner = property.owner;
-  const ownerDetails = property.ownerDetails || {};
+  // ✅ Admin-created property
+  if (property.ownerDetails) {
+    return {
+      name: property.ownerDetails.name || "",
+      email: property.ownerDetails.email || "",
+      phone: property.ownerDetails.phone || "",
+      idProofType: property.ownerDetails.idProofType || "",
+      idProofNumber: property.ownerDetails.idProofNumber || "",
+      idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
+      electricityBill: property.ownerDetails.electricityBill || "",
+      electricityBillImageUrl:
+        property.ownerDetails.electricityBillImageUrl || "",
+    };
+  }
 
-  if (!owner) return null;
-  const user = owner.user || {};
+  // ✅ User-created property
+  if (property.owner) {
+    const owner = property.owner;
+    const user = owner.user || {};
 
-  // Prioritize property-specific ownerDetails
-  const name = ownerDetails.name || owner.name || getUserFullName(user) || null;
-  const email = ownerDetails.email || owner.email || user.email || null;
-  const phone =
-    ownerDetails.phone || owner.phone || user.phone || owner.mobile || null;
+    return {
+      name: owner.name || user.name || "",
+      email: owner.email || user.email || "",
+      phone: owner.phone || user.phone || "",
+      idProofType: owner.idProofType || "",
+      idProofNumber: owner.idProofNumber || "",
+      idProofImageUrl: owner.idProofImageUrl || "",
+      electricityBill: owner.electricityBill || "",
+      electricityBillImageUrl: owner.electricityBillImageUrl || "",
+    };
+  }
 
-  // Try owner fields first, else check possible snake_case fields
-  const idProofType =
-    ownerDetails.idProofType ||
-    owner.idProofType ||
-    owner.id_proof_type ||
-    owner.id_proof ||
-    null;
-  const idProofNumber =
-    ownerDetails.idProofNumber ||
-    owner.idProofNumber ||
-    owner.id_proof_number ||
-    owner.id_proof_no ||
-    null;
-  const idProofImageUrl =
-    ownerDetails.idProofImageUrl ||
-    owner.idProofImageUrl ||
-    owner.id_proof_image_url ||
-    owner.id_proof_image ||
-    null;
-
-  // Electricity bill fields: per-property preferred, then owner's global fields
-  const electricityBillNumber =
-    ownerDetails.electricityBillNumber || owner.electricityBill || null;
-  const electricityBillImageUrl =
-    ownerDetails.electricityBillImageUrl ||
-    owner.electricityBillImageUrl ||
-    null;
-
-  return {
-    id: owner._id,
-    name,
-    email,
-    phone,
-    idProofType,
-    idProofNumber,
-    idProofImageUrl,
-    electricityBillNumber,
-    electricityBillImageUrl,
-  };
+  return null;
 };
-
 const formatAdminProperty = (property) => {
   if (!property) return null;
 
@@ -255,7 +236,6 @@ const createPropertyWithOwner = async (req, res) => {
 
     const listingType = (propertyData.listingType || "rent").toString();
 
-    // ---------- PRICE VALIDATION ----------
     if (listingType === "rent" && !propertyData.rent) {
       return res.status(400).json({
         statusCode: 400,
@@ -289,7 +269,6 @@ const createPropertyWithOwner = async (req, res) => {
       });
     }
 
-    // ---------- 🔐 PROPERTY TYPE RULE ----------
     let propertyTypeVal;
     if (listingType === "commercial") {
       propertyTypeVal = "office"; // ✅ FIX
@@ -309,6 +288,21 @@ const createPropertyWithOwner = async (req, res) => {
 
     const property = await Property.create({
       owner: null,
+
+      ownerDetails:
+        ownerData && Object.keys(ownerData).length > 0
+          ? {
+              name: ownerData.name || "",
+              email: ownerData.email || "",
+              phone: ownerData.phone || "",
+              idProofType: ownerData.idProofType || "",
+              idProofNumber: ownerData.idProofNumber || "",
+              idProofImageUrl: ownerData.idProofImageUrl || "",
+              electricityBill: ownerData.electricityBill || "",
+              electricityBillImageUrl: ownerData.electricityBillImageUrl || "",
+            }
+          : undefined,
+
       title: propertyData.title,
       description: propertyData.description || "",
       location: propertyData.location,
@@ -643,30 +637,16 @@ const updatePropertyStatus = async (req, res) => {
 
 // Helper: check if owner details are complete
 const hasOwnerDetails = (property) => {
-  const owner = property.owner;
-  if (!owner) return false;
+  const details = property.ownerDetails;
+  if (!details) return false;
 
-  const user = owner.user || {};
-
-  const fullNameFromUser =
-    user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : null;
-
-  const name = user.name || owner.name || fullNameFromUser;
-  const email = user.email || owner.email;
-  const phone = user.phone || owner.phone || owner.mobile;
-
-  const { idProofType, idProofNumber, idProofImageUrl } = owner;
-  const { electricityBill } = owner;
   return (
-    isFilled(name) &&
-    isFilled(email) &&
-    isFilled(phone) &&
-    isFilled(idProofType) &&
-    isFilled(idProofNumber) &&
-    isFilled(idProofImageUrl) &&
-    isFilled(electricityBill)
+    isFilled(details.name) &&
+    isFilled(details.email) &&
+    isFilled(details.phone) &&
+    isFilled(details.idProofType) &&
+    isFilled(details.idProofNumber) &&
+    isFilled(details.idProofImageUrl) & isFilled(details.electricityBill)
   );
 };
 
@@ -957,7 +937,22 @@ const getPropertyByIdForAdmin = async (req, res) => {
       error: null,
       data: {
         message: "Property retrieved successfully",
-        property: formatAdminProperty(property),
+        property: {
+          ...formatAdminProperty(property),
+          owner: property.ownerDetails
+            ? {
+                name: property.ownerDetails.name || "",
+                email: property.ownerDetails.email || "",
+                phone: property.ownerDetails.phone || "",
+                idProofType: property.ownerDetails.idProofType || "",
+                idProofNumber: property.ownerDetails.idProofNumber || "",
+                idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
+                electricityBill: property.ownerDetails.electricityBill || "",
+                electricityBillImageUrl:
+                  property.ownerDetails.electricityBillImageUrl || "",
+              }
+            : null,
+        },
       },
     });
   } catch (error) {
@@ -987,8 +982,6 @@ const updatePropertyForAdmin = async (req, res) => {
         data: null,
       });
     }
-
-    // ❌ DO NOT UPDATE propertyType FROM FRONTEND
     const updatableFields = [
       "title",
       "description",
@@ -1010,16 +1003,12 @@ const updatePropertyForAdmin = async (req, res) => {
       }
     });
 
-    // -------------------------------
-    // 🔐 ENFORCE PROPERTY TYPE RULE
-    // -------------------------------
     if (property.listingType === "commercial") {
       property.bedrooms = 0;
       property.bathrooms = 0;
       property.rent = null;
       property.deposit = null;
 
-      // 🚫 NEVER allow "commercial" as propertyType
       property.propertyType = "office"; // ✅ FIX
       property.category = "commercial";
     } else {
@@ -1034,6 +1023,28 @@ const updatePropertyForAdmin = async (req, res) => {
         property.price = null;
       }
     }
+    if (ownerData && Object.keys(ownerData).length > 0) {
+      property.ownerDetails = {
+        ...(property.ownerDetails || {}),
+      };
+
+      const ownerFields = [
+        "name",
+        "email",
+        "phone",
+        "idProofType",
+        "idProofNumber",
+        "idProofImageUrl",
+        "electricityBill",
+        "electricityBillImageUrl",
+      ];
+
+      ownerFields.forEach((field) => {
+        if (ownerData[field] !== undefined && ownerData[field] !== "") {
+          property.ownerDetails[field] = ownerData[field];
+        }
+      });
+    }
 
     await property.save();
 
@@ -1045,7 +1056,23 @@ const updatePropertyForAdmin = async (req, res) => {
       error: null,
       data: {
         message: "Property updated successfully",
-        property: formatAdminProperty(property),
+        property: {
+          ...formatAdminProperty(property),
+
+          owner: property.ownerDetails
+            ? {
+                name: property.ownerDetails.name || "",
+                email: property.ownerDetails.email || "",
+                phone: property.ownerDetails.phone || "",
+                idProofType: property.ownerDetails.idProofType || "",
+                idProofNumber: property.ownerDetails.idProofNumber || "",
+                idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
+                electricityBill: property.ownerDetails.electricityBill || "",
+                electricityBillImageUrl:
+                  property.ownerDetails.electricityBillImageUrl || "",
+              }
+            : null,
+        },
       },
     });
   } catch (error) {
