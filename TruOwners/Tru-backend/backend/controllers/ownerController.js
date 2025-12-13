@@ -5,101 +5,87 @@ const { PROPERTY_STATUS } = require("../utils/constants");
 
 // Upload new property
 const uploadProperty = async (req, res) => {
-  const {
-    title,
-    description,
-    location,
-    rent,
-    deposit,
-    listingType,
-    price,
-    propertyType,
-    bedrooms,
-    bathrooms,
-    area,
-    amenities,
-    images,
-    // Owner Details (Per Property)
-    ownerPhone,
-    ownerIdProofType,
-    ownerIdProofNumber,
-    ownerIdProofImageUrl,
-    // NEW: electricity bill per-property
-    ownerElectricityBillNumber,
-    ownerElectricityBillImageUrl,
-  } = req.body;
-
   try {
-    // Find owner profile
     const owner = await Owner.findOne({ user: req.user._id });
-    console.log("uploadProperty owner:", owner);
-
     if (!owner) {
       return res.status(403).json({
         statusCode: 403,
         success: false,
-        error: {
-          message: "Owner profile not found",
-        },
+        error: { message: "Owner profile not found" },
         data: null,
       });
     }
 
-    // require electricity bill number OR image
-    if (
-      !ownerElectricityBillNumber &&
-      (!ownerElectricityBillImageUrl ||
-        String(ownerElectricityBillImageUrl).trim() === "")
-    ) {
-      return res.status(400).json({
-        statusCode: 400,
-        success: false,
-        error: {
-          message:
-            "Electricity bill number or electricity bill image is required for property upload. Provide ownerElectricityBillNumber or ownerElectricityBillImageUrl.",
-        },
-        data: null,
-      });
-    }
-    const normalizedListingType = (listingType || "").toString();
+    const {
+      title,
+      description,
+      location,
+      listingType,
+      rent,
+      deposit,
+      price,
+      propertyType,
+      bedrooms,
+      bathrooms,
+      area,
+      amenities,
+      images,
+      ownerPhone,
+      ownerIdProofType,
+      ownerIdProofNumber,
+      ownerIdProofImageUrl,
+      ownerElectricityBillNumber,
+      ownerElectricityBillImageUrl,
+    } = req.body;
 
-    // Decide final values using commercial rule
-    let finalBedrooms = bedrooms;
-    let finalBathrooms = bathrooms;
-    let finalPropertyType = propertyType;
-    let finalRent = undefined;
-    let finalDeposit = undefined;
-    let finalPrice = undefined;
+    const normalizedListingType = (listingType || "").toLowerCase();
 
-    // Keep existing semantics: rent/deposit only for rent listings, price for others
-    if (normalizedListingType === "rent") {
-      finalRent = rent !== undefined ? rent : null;
-      finalDeposit = deposit !== undefined ? deposit : null;
-      finalPrice = null;
-    } else {
-      finalRent = null;
-      finalDeposit = null;
-      finalPrice = price !== undefined ? price : null;
-    }
-
+    // -----------------------------
+    // 🔐 ENFORCE COMMERCIAL RULE
+    // -----------------------------
+    let finalPropertyType = propertyType || "apartment";
+    let finalBedrooms = bedrooms ?? 0;
+    let finalBathrooms = bathrooms ?? 0;
+    let finalRent = rent ?? null;
+    let finalDeposit = deposit ?? null;
+    let finalPrice = price ?? null;
 
     if (normalizedListingType === "commercial") {
-      finalBedrooms = null;
-      finalBathrooms = null;
-      finalPropertyType = null;
+      finalPropertyType = "office"; // ✅ VALID ENUM
+      finalBedrooms = 0;
+      finalBathrooms = 0;
+      finalRent = null;
+      finalDeposit = null;
+
+      if (finalPrice === null) {
+        return res.status(400).json({
+          statusCode: 400,
+          success: false,
+          error: { message: "Price is required for commercial property" },
+          data: null,
+        });
+      }
+    }
+
+    if (normalizedListingType === "rent") {
+      finalPrice = null;
+    }
+
+    if (["sell", "lease"].includes(normalizedListingType)) {
       finalRent = null;
       finalDeposit = null;
     }
-    const property = new Property({
+
+    const property = await Property.create({
       owner: owner._id,
       title,
       description,
       location,
+      listingType: normalizedListingType,
+      propertyType: finalPropertyType,
       rent: finalRent,
       deposit: finalDeposit,
-      listingType,
       price: finalPrice,
-      propertyType: finalPropertyType,
       bedrooms: finalBedrooms,
       bathrooms: finalBathrooms,
       area,
@@ -116,98 +102,24 @@ const uploadProperty = async (req, res) => {
       status: PROPERTY_STATUS.PENDING,
     });
 
-    const response = await property.save();
-    console.log("Property saved:", response);
-
-    // update owner's properties array and fallback fields (do not overwrite existing non-empty fields)
     owner.properties.push(property._id);
-    if (!owner.electricityBill && ownerElectricityBillNumber) {
-      owner.electricityBill = ownerElectricityBillNumber;
-    }
-    if (!owner.electricityBillImageUrl && ownerElectricityBillImageUrl) {
-      owner.electricityBillImageUrl = ownerElectricityBillImageUrl;
-    }
     await owner.save();
 
-    // populate owner.user for returning
-    const populatedOwner = await Owner.findById(owner._id)
-      .populate({
-        path: "user",
-        select: "name email phone",
-      })
-      .lean();
-
-    const returnedProperty = {
-      id: property._id,
-      title: property.title,
-      description: property.description,
-      location: property.location,
-      rent: property.rent === undefined ? null : property.rent,
-      deposit: property.deposit === undefined ? null : property.deposit,
-      listingType: property.listingType,
-      price: property.price === undefined ? null : property.price,
-      propertyType: property.propertyType === undefined ? null : property.propertyType,
-      bedrooms: property.bedrooms === undefined ? null : property.bedrooms,
-      bathrooms: property.bathrooms === undefined ? null : property.bathrooms,
-      area: property.area === undefined ? null : property.area,
-      amenities: property.amenities,
-      images: property.images,
-      status: property.status,
-      owner: populatedOwner
-        ? {
-          id: populatedOwner._id,
-          name:
-            (populatedOwner.user && populatedOwner.user.name) ||
-            populatedOwner.name ||
-            null,
-          email:
-            (populatedOwner.user && populatedOwner.user.email) ||
-            populatedOwner.email ||
-            null,
-          phone:
-            property.ownerDetails?.phone ||
-            (populatedOwner.user && populatedOwner.user.phone) ||
-            populatedOwner.phone ||
-            null,
-          idProofType:
-            property.ownerDetails?.idProofType || populatedOwner.idProofType || null,
-          idProofNumber:
-            property.ownerDetails?.idProofNumber || populatedOwner.idProofNumber || null,
-          idProofImageUrl:
-            property.ownerDetails?.idProofImageUrl || populatedOwner.idProofImageUrl || null,
-          // electricity fields
-          electricityBillNumber:
-            property.ownerDetails?.electricityBillNumber ||
-            populatedOwner.electricityBill ||
-            null,
-          electricityBillImageUrl:
-            property.ownerDetails?.electricityBillImageUrl ||
-            populatedOwner.electricityBillImageUrl ||
-            null,
-        }
-        : property.owner,
-      ownerDetails: property.ownerDetails,
-      createdAt: property.createdAt,
-    };
-
-    res.status(201).json({
+    return res.status(201).json({
       statusCode: 201,
       success: true,
       error: null,
       data: {
         message: "Property uploaded successfully",
-        property: returnedProperty,
+        property,
       },
     });
   } catch (error) {
     console.error("Upload property error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       statusCode: 500,
       success: false,
-      error: {
-        message: "Internal server error",
-        details: error.message,
-      },
+      error: { message: "Internal server error", details: error.message },
       data: null,
     });
   }
@@ -245,9 +157,11 @@ const getOwnerProperties = async (req, res) => {
           deposit: property.deposit === undefined ? null : property.deposit,
           listingType: property.listingType,
           price: property.price === undefined ? null : property.price,
-          propertyType: property.propertyType === undefined ? null : property.propertyType,
+          propertyType:
+            property.propertyType === undefined ? null : property.propertyType,
           bedrooms: property.bedrooms === undefined ? null : property.bedrooms,
-          bathrooms: property.bathrooms === undefined ? null : property.bathrooms,
+          bathrooms:
+            property.bathrooms === undefined ? null : property.bathrooms,
           area: property.area === undefined ? null : property.area,
           amenities: property.amenities,
           images: property.images,
@@ -312,16 +226,16 @@ const getProperty = async (req, res) => {
           owner.phone ||
           owner.mobile ||
           null,
-        idProofType:
-          perProp.idProofType || owner.idProofType || null,
-        idProofNumber:
-          perProp.idProofNumber || owner.idProofNumber || null,
+        idProofType: perProp.idProofType || owner.idProofType || null,
+        idProofNumber: perProp.idProofNumber || owner.idProofNumber || null,
         idProofImageUrl:
           perProp.idProofImageUrl || owner.idProofImageUrl || null,
         electricityBillNumber:
           perProp.electricityBillNumber || owner.electricityBill || null,
         electricityBillImageUrl:
-          perProp.electricityBillImageUrl || owner.electricityBillImageUrl || null,
+          perProp.electricityBillImageUrl ||
+          owner.electricityBillImageUrl ||
+          null,
         verified: owner.verified || false,
       };
     }
@@ -341,9 +255,11 @@ const getProperty = async (req, res) => {
           deposit: property.deposit === undefined ? null : property.deposit,
           listingType: property.listingType,
           price: property.price === undefined ? null : property.price,
-          propertyType: property.propertyType === undefined ? null : property.propertyType,
+          propertyType:
+            property.propertyType === undefined ? null : property.propertyType,
           bedrooms: property.bedrooms === undefined ? null : property.bedrooms,
-          bathrooms: property.bathrooms === undefined ? null : property.bathrooms,
+          bathrooms:
+            property.bathrooms === undefined ? null : property.bathrooms,
           area: property.area === undefined ? null : property.area,
           amenities: property.amenities,
           images: property.images,
@@ -385,7 +301,7 @@ const updateProperty = async (req, res) => {
     area,
     amenities,
     images,
-    ownerDetails, // allow ownerDetails object
+    ownerDetails,
   } = req.body;
 
   const allowedUpdates = [
@@ -405,10 +321,10 @@ const updateProperty = async (req, res) => {
     "ownerDetails",
   ];
 
-  // Validate only allowed fields are being updated
   const isValidOperation = Object.keys(req.body).every((update) =>
     allowedUpdates.includes(update)
   );
+
   if (!isValidOperation) {
     return res.status(400).json({
       statusCode: 400,
@@ -422,20 +338,18 @@ const updateProperty = async (req, res) => {
   }
 
   try {
-    // Find owner
+    // 1️⃣ Find owner
     const owner = await Owner.findOne({ user: req.user._id });
     if (!owner) {
       return res.status(403).json({
         statusCode: 403,
         success: false,
-        error: {
-          message: "Owner profile not found",
-        },
+        error: { message: "Owner profile not found" },
         data: null,
       });
     }
 
-    // Find property belonging to owner
+    // 2️⃣ Find property
     const property = await Property.findOne({
       _id: req.params.id,
       owner: owner._id,
@@ -453,7 +367,7 @@ const updateProperty = async (req, res) => {
       });
     }
 
-    // If approved/published, re-approval needed
+    // 3️⃣ If approved/published → reset to pending
     if (
       property.status === PROPERTY_STATUS.APPROVED ||
       property.status === PROPERTY_STATUS.PUBLISHED
@@ -461,99 +375,81 @@ const updateProperty = async (req, res) => {
       property.status = PROPERTY_STATUS.PENDING;
     }
 
-    // Update fields explicitly
+    // 4️⃣ Apply raw updates first
     if (title !== undefined) property.title = title;
     if (description !== undefined) property.description = description;
     if (location !== undefined) property.location = location;
-    if (rent !== undefined) property.rent = rent;
-    if (deposit !== undefined) property.deposit = deposit;
     if (listingType !== undefined) property.listingType = listingType;
-    if (price !== undefined) property.price = price;
-    if (propertyType !== undefined) property.propertyType = propertyType;
-    if (bedrooms !== undefined) property.bedrooms = bedrooms;
-    if (bathrooms !== undefined) property.bathrooms = bathrooms;
     if (area !== undefined) property.area = area;
     if (amenities !== undefined) property.amenities = amenities || [];
     if (images !== undefined) property.images = images || [];
 
-    // Update ownerDetails if provided (merge)
+    const normalizedListingType = (property.listingType || "").toLowerCase();
+
+    // ------------------------------------------------
+    // 🔐 ENFORCE LISTING TYPE RULES (MAIN FIX)
+    // ------------------------------------------------
+    if (normalizedListingType === "commercial") {
+      property.propertyType = "office"; // ✅ VALID ENUM
+      property.bedrooms = 0;
+      property.bathrooms = 0;
+      property.rent = null;
+      property.deposit = null;
+      property.price = price ?? property.price ?? null;
+
+      if (property.price === null) {
+        return res.status(400).json({
+          statusCode: 400,
+          success: false,
+          error: { message: "Price is required for commercial property" },
+          data: null,
+        });
+      }
+    } else if (normalizedListingType === "rent") {
+      property.propertyType =
+        propertyType || property.propertyType || "apartment";
+      property.bedrooms = bedrooms ?? property.bedrooms ?? 0;
+      property.bathrooms = bathrooms ?? property.bathrooms ?? 0;
+      property.rent = rent ?? property.rent ?? null;
+      property.deposit = deposit ?? property.deposit ?? null;
+      property.price = null;
+    } else {
+      // sell / lease
+      property.propertyType =
+        propertyType || property.propertyType || "apartment";
+      property.bedrooms = bedrooms ?? property.bedrooms ?? 0;
+      property.bathrooms = bathrooms ?? property.bathrooms ?? 0;
+      property.price = price ?? property.price ?? null;
+      property.rent = null;
+      property.deposit = null;
+    }
+
+    // 5️⃣ Owner details merge
     if (ownerDetails) {
       property.ownerDetails = {
         ...property.ownerDetails,
         ...ownerDetails,
       };
-
-      // sync with Owner model fallback fields (only set if Owner missing those fields)
-      if (ownerDetails.electricityBillNumber && !owner.electricityBill) {
-        owner.electricityBill = ownerDetails.electricityBillNumber;
-      }
-      if (ownerDetails.electricityBillImageUrl && !owner.electricityBillImageUrl) {
-        owner.electricityBillImageUrl = ownerDetails.electricityBillImageUrl;
-      }
-      await owner.save();
     }
 
-    const normalizedListingType = (property.listingType || "").toString();
-
-    // Enforce commercial rule AFTER applying updates
-    if (normalizedListingType === "commercial") {
-      property.bedrooms = null;
-      property.bathrooms = null;
-      property.propertyType = null;
-      property.rent = null;
-      property.deposit = null;
-
-    } else if (normalizedListingType === "rent") {
-
-      property.price = null;
-
-    } else {
-
-      property.rent = null;
-      property.deposit = null;
-
-    }
     property.updatedAt = new Date();
     await property.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       statusCode: 200,
       success: true,
       error: null,
       data: {
         message: "Property updated successfully",
-        property: {
-          id: property._id,
-          title: property.title,
-          description: property.description,
-          location: property.location,
-          rent: property.rent === undefined ? null : property.rent,
-          deposit: property.deposit === undefined ? null : property.deposit,
-          listingType: property.listingType,
-          price: property.price === undefined ? null : property.price,
-          propertyType: property.propertyType === undefined ? null : property.propertyType,
-          bedrooms: property.bedrooms === undefined ? null : property.bedrooms,
-          bathrooms: property.bathrooms === undefined ? null : property.bathrooms,
-          area: property.area === undefined ? null : property.area,
-          amenities: property.amenities,
-          images: property.images,
-          status: property.status,
-          owner: property.owner,
-          ownerDetails: property.ownerDetails || {},
-          createdAt: property.createdAt,
-          updatedAt: property.updatedAt,
-        },
+        property,
       },
     });
   } catch (error) {
     console.error("Update property error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       statusCode: 500,
       success: false,
-      error: {
-        message: "Internal server error",
-        details: error.message,
-      },
+      error: { message: "Internal server error", details: error.message },
       data: null,
     });
   }

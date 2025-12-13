@@ -651,7 +651,7 @@ const AddPropertyModal = ({
             <p className="section-subtitle">Enter owner information</p>
 
             <div className="form-group">
-              <label htmlFor="email">Owner Email *</label>
+              <label htmlFor="email">Owner Email</label>
               <input
                 type="email"
                 id="email"
@@ -661,14 +661,13 @@ const AddPropertyModal = ({
                 onBlur={!isEdit ? handleEmailBlur : undefined}
                 placeholder="owner@example.com"
                 disabled={checkingOwner}
-                required
               />
               {checkingOwner && <small>Checking...</small>}
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="name">Owner Name *</label>
+                <label htmlFor="name">Owner Name</label>
                 <input
                   type="text"
                   id="name"
@@ -677,12 +676,11 @@ const AddPropertyModal = ({
                   onChange={handleOwnerChange}
                   placeholder="John Doe"
                   disabled={ownerExists && !isEdit}
-                  required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="phone">Owner Phone *</label>
+                <label htmlFor="phone">Owner Phone</label>
                 <input
                   type="tel"
                   id="phone"
@@ -691,7 +689,6 @@ const AddPropertyModal = ({
                   onChange={handleOwnerChange}
                   placeholder="+1234567890"
                   disabled={ownerExists && !isEdit}
-                  required
                 />
               </div>
             </div>
@@ -700,7 +697,7 @@ const AddPropertyModal = ({
               <>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="idProofType">ID Proof Type *</label>
+                    <label htmlFor="idProofType">ID Proof Type</label>
                     <select
                       id="idProofType"
                       name="idProofType"
@@ -708,7 +705,6 @@ const AddPropertyModal = ({
                       onChange={handleOwnerChange}
                       className="form-select"
                       disabled={ownerExists && !isEdit}
-                      required
                     >
                       <option value="">Select ID Proof</option>
                       {idProofTypes.map((type) => (
@@ -720,7 +716,7 @@ const AddPropertyModal = ({
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="idProofNumber">ID Proof Number *</label>
+                    <label htmlFor="idProofNumber">ID Proof Number</label>
                     <input
                       type="text"
                       id="idProofNumber"
@@ -729,13 +725,12 @@ const AddPropertyModal = ({
                       onChange={handleOwnerChange}
                       placeholder="1234-5678-9012"
                       disabled={ownerExists && !isEdit}
-                      required
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="idProof">ID Proof Image *</label>
+                  <label htmlFor="idProof">ID Proof Image</label>
                   <div className="file-upload-area">
                     <input
                       type="file"
