@@ -31,7 +31,7 @@ const AddProperty = ({ onClose, onSuccess }) => {
     ownerPhone: '',
     idProofType: 'Aadhar',
     idProofNumber: '',
-    electricityBillNumber: '' // Added electricity bill number
+    electricityBill: '' 
   })
 
   const [idProofFile, setIdProofFile] = useState(null)
@@ -354,8 +354,8 @@ const AddProperty = ({ onClose, onSuccess }) => {
       setError('ID Proof Image is required')
       return false
     }
-    // Electricity Bill Validation (MANDATORY)
-    if (!formData.electricityBillNumber.trim()) {
+    // Electricity Bill Validation (MANDATORY) - Changed field name
+    if (!formData.electricityBill.trim()) {
       setError('Electricity Bill Number is required')
       return false
     }
@@ -484,8 +484,8 @@ const AddProperty = ({ onClose, onSuccess }) => {
           ownerIdProofType: formData.idProofType,
           ownerIdProofNumber: formData.idProofNumber,
           ownerIdProofImageUrl: idProofUrl,
-          // Electricity Bill Details (MANDATORY)
-          ownerElectricityBillNumber: formData.electricityBillNumber,
+          // Electricity Bill Details (MANDATORY) - Changed field name to match backend
+          ownerElectricityBill: formData.electricityBill,
           ownerElectricityBillImageUrl: electricityBillUrl
         }),
       })
@@ -609,15 +609,15 @@ const AddProperty = ({ onClose, onSuccess }) => {
                 </div>
               </div>
 
-              {/* Electricity Bill Section */}
+              {/* Electricity Bill Section - Changed field name */}
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="electricityBillNumber">Electricity Bill Number *</label>
+                  <label htmlFor="electricityBill">Electricity Bill Number *</label>
                   <input
                     type="text"
-                    id="electricityBillNumber"
-                    name="electricityBillNumber"
-                    value={formData.electricityBillNumber}
+                    id="electricityBill"
+                    name="electricityBill"
+                    value={formData.electricityBill}
                     onChange={handleInputChange}
                     placeholder="Enter Electricity Bill Number"
                     required

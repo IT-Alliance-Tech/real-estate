@@ -26,7 +26,7 @@ const AddPropertyModal = ({
     idProofType: "",
     idProofNumber: "",
     idProofImageUrl: "",
-    electricityBillNumber: "",
+    electricityBill: "",
     electricityBillImageUrl: "",
   });
 
@@ -126,10 +126,12 @@ const AddPropertyModal = ({
         owner.user?.id_proof_image_url ||
         owner.user?.id_proof_image ||
         "",
-      electricityBillNumber:
-        owner.electricityBillNumber ||
+      electricityBill:
+        owner.electricityBill ||
+      
         owner.electricity_bill_number ||
-        owner.user?.electricityBillNumber ||
+        owner.user?.electricityBill ||
+        
         "",
       electricityBillImageUrl:
         owner.electricityBillImageUrl ||
@@ -227,7 +229,7 @@ const AddPropertyModal = ({
             idProofType: data.data.owner?.idProofType || "",
             idProofNumber: data.data.owner?.idProofNumber || "",
             idProofImageUrl: data.data.owner?.idProofImageUrl || "",
-            electricityBillNumber: data.data.owner?.electricityBillNumber || "",
+            electricityBill: data.data.owner?.electricityBill || data.data.owner?.electricityBill || "",
             electricityBillImageUrl: data.data.owner?.electricityBillImageUrl || "",
           }));
 
@@ -245,7 +247,7 @@ const AddPropertyModal = ({
             idProofType: "",
             idProofNumber: "",
             idProofImageUrl: "",
-            electricityBillNumber: "",
+            electricityBill: "",
             electricityBillImageUrl: "",
           }));
 
@@ -560,8 +562,8 @@ const AddPropertyModal = ({
       };
 
       // Add electricity bill only if provided
-      if (ownerData.electricityBillNumber) {
-        ownerPayload.electricityBillNumber = ownerData.electricityBillNumber;
+      if (ownerData.electricityBill) {
+        ownerPayload.electricityBill = ownerData.electricityBill;
       }
       if (electricityBillUrl) {
         ownerPayload.electricityBillImageUrl = electricityBillUrl;
@@ -765,12 +767,12 @@ const AddPropertyModal = ({
 
                 {/* Electricity Bill Number */}
                 <div className="form-group">
-                  <label htmlFor="electricityBillNumber">Electricity Bill Number</label>
+                  <label htmlFor="electricityBill">Electricity Bill Number</label>
                   <input
                     type="text"
-                    id="electricityBillNumber"
-                    name="electricityBillNumber"
-                    value={ownerData.electricityBillNumber}
+                    id="electricityBill"
+                    name="electricityBill"
+                    value={ownerData.electricityBill}
                     onChange={handleOwnerChange}
                     placeholder="EB-123456789"
                     disabled={ownerExists && !isEdit}
