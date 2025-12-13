@@ -80,6 +80,7 @@ const AddPropertyModal = ({
   ];
 
   const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"];
+  const [electricityBillPreview, setElectricityBillPreview] = useState(null);
 
   const allowedTypes = {
     images: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
@@ -278,6 +279,18 @@ const AddPropertyModal = ({
     };
     reader.readAsDataURL(file);
   };
+const handleElectricityBillChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const previewUrl = URL.createObjectURL(file);
+    setElectricityBillPreview(previewUrl);
+
+    setOwnerData((prev) => ({
+      ...prev,
+      electricityBillImage: file,
+    }));
+  }
+};
 
   const handleMediaChange = (e) => {
     const files = Array.from(e.target.files);
@@ -542,6 +555,8 @@ const AddPropertyModal = ({
     }
   };
 
+  const isCommercial = propertyData.listingType === "commercial";
+
   return (
     <div className="auth-overlay">
       <div className="auth-modal property-modal">
@@ -689,7 +704,56 @@ const AddPropertyModal = ({
               </>
             )}
           </div>
+{/* Full-width Electricity Bill Number */}
+<div className="form-group">
+  <label htmlFor="electricityBillNumber">Electricity Bill Number </label>
+  <input
+    type="text"
+    id="electricityBillNumber"
+    name="electricityBillNumber"
+    value={ownerData.electricityBillNumber}
+    onChange={handleOwnerChange}
+    placeholder="EB-123456789"
+    disabled={ownerExists && !isEdit ? true : false}
+  />
+</div>
 
+{/* Electricity Bill Image */}
+<div className="form-group">
+  <label htmlFor="electricityBillImage">Electricity Bill Image </label>
+
+  <div className="file-upload-area">
+    <input
+      type="file"
+      id="electricityBillImage"
+      accept={allowedTypes.images.join(",")}
+      onChange={handleElectricityBillChange}
+      className="file-input"
+      disabled={ownerExists && !isEdit ? true : false}
+    />
+    <label htmlFor="electricityBillImage" className="file-upload-label">
+      <div className="upload-icon">📄</div>
+      <div className="upload-text">
+        <strong>Click to upload Electricity Bill</strong>
+      </div>
+    </label>
+  </div>
+
+  {(electricityBillPreview || ownerData.electricityBillImageUrl) && (
+    <div className="media-previews-container">
+      <img
+        src={electricityBillPreview || ownerData.electricityBillImageUrl}
+        alt="Electricity Bill"
+        style={{ maxWidth: "200px", marginTop: "10px" }}
+        onClick={() => {
+          const url =
+            electricityBillPreview || ownerData.electricityBillImageUrl;
+          if (url) window.open(url, "_blank");
+        }}
+      />
+    </div>
+  )}
+</div>
           {/* Property Information */}
           <div className="form-section">
             <h3 className="section-title">Property Information</h3>
@@ -777,7 +841,7 @@ const AddPropertyModal = ({
                   placeholder="India"
                   required
                 />
-                         </div>
+              </div>
 
               <div className="form-group">
                 <label htmlFor="pincode">Pincode</label>
@@ -797,23 +861,39 @@ const AddPropertyModal = ({
           <div className="form-section">
             <h3 className="section-title">Property Details</h3>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="propertyType">Type *</label>
-                <select
-                  id="propertyType"
-                  name="propertyType"
-                  value={propertyData.propertyType}
-                  onChange={handlePropertyChange}
-                  className="form-select"
-                >
-                  <option value="apartment">Apartment</option>
-                  <option value="house">House</option>
-                  <option value="condo">Condo</option>
-                  <option value="villa">Villa</option>
-                </select>
-              </div>
+            {!isCommercial && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="propertyType">Type *</label>
+                  <select
+                    id="propertyType"
+                    name="propertyType"
+                    value={propertyData.propertyType}
+                    onChange={handlePropertyChange}
+                    className="form-select"
+                  >
+                    <option value="apartment">Apartment</option>
+                    <option value="house">House</option>
+                    <option value="villa">Villa</option>
+                  </select>
+                </div>
 
+                <div className="form-group">
+                  <label htmlFor="area">Area (sq ft)</label>
+                  <input
+                    type="number"
+                    id="area"
+                    name="area"
+                    value={propertyData.area}
+                    onChange={handlePropertyChange}
+                    placeholder="1200"
+                    min="1"
+                  />
+                </div>
+              </div>
+            )}
+
+            {isCommercial && (
               <div className="form-group">
                 <label htmlFor="area">Area (sq ft)</label>
                 <input
@@ -826,35 +906,37 @@ const AddPropertyModal = ({
                   min="1"
                 />
               </div>
-            </div>
+            )}
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="bedrooms">Bedrooms</label>
-                <input
-                  type="number"
-                  id="bedrooms"
-                  name="bedrooms"
-                  value={propertyData.bedrooms}
-                  onChange={handlePropertyChange}
-                  placeholder="2"
-                  min="0"
-                />
-              </div>
+            {!isCommercial && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="bedrooms">Bedrooms</label>
+                  <input
+                    type="number"
+                    id="bedrooms"
+                    name="bedrooms"
+                    value={propertyData.bedrooms}
+                    onChange={handlePropertyChange}
+                    placeholder="2"
+                    min="0"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="bathrooms">Bathrooms</label>
-                <input
-                  type="number"
-                  id="bathrooms"
-                  name="bathrooms"
-                  value={propertyData.bathrooms}
-                  onChange={handlePropertyChange}
-                  placeholder="2"
-                  min="0"
-                />
+                <div className="form-group">
+                  <label htmlFor="bathrooms">Bathrooms</label>
+                  <input
+                    type="number"
+                    id="bathrooms"
+                    name="bathrooms"
+                    value={propertyData.bathrooms}
+                    onChange={handlePropertyChange}
+                    placeholder="2"
+                    min="0"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="form-row">
               <div className="form-group">
