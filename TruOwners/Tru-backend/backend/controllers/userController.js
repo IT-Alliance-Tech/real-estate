@@ -140,6 +140,12 @@ const getAllProperties = async (req, res) => {
         case 'area_desc':
           sortQuery = { area: -1 };
           break;
+        case 'price_asc':
+          sortQuery = { price: 1 };
+          break;
+        case 'price_desc':
+          sortQuery = { price: -1 };
+          break;
         case 'newest':
           sortQuery = { createdAt: -1 };
           break;
@@ -179,6 +185,8 @@ const getAllProperties = async (req, res) => {
           location: property.location,
           rent: property.rent,
           deposit: property.deposit,
+          listingType: property.listingType,
+          price: property.price,
           propertyType: property.propertyType,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
@@ -272,16 +280,24 @@ const getPropertyById = async (req, res) => {
     let candidates = [];
 
     // step 1: same city + rent range
-    const rentRange = {
-      $gte: property.rent * 0.8,
-      $lte: property.rent * 1.2
-    };
+    // step 1: same city + rent/price range
+    let priceOrRent = property.listingType === 'rent' ? property.rent : property.price;
+    const fieldToCheck = property.listingType === 'rent' ? 'rent' : 'price';
+
+    const rangeFilter = {};
+    if (priceOrRent) {
+      rangeFilter[fieldToCheck] = {
+        $gte: priceOrRent * 0.8,
+        $lte: priceOrRent * 1.2
+      };
+    }
 
     candidates = await Property.find({
       _id: { $ne: property._id },
       'location.city': property.location.city,
       propertyType: property.propertyType,
-      rent: rentRange,
+      listingType: property.listingType,
+      ...rangeFilter,
       status: 'published'
     }).lean();
 
@@ -291,6 +307,7 @@ const getPropertyById = async (req, res) => {
         _id: { $ne: property._id },
         'location.city': property.location.city,
         propertyType: property.propertyType,
+        listingType: property.listingType,
         status: 'published'
       }).lean();
 
@@ -302,6 +319,7 @@ const getPropertyById = async (req, res) => {
       const extra = await Property.find({
         _id: { $ne: property._id },
         propertyType: property.propertyType,
+        listingType: property.listingType,
         status: 'published'
       }).lean();
 
@@ -309,9 +327,14 @@ const getPropertyById = async (req, res) => {
     }
 
     // sort by rent difference (closest first)
+    // sort by price/rent difference (closest first)
     candidates = candidates.sort(
-      (a, b) =>
-        Math.abs(a.rent - property.rent) - Math.abs(b.rent - property.rent)
+      (a, b) => {
+        const valA = a[fieldToCheck] || 0;
+        const valB = b[fieldToCheck] || 0;
+        const target = priceOrRent || 0;
+        return Math.abs(valA - target) - Math.abs(valB - target);
+      }
     );
 
     // take top 5
@@ -410,6 +433,8 @@ const addToWishlist = async (req, res) => {
             title: prop.title,
             location: prop.location,
             rent: prop.rent,
+            listingType: prop.listingType,
+            price: prop.price,
             images: prop.images
           })),
           totalItems: wishlist.properties.length
@@ -687,6 +712,8 @@ const getUserWishlist = async (req, res) => {
         location: property.location,
         rent: property.rent,
         deposit: property.deposit,
+        listingType: property.listingType,
+        price: property.price,
         propertyType: property.propertyType,
         bedrooms: property.bedrooms,
         bathrooms: property.bathrooms,
@@ -786,6 +813,8 @@ const removeFromWishlist = async (req, res) => {
             title: prop.title,
             location: prop.location,
             rent: prop.rent,
+            listingType: prop.listingType,
+            price: prop.price,
             images: prop.images
           })),
           totalItems: wishlist.properties.length

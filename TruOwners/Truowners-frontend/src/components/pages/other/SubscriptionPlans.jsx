@@ -74,7 +74,7 @@ const SubscriptionPlans = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success && data.data.paymentUrl) {
         // Redirect to PhonePe payment page
         window.location.href = data.data.paymentUrl;
@@ -95,8 +95,8 @@ const SubscriptionPlans = () => {
       return {
         theme: "silver",
         icon: "🥈",
-        gradient: "linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%)",
-        accent: "#7f8c8d",
+        gradient: "linear-gradient(135deg, #94d0cbff 0%, #CFDEF3 100%)",
+        accent: "#5fa5a9ff",
         shadow: "0 10px 30px rgba(189, 195, 199, 0.4)"
       };
     }
@@ -149,7 +149,7 @@ const SubscriptionPlans = () => {
           <p className="sub-title">
             Get direct access to verified property owners. No middlemen, no hidden fees.
           </p>
-          
+
           {currentSubscription && (
             <div className="active-subscription-banner">
               <div className="active-sub-content">
@@ -173,8 +173,8 @@ const SubscriptionPlans = () => {
             const isPopular = plan.name.toLowerCase().includes("gold");
 
             return (
-              <div 
-                key={plan._id} 
+              <div
+                key={plan._id}
                 className={`premium-plan-card ${isPopular ? 'popular-card' : ''} ${isCurrent ? 'current-card' : ''}`}
               >
                 {isPopular && <div className="popular-tag">Most Popular</div>}
@@ -212,9 +212,9 @@ const SubscriptionPlans = () => {
 
                   <button
                     className={`action-button ${isCurrent ? 'disabled' : ''}`}
-                    style={{ 
+                    style={{
                       background: isCurrent ? '#ccc' : style.accent,
-                      boxShadow: isCurrent ? 'none' : style.shadow 
+                      boxShadow: isCurrent ? 'none' : style.shadow
                     }}
                     onClick={() => !isCurrent && handleSubscribe(plan)}
                     disabled={subscribing === plan._id || isCurrent}

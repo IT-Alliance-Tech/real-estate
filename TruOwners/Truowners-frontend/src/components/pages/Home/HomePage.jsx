@@ -234,16 +234,16 @@ const HomePage = () => {
       setLoading(false)
     }
   }
-const handleSearch = () => {
-  console.log("Property Type:", filters.propertyType);
-  console.log("Bedrooms:", filters.bedrooms);
-  console.log("Type:", activeTab); // ✅ This is what you were missing
+  const handleSearch = () => {
+    console.log("Property Type:", filters.propertyType);
+    console.log("Bedrooms:", filters.bedrooms);
+    console.log("Type:", activeTab); // ✅ This is what you were missing
 
-  // Navigate to properties page with query params
-  navigate(
-    `/properties?propertyType=${filters.propertyType}&bedrooms=${filters.bedrooms}&listingType=${activeTab}`
-  );
-};
+    // Navigate to properties page with query params
+    navigate(
+      `/properties?propertyType=${filters.propertyType}&bedrooms=${filters.bedrooms}&listingType=${activeTab}`
+    );
+  };
   const fetchWishlist = async () => {
     if (!isAuthenticated || !token) return
 
@@ -434,14 +434,14 @@ const handleSearch = () => {
       </div>
     )
   }
-  
+
   return (
     <>
       <div className="homepage">
         <div className="container">
           {/* 🌟 Premium Subscription Banner */}
           <SubscriptionAdBanner />
-          
+
           <motion.section
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -474,7 +474,7 @@ const handleSearch = () => {
                         <div className="card-g  bg-col1">
                           <div className="row-g">
                             <div className="col-left">
-                                <img src={icon1} style={{ width: '50px' }} />
+                              <img src={icon1} style={{ width: '50px' }} />
                             </div>
                             <div className="col-right">
                               <h3>Verified Listings
@@ -488,7 +488,7 @@ const handleSearch = () => {
                       <div className="slide"> <div className="card-g bg-col2">
                         <div className="row-g">
                           <div className="col-left">
-                           <img src={icon2} style={{ width: '50px' }} />
+                            <img src={icon2} style={{ width: '50px' }} />
                           </div>
                           <div className="col-right">
                             <h3>Find the best deal</h3>
@@ -500,7 +500,7 @@ const handleSearch = () => {
                       <div className="slide"> <div className="card-g bg-col3">
                         <div className="row-g">
                           <div className="col-left">
-                             <img src={icon3} style={{ width: '50px' }} />
+                            <img src={icon3} style={{ width: '50px' }} />
                           </div>
                           <div className="col-right">
                             <h3>Get ready to apply</h3>
@@ -526,358 +526,359 @@ const handleSearch = () => {
             </div>
           </motion.section>
 
-         <motion.section 
-           className="res-sec"
-           initial={{ opacity: 0, y: 50 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           viewport={{ once: true }}
-           transition={{ duration: 0.8, delay: 0.2 }}
-         >
-  <div
-    style={{
-      textAlign: "center",
-      padding: "50px 0 0 0",
-      width: "70%",
-      margin: "0 auto",
-    }}
-  >
-    <p className="head-size" style={{ fontSize: "50px" }}>Residential</p>
-    <p
-      className="para-pad"
-      style={{ paddingBottom: "50px", fontSize: "16px" }}
-    >
-      Find your dream home with Tru Owners. Explore a wide range of verified
-      residential listings including apartments, villas, plots, and independent
-      houses.
-    </p>
-  </div>
-  
-  <div className="container-image">
-    {/* Left Column */}
-    <div className="left-col">
-      {propertyData.leftCol.map((row, rowIndex) => (
-        <div key={rowIndex} className="row1">
-          {row.map((item, index) => (
-            <div
-              key={index}
-              className={`img-box ${item.size}`}
-              style={{ backgroundImage: `url(${item.backgroundImage})` }}
-              onClick={() =>
-                navigate(
-                  `/properties?propertyType=${item.propertyType.toLowerCase()}&listingType=${activeTab.toLowerCase()}`
-                )
-              }
-            >
-              <div className="overlay-1">
-                <h4>{item.propertyType}</h4>
-                <p style={{ fontWeight: 600, fontStyle: 'italic', marginTop: '5px' }}>
-                  {item.listingType}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-    {/* Right Column */}
-    <div className="right-col">
-      {/* Independent House */}
-      <div
-        className="img-box full-height"
-        style={{
-          backgroundImage: `url(${propertyData.rightCol.independent.backgroundImage})`,
-        }}
-        onClick={() =>
-          navigate(
-            `/properties?propertyType=${propertyData.rightCol.independent.propertyType.toLowerCase()}&listingType=${activeTab.toLowerCase()}`
-          )
-        }
-      >
-        <div className="overlay-1">
-          <h4>{propertyData.rightCol.independent.propertyType}</h4>
-          <p style={{ fontWeight: 600, fontStyle: 'italic', marginTop: '5px' }}>
-            {propertyData.rightCol.independent.listingType}
-          </p>
-        </div>
-      </div>
-
-      {/* Commercial Text Box */}
-      <div className="text-box">
-        <h2>{propertyData.rightCol.commercial.heading}</h2>
-       
-        <p>{propertyData.rightCol.commercial.description}</p>
-      </div>
-    </div>
-  </div>
-</motion.section>
-
-</div>
-
-          {/* Properties Grid */}
-          <motion.div 
-            className="properties-section" 
-            style={{ background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)' }}
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="properties-header" >
-              {/* Commented section kept as is */}
-              <h2>Based on your location</h2>
-              <p>Some of our picked properties near you location.</p>
-            </div>
-
-           {filteredProperties.length === 0 ? (
-  <div className="empty-properties d-flex flex-column align-items-center text-center">
-    <div className="empty-icon">🏠</div>
-    <h3>No properties match your criteria</h3>
-    <p>Try adjusting your filters or search terms to see more results.</p>
-    <button
-      className="btn btn-primary"
-      onClick={() => {
-        setFilters({
-          location: '',
-          propertyType: 'all',
-          priceRange: { min: 0, max: 10000 },
-          bedrooms: 'any',
-          amenities: []
-        })
-        setSearchTerm('')
-      }}
-    >
-      Clear All Filters
-    </button>
-  </div>
-) : (
-  // your list…
-
-              <div className="properties-grid">
-                {filteredProperties.map((property, index) => (
-                  <motion.div
-                    key={property.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    <PropertyCard
-                      property={property}
-                      // isInWishlist={wishlist.includes(property.id)}
-                      onWishlistToggle={() => handleWishlistToggle(property.id)}
-                      onClick={() => handlePropertyClick(property)}
-                      onLoginRequired={handleLoginRequired}
-                      isAuthenticated={isAuthenticated}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            )}
-            <div className="button-color">
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={() => navigate(`/properties?city=bengaluru`)}
-                sx={{
-                  mt: 1,
-                  pt: 1,
-                  fontFamily: "Poppins, sans-serif",
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  maxWidth: "10rem",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                SHOW MORE
-              </Button>
-            </div>
-
-          </motion.div>
-          <motion.section 
-            className="about-cta"
+          <motion.section
+            className="res-sec"
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="three-column-layout">
-  {/* Column 3 (Form) */}
-  <div className="column form-column">
-    <form>
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-        <img src={truOwnersLogo} alt="TruOwners Logo" style={{ width: '200px' }} />
-        <label className='title-color'>VIEW LISTINGS</label>
-      </div>
-
-      <input type="text" placeholder="NAME" />
-      <input type="email" placeholder="EMAIL ADDRESS" />
-      <input type="number" placeholder="PHONE NUMBER" />
-
-      <textarea placeholder="HELLO, I AM INTERESTED IN 2 BHK 2ND FLOOR, NORTH FACING MAIN DOOR, 32000 RENT." rows="4"></textarea>
-
-      <select>
-        <option value="">INTERESTED IN</option>
-        <option value="SELL">SELL</option>
-        <option value="RENT">RENT</option>
-        <option value="LEASE">LEASE</option>
-      </select>
-
-      <label style={{ color: '#000' }}>
-        <input type="checkbox" /> By submitting this form I agree to Terms of Use
-      </label>
-
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', columnGap: '20px' }}>
-        <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>SEND MESSAGE</button>
-        <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>CALL</button>
-      </div>
-
-      <div className='whatsapp-btn'>
-        <button type="submit" className="submit-btn mar-btn1">WHATSAPP</button>
-      </div>
-    </form>
-  </div>
-
-  {/* Column 1 */}
-  <div className="column center1">
-    <div className="section12">
-      <h3 style={{ color: '#fff' }}>Putting a plan to action,
-        to assure your satisfaction!
-      </h3>
-      <p style={{ color: '#fff' }}>
-        Every property listed on our platform is thoroughly verified for authenticity, location accuracy,
-        and pricing—so you can rent or buy with complete confidence.
-      </p>
-    </div>
-  </div>
-</div>
-
-</motion.section>
-
-<motion.div
-  style={{
-    width: '100%',
-    background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)'
-  }}
-  initial={{ opacity: 0 }}
-  whileInView={{ opacity: 1 }}
-  viewport={{ once: true }}
-  transition={{ duration: 0.8 }}
->
-
-            <div className="testimonial-slider-container">
-              <h2
-                className="slider-title"
-                style={{
-                  textAlign: 'center',
-                  marginBottom: '10px',
-                  fontSize: '40px',
-                  color: '#000'
-                }}
-              >
-              What Our Happy Customers Say
-              </h2>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "50px 0 0 0",
+                width: "70%",
+                margin: "0 auto",
+              }}
+            >
+              <p className="head-size" style={{ fontSize: "50px" }}>Residential</p>
               <p
-                style={{
-                  textAlign: 'center',
-                  marginBottom: '40px',
-                  fontSize: '16px',
-                  color: '#000',
-                  opacity: '60%'
-                }}
+                className="para-pad"
+                style={{ paddingBottom: "50px", fontSize: "16px" }}
               >
-                See what our property managers, landlords, and tenants have to say
+                Find your dream home with Tru Owners. Explore a wide range of verified
+                residential listings including apartments, villas, plots, and independent
+                houses.
               </p>
+            </div>
 
-              <Swiper
-                modules={[Autoplay, Pagination, Navigation]}
-                spaceBetween={30}
-                slidesPerView={1}
-                autoplay={{
-                  delay: 3000,
-                  disableOnInteraction: false
+            <div className="container-image">
+              {/* Left Column */}
+              <div className="left-col">
+                {propertyData.leftCol.map((row, rowIndex) => (
+                  <div key={rowIndex} className="row1">
+                    {row.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`img-box ${item.size}`}
+                        style={{ backgroundImage: `url(${item.backgroundImage})` }}
+                        onClick={() =>
+                          navigate(
+                            `/properties?propertyType=${item.propertyType.toLowerCase()}&listingType=${activeTab.toLowerCase()}`
+                          )
+                        }
+                      >
+                        <div className="overlay-1">
+                          <h4>{item.propertyType}</h4>
+                          <p style={{ fontWeight: 600, fontStyle: 'italic', marginTop: '5px' }}>
+                            {item.listingType}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              {/* Right Column */}
+              <div className="right-col">
+                {/* Independent House */}
+                <div
+                  className="img-box full-height"
+                  style={{
+                    backgroundImage: `url(${propertyData.rightCol.independent.backgroundImage})`,
+                  }}
+                  onClick={() =>
+                    navigate(
+                      `/properties?propertyType=${propertyData.rightCol.independent.propertyType.toLowerCase()}&listingType=${activeTab.toLowerCase()}`
+                    )
+                  }
+                >
+                  <div className="overlay-1">
+                    <h4>{propertyData.rightCol.independent.propertyType}</h4>
+                    <p style={{ fontWeight: 600, fontStyle: 'italic', marginTop: '5px' }}>
+                      {propertyData.rightCol.independent.listingType}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Commercial Text Box */}
+                <div className="text-box">
+                  <h2>{propertyData.rightCol.commercial.heading}</h2>
+
+                  <p>{propertyData.rightCol.commercial.description}</p>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+        </div>
+
+        {/* Properties Grid */}
+        <motion.div
+          className="properties-section"
+          style={{ background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)' }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="properties-header" >
+            {/* Commented section kept as is */}
+            <h2>Based on your location</h2>
+            <p>Some of our picked properties near you location.</p>
+          </div>
+
+          {filteredProperties.length === 0 ? (
+            <div className="empty-properties d-flex flex-column align-items-center text-center">
+              <div className="empty-icon">🏠</div>
+              <h3>No properties match your criteria</h3>
+              <p>Try adjusting your filters or search terms to see more results.</p>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setFilters({
+                    location: '',
+                    propertyType: 'all',
+                    priceRange: { min: 0, max: 10000 },
+                    bedrooms: 'any',
+                    amenities: []
+                  })
+                  setSearchTerm('')
                 }}
-                loop={true}
-                navigation={true} // ✅ Enables arrows
-                breakpoints={{
-                  640: { slidesPerView: 1 },
-                  1024: { slidesPerView: 1 }
-                }}
-                style={{ padding: '20px' }}
               >
-                {testimonials.map((testimonial, index) => (
-                  <SwiperSlide
-                    key={index}
+                Clear All Filters
+              </button>
+            </div>
+          ) : (
+            // your list…
+
+            <div className="properties-grid">
+              {filteredProperties.map((property, index) => (
+                <motion.div
+                  key={property.id}
+                  initial={{ opacity: 0, y: 20, display: "flex", justifyContent: "center", alignItems: "center" }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <PropertyCard
+                    property={property}
+                    // isInWishlist={wishlist.includes(property.id)}
+                    onWishlistToggle={() => handleWishlistToggle(property.id)}
+                    onClick={() => handlePropertyClick(property)}
+                    onLoginRequired={handleLoginRequired}
+                    isAuthenticated={isAuthenticated}
+                    postType={property?.listingType ?? "Rent"}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+          <div className="button-color">
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              onClick={() => navigate(`/properties?city=bengaluru`)}
+              sx={{
+                mt: 1,
+                pt: 1,
+                fontFamily: "Poppins, sans-serif",
+                fontWeight: 600,
+                borderRadius: "8px",
+                maxWidth: "10rem",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              SHOW MORE
+            </Button>
+          </div>
+
+        </motion.div>
+        <motion.section
+          className="about-cta"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="three-column-layout">
+            {/* Column 3 (Form) */}
+            <div className="column form-column">
+              <form>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <img src={truOwnersLogo} alt="TruOwners Logo" style={{ width: '200px' }} />
+                  <label className='title-color'>VIEW LISTINGS</label>
+                </div>
+
+                <input type="text" placeholder="NAME" />
+                <input type="email" placeholder="EMAIL ADDRESS" />
+                <input type="number" placeholder="PHONE NUMBER" />
+
+                <textarea placeholder="HELLO, I AM INTERESTED IN 2 BHK 2ND FLOOR, NORTH FACING MAIN DOOR, 32000 RENT." rows="4"></textarea>
+
+                <select>
+                  <option value="">INTERESTED IN</option>
+                  <option value="SELL">SELL</option>
+                  <option value="RENT">RENT</option>
+                  <option value="LEASE">LEASE</option>
+                </select>
+
+                <label style={{ color: '#000' }}>
+                  <input type="checkbox" /> By submitting this form I agree to Terms of Use
+                </label>
+
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', columnGap: '20px' }}>
+                  <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>SEND MESSAGE</button>
+                  <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>CALL</button>
+                </div>
+
+                <div className='whatsapp-btn'>
+                  <button type="submit" className="submit-btn mar-btn1">WHATSAPP</button>
+                </div>
+              </form>
+            </div>
+
+            {/* Column 1 */}
+            <div className="column center1">
+              <div className="section12">
+                <h3 style={{ color: '#fff' }}>Putting a plan to action,
+                  to assure your satisfaction!
+                </h3>
+                <p style={{ color: '#fff' }}>
+                  Every property listed on our platform is thoroughly verified for authenticity, location accuracy,
+                  and pricing—so you can rent or buy with complete confidence.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </motion.section>
+
+        <motion.div
+          style={{
+            width: '100%',
+            background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)'
+          }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+
+          <div className="testimonial-slider-container">
+            <h2
+              className="slider-title"
+              style={{
+                textAlign: 'center',
+                marginBottom: '10px',
+                fontSize: '40px',
+                color: '#000'
+              }}
+            >
+              What Our Happy Customers Say
+            </h2>
+            <p
+              style={{
+                textAlign: 'center',
+                marginBottom: '40px',
+                fontSize: '16px',
+                color: '#000',
+                opacity: '60%'
+              }}
+            >
+              See what our property managers, landlords, and tenants have to say
+            </p>
+
+            <Swiper
+              modules={[Autoplay, Pagination, Navigation]}
+              spaceBetween={30}
+              slidesPerView={1}
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false
+              }}
+              loop={true}
+              navigation={true} // ✅ Enables arrows
+              breakpoints={{
+                640: { slidesPerView: 1 },
+                1024: { slidesPerView: 1 }
+              }}
+              style={{ padding: '20px' }}
+            >
+              {testimonials.map((testimonial, index) => (
+                <SwiperSlide
+                  key={index}
+                  style={{
+                    height: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <div className="div-test"
                     style={{
-                      height: 'auto',
+                      borderRadius: '10px',
+                      padding: '30px',
+                      height: '250px',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      textAlign: 'center'
                     }}
                   >
-                    <div className="div-test"
+                    <p
                       style={{
-                        borderRadius: '10px',
-                        padding: '30px',
-                        height: '250px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center'
+                        fontSize: '16px',
+                        lineHeight: '1.6',
+                        marginBottom: '20px',
+                        flexGrow: 1
                       }}
                     >
-                      <p
-                        style={{
-                          fontSize: '16px',
-                          lineHeight: '1.6',
-                          marginBottom: '20px',
-                          flexGrow: 1
-                        }}
-                      >
-                        "{testimonial.text}"
-                      </p>
+                      "{testimonial.text}"
+                    </p>
 
-                      <img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        style={{
-                          width: '50px',
-                          height: '50px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          marginBottom: '10px'
-                        }}
-                      />
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        marginBottom: '10px'
+                      }}
+                    />
 
-                      <h4
-                        style={{
-                          margin: '0',
-                          fontSize: '1.1rem',
-                          color: '#000'
-                        }}
-                      >
-                        {testimonial.name}
-                      </h4>
-                      <p
-                        style={{
-                          margin: '5px 0 0',
-                          fontSize: '0.9rem',
-                          color: '#000',
-                          opacity: '60%'
-                        }}
-                      >
-                        {testimonial.role}
-                      </p>
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            </div>
-          </motion.div>
+                    <h4
+                      style={{
+                        margin: '0',
+                        fontSize: '1.1rem',
+                        color: '#000'
+                      }}
+                    >
+                      {testimonial.name}
+                    </h4>
+                    <p
+                      style={{
+                        margin: '5px 0 0',
+                        fontSize: '0.9rem',
+                        color: '#000',
+                        opacity: '60%'
+                      }}
+                    >
+                      {testimonial.role}
+                    </p>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </motion.div>
       </div>
-      
+
 
       {/* Modals */}
       {showAuthPrompt && (

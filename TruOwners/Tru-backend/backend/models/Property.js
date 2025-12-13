@@ -2,24 +2,34 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const propertySchema = new Schema({
-  owner: { type: Schema.Types.ObjectId, ref: 'Owner', required: true },
+  owner: { type: Schema.Types.ObjectId, ref: 'Owner', default: null },
   title: { type: String, required: true },
   description: { type: String },
   location: {
     address: String,
     city: String,
     state: String,
+    pincode: String,
     country: String,
     coordinates: {
       lat: Number,
       lng: Number
     }
   },
-  rent: { type: Number, required: true },
+  ownerDetails: {
+    phone: String,
+    idProofType: String,
+    idProofNumber: String,
+    idProofImageUrl: String,
+    name: String, // Optional, can be used if different from profile
+    email: String // Optional
+  },
+  rent: { type: Number }, // Made optional as it's not needed for sale
+  price: { type: Number }, // Unified field for Sale Price, Commercial Price, Lease Amount
   deposit: { type: Number },
   listingType: { 
     type: String, 
-    enum: ['rent', 'sell', 'lease'], 
+    enum: ['rent', 'sell', 'lease', 'commercial'], 
     default: 'rent' 
   },
   category: { 
