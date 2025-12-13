@@ -30,13 +30,19 @@ const AddProperty = ({ onClose, onSuccess }) => {
     // Owner Details
     ownerPhone: '',
     idProofType: 'Aadhar',
-    idProofNumber: ''
+    idProofNumber: '',
+    electricityBillNumber: '' // Added electricity bill number
   })
 
   const [idProofFile, setIdProofFile] = useState(null)
   const [idProofPreview, setIdProofPreview] = useState(null)
   const [uploadingIdProof, setUploadingIdProof] = useState(false)
   const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"]
+
+  // Electricity Bill states
+  const [electricityBillFile, setElectricityBillFile] = useState(null)
+  const [electricityBillPreview, setElectricityBillPreview] = useState(null)
+  const [uploadingElectricityBill, setUploadingElectricityBill] = useState(false)
 
   // Media file states
   const [mediaFiles, setMediaFiles] = useState([])
@@ -114,6 +120,7 @@ const AddProperty = ({ onClose, onSuccess }) => {
         : [...prev.amenities, amenity]
     }))
   }
+
   const handleMediaChange = (e) => {
     const files = Array.from(e.target.files)
     if (files.length === 0) return
@@ -232,6 +239,47 @@ const AddProperty = ({ onClose, onSuccess }) => {
     if (fileInput) fileInput.value = ''
   }
 
+  // Handle Electricity Bill Image Change
+  const handleElectricityBillChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!allowedTypes.images.includes(file.type)) {
+      setError('Invalid Electricity Bill file type. Only images are allowed.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit for electricity bill
+      setError('Electricity Bill image too large. Max 5MB.')
+      return
+    }
+
+    new Compressor(file, {
+      quality: 0.6,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      success(compressedFile) {
+        setElectricityBillFile(compressedFile)
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          setElectricityBillPreview(event.target.result)
+        }
+        reader.readAsDataURL(compressedFile)
+        if (error) setError('')
+      },
+      error(err) {
+        console.error('Electricity Bill compression failed:', err.message)
+        setError('Electricity Bill compression failed')
+      }
+    })
+  }
+
+  const removeElectricityBill = () => {
+    setElectricityBillFile(null)
+    setElectricityBillPreview(null)
+    const fileInput = document.getElementById('electricityBillImage')
+    if (fileInput) fileInput.value = ''
+  }
 
   const removeMedia = (id) => {
     setMediaPreviews(prev => prev.filter(preview => preview.id !== id))
@@ -240,11 +288,6 @@ const AddProperty = ({ onClose, onSuccess }) => {
       return prev.filter(file => file !== preview?.file)
     })
   }
-
-
-
-
-
 
   const uploadAllMedia = async () => {
     if (mediaFiles.length === 0) return []
@@ -284,20 +327,6 @@ const AddProperty = ({ onClose, onSuccess }) => {
       setUploadProgress({})
     }
   }
-const [electricityBillPreview, setElectricityBillPreview] = useState(null);
-
-const handleElectricityBillChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    setElectricityBillPreview(URL.createObjectURL(file));
-    setFormData({ ...formData, electricityBillImage: file });
-  }
-};
-
-const removeElectricityBill = () => {
-  setElectricityBillPreview(null);
-  setFormData({ ...formData, electricityBillImage: null });
-};
 
   const validateForm = () => {
     if (!formData.title.trim()) {
@@ -323,6 +352,15 @@ const removeElectricityBill = () => {
     }
     if (!idProofFile && !idProofPreview) {
       setError('ID Proof Image is required')
+      return false
+    }
+    // Electricity Bill Validation (MANDATORY)
+    if (!formData.electricityBillNumber.trim()) {
+      setError('Electricity Bill Number is required')
+      return false
+    }
+    if (!electricityBillFile && !electricityBillPreview) {
+      setError('Electricity Bill Image is required')
       return false
     }
     if (!formData.location.city.trim()) {
@@ -407,6 +445,20 @@ const removeElectricityBill = () => {
         }
       }
 
+      // Upload Electricity Bill
+      let electricityBillUrl = ''
+      if (electricityBillFile) {
+        setUploadingElectricityBill(true)
+        const fileName = generateFileName(electricityBillFile.name, 'electricity-bill')
+        const uploadResult = await uploadFile(electricityBillFile, fileName)
+        setUploadingElectricityBill(false)
+        if (uploadResult.success) {
+          electricityBillUrl = uploadResult.url
+        } else {
+          throw new Error(`Failed to upload Electricity Bill: ${uploadResult.error}`)
+        }
+      }
+
       const response = await fetch(buildApiUrl(API_CONFIG.OWNER.PROPERTIES), {
         method: 'POST',
         headers: {
@@ -431,7 +483,10 @@ const removeElectricityBill = () => {
           ownerPhone: formData.ownerPhone,
           ownerIdProofType: formData.idProofType,
           ownerIdProofNumber: formData.idProofNumber,
-          ownerIdProofImageUrl: idProofUrl
+          ownerIdProofImageUrl: idProofUrl,
+          // Electricity Bill Details (MANDATORY)
+          ownerElectricityBillNumber: formData.electricityBillNumber,
+          ownerElectricityBillImageUrl: electricityBillUrl
         }),
       })
 
@@ -553,60 +608,61 @@ const removeElectricityBill = () => {
                   )}
                 </div>
               </div>
+
+              {/* Electricity Bill Section */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="electricityBillNumber">Electricity Bill Number *</label>
+                  <input
+                    type="text"
+                    id="electricityBillNumber"
+                    name="electricityBillNumber"
+                    value={formData.electricityBillNumber}
+                    onChange={handleInputChange}
+                    placeholder="Enter Electricity Bill Number"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="electricityBillImage">Electricity Bill Image *</label>
+
+                  {!electricityBillPreview && (
+                    <input
+                      type="file"
+                      id="electricityBillImage"
+                      accept="image/*"
+                      onChange={handleElectricityBillChange}
+                      required={!electricityBillPreview}
+                    />
+                  )}
+
+                  {electricityBillPreview && (
+                    <div
+                      className="media-preview-item"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        position: "relative",
+                      }}
+                    >
+                      <img
+                        src={electricityBillPreview}
+                        alt="Electricity Bill"
+                        className="media-preview-image"
+                      />
+                      <button
+                        type="button"
+                        className="remove-media-btn"
+                        onClick={removeElectricityBill}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="form-row">
-  <div className="form-group">
-    <label htmlFor="electricityBillNumber">Electricity Bill Number *</label>
-    <input
-      type="text"
-      id="electricityBillNumber"
-      name="electricityBillNumber"
-      value={formData.electricityBillNumber}
-      onChange={handleInputChange}
-      placeholder="Enter Electricity Bill Number"
-      required
-    />
-  </div>
-
-  <div className="form-group">
-    <label htmlFor="electricityBillImage">Electricity Bill Image *</label>
-
-    {!electricityBillPreview && (
-      <input
-        type="file"
-        id="electricityBillImage"
-        accept="image/*"
-        onChange={handleElectricityBillChange}
-        required={!electricityBillPreview}
-      />
-    )}
-
-    {electricityBillPreview && (
-      <div
-        className="media-preview-item"
-        style={{
-          width: "100px",
-          height: "100px",
-          position: "relative",
-        }}
-      >
-        <img
-          src={electricityBillPreview}
-          alt="Electricity Bill"
-          className="media-preview-image"
-        />
-        <button
-          type="button"
-          className="remove-media-btn"
-          onClick={removeElectricityBill}
-        >
-          ×
-        </button>
-      </div>
-    )}
-  </div>
-</div>
-
 
             <div className="form-group">
               <label htmlFor="title">Property Title *</label>
@@ -1044,12 +1100,12 @@ const removeElectricityBill = () => {
           <button
             type="submit"
             className="btn btn-primary btn-full"
-            disabled={loading || uploadingMedia || uploadingIdProof || mediaFiles.length === 0}
+            disabled={loading || uploadingMedia || uploadingIdProof || uploadingElectricityBill || mediaFiles.length === 0}
           >
-            {uploadingMedia || uploadingIdProof ? (
+            {uploadingMedia || uploadingIdProof || uploadingElectricityBill ? (
               <>
                 <span className="loading-spinner"></span>
-                Uploading Media/ID...
+                Uploading Files...
               </>
             ) : loading ? (
               <>

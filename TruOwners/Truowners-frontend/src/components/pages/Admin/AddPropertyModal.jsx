@@ -26,6 +26,8 @@ const AddPropertyModal = ({
     idProofType: "",
     idProofNumber: "",
     idProofImageUrl: "",
+    electricityBillNumber: "",
+    electricityBillImageUrl: "",
   });
 
   const [propertyData, setPropertyData] = useState({
@@ -52,6 +54,8 @@ const AddPropertyModal = ({
 
   const [idProofFile, setIdProofFile] = useState(null);
   const [idProofPreview, setIdProofPreview] = useState("");
+  const [electricityBillFile, setElectricityBillFile] = useState(null);
+  const [electricityBillPreview, setElectricityBillPreview] = useState("");
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -80,7 +84,6 @@ const AddPropertyModal = ({
   ];
 
   const idProofTypes = ["Aadhar", "Passport", "Driving License", "Voter ID"];
-  const [electricityBillPreview, setElectricityBillPreview] = useState(null);
 
   const allowedTypes = {
     images: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
@@ -123,18 +126,35 @@ const AddPropertyModal = ({
         owner.user?.id_proof_image_url ||
         owner.user?.id_proof_image ||
         "",
+      electricityBillNumber:
+        owner.electricityBillNumber ||
+        owner.electricity_bill_number ||
+        owner.user?.electricityBillNumber ||
+        "",
+      electricityBillImageUrl:
+        owner.electricityBillImageUrl ||
+        owner.electricity_bill_image_url ||
+        owner.user?.electricityBillImageUrl ||
+        "",
     });
 
     // If property has an owner object (existing owner), mark as exists
     setOwnerExists(!!owner._id || !!owner.email);
 
-    // Also set the ID preview immediately from property (avoid waiting for ownerData state)
+    // Set previews immediately
     setIdProofPreview(
       owner.idProofImageUrl ||
       owner.id_proof_image_url ||
       owner.id_proof_image ||
       owner.user?.idProofImageUrl ||
       owner.user?.id_proof_image_url ||
+      ""
+    );
+
+    setElectricityBillPreview(
+      owner.electricityBillImageUrl ||
+      owner.electricity_bill_image_url ||
+      owner.user?.electricityBillImageUrl ||
       ""
     );
 
@@ -207,7 +227,12 @@ const AddPropertyModal = ({
             idProofType: data.data.owner?.idProofType || "",
             idProofNumber: data.data.owner?.idProofNumber || "",
             idProofImageUrl: data.data.owner?.idProofImageUrl || "",
+            electricityBillNumber: data.data.owner?.electricityBillNumber || "",
+            electricityBillImageUrl: data.data.owner?.electricityBillImageUrl || "",
           }));
+
+          setIdProofPreview(data.data.owner?.idProofImageUrl || "");
+          setElectricityBillPreview(data.data.owner?.electricityBillImageUrl || "");
 
           setError("✓ Owner found. Property will be linked to existing owner.");
         } else {
@@ -220,8 +245,12 @@ const AddPropertyModal = ({
             idProofType: "",
             idProofNumber: "",
             idProofImageUrl: "",
+            electricityBillNumber: "",
+            electricityBillImageUrl: "",
           }));
 
+          setIdProofPreview("");
+          setElectricityBillPreview("");
           setError("");
         }
       }
@@ -279,18 +308,23 @@ const AddPropertyModal = ({
     };
     reader.readAsDataURL(file);
   };
-const handleElectricityBillChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const previewUrl = URL.createObjectURL(file);
-    setElectricityBillPreview(previewUrl);
 
-    setOwnerData((prev) => ({
-      ...prev,
-      electricityBillImage: file,
-    }));
-  }
-};
+  const handleElectricityBillChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!allowedTypes.images.includes(file.type)) {
+      setError("Electricity Bill must be an image file");
+      return;
+    }
+
+    setElectricityBillFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setElectricityBillPreview(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleMediaChange = (e) => {
     const files = Array.from(e.target.files);
@@ -402,7 +436,18 @@ const handleElectricityBillChange = (e) => {
       setError("Complete location information is required");
       return false;
     }
-    if (propertyData.listingType === "rent") {
+
+    // For commercial properties, area is required
+    if (propertyData.listingType === "commercial") {
+      if (!propertyData.area || propertyData.area <= 0) {
+        setError("Area (sq ft) is required for commercial listings");
+        return false;
+      }
+      if (!propertyData.price || propertyData.price <= 0) {
+        setError("Valid commercial price is required");
+        return false;
+      }
+    } else if (propertyData.listingType === "rent") {
       if (!propertyData.rent || propertyData.rent <= 0) {
         setError("Valid rent amount is required");
         return false;
@@ -455,6 +500,20 @@ const handleElectricityBillChange = (e) => {
         idProofUrl = idProofResult.url;
       }
 
+      // Upload electricity bill if new file selected
+      let electricityBillUrl = ownerData.electricityBillImageUrl;
+      if (electricityBillFile) {
+        const electricityBillFileName = generateFileName(
+          electricityBillFile.name,
+          `electricitybill_${ownerData.email || "owner"}`
+        );
+        const electricityBillResult = await uploadFile(electricityBillFile, electricityBillFileName);
+        if (!electricityBillResult.success) {
+          throw new Error("Failed to upload electricity bill");
+        }
+        electricityBillUrl = electricityBillResult.url;
+      }
+
       // Upload new media
       const mediaUrls = await uploadAllMedia();
 
@@ -462,57 +521,61 @@ const handleElectricityBillChange = (e) => {
         ? [...(propertyData.images || []), ...mediaUrls]
         : mediaUrls;
 
+      const isCommercial = propertyData.listingType === "commercial";
+
+      // Build property object conditionally
+      const propertyPayload = {
+        title: propertyData.title,
+        description: propertyData.description,
+        location: propertyData.location,
+        listingType: propertyData.listingType,
+        area: parseInt(propertyData.area) || 0,
+        amenities: propertyData.amenities,
+        images: finalImages,
+      };
+
+      // Add rent/deposit for rent type
+      if (propertyData.listingType === 'rent') {
+        propertyPayload.rent = parseInt(propertyData.rent) || 0;
+        propertyPayload.deposit = parseInt(propertyData.deposit) || 0;
+      } else {
+        // Add price for sell/lease/commercial
+        propertyPayload.price = parseInt(propertyData.price) || 0;
+      }
+
+      // Add property details only for non-commercial
+      if (!isCommercial) {
+        propertyPayload.propertyType = propertyData.propertyType || "apartment";
+        propertyPayload.bedrooms = parseInt(propertyData.bedrooms) || 0;
+        propertyPayload.bathrooms = parseInt(propertyData.bathrooms) || 0;
+      }
+
+      const ownerPayload = {
+        email: ownerData.email,
+        name: ownerData.name,
+        phone: ownerData.phone,
+        idProofType: ownerData.idProofType,
+        idProofNumber: ownerData.idProofNumber,
+        idProofImageUrl: idProofUrl,
+      };
+
+      // Add electricity bill only if provided
+      if (ownerData.electricityBillNumber) {
+        ownerPayload.electricityBillNumber = ownerData.electricityBillNumber;
+      }
+      if (electricityBillUrl) {
+        ownerPayload.electricityBillImageUrl = electricityBillUrl;
+      }
+
       const payload = isEdit
         ? {
-          property: {
-            title: propertyData.title,
-            description: propertyData.description,
-            location: propertyData.location,
-            listingType: propertyData.listingType,
-            rent: propertyData.listingType === 'rent' ? parseInt(propertyData.rent) : undefined,
-            deposit: propertyData.listingType === 'rent' ? (parseInt(propertyData.deposit) || 0) : undefined,
-            price: propertyData.listingType !== 'rent' ? (parseInt(propertyData.price) || 0) : undefined,
-            propertyType: propertyData.propertyType,
-            bedrooms: parseInt(propertyData.bedrooms) || 0,
-            bathrooms: parseInt(propertyData.bathrooms) || 0,
-            area: parseInt(propertyData.area) || 0,
-            amenities: propertyData.amenities,
-            images: finalImages,
-          },
-          owner: {
-            email: ownerData.email,
-            name: ownerData.name,
-            phone: ownerData.phone,
-            idProofType: ownerData.idProofType,
-            idProofNumber: ownerData.idProofNumber,
-            idProofImageUrl: idProofUrl,
-          },
-        }
+            property: propertyPayload,
+            owner: ownerPayload,
+          }
         : {
-          owner: {
-            email: ownerData.email,
-            name: ownerData.name,
-            phone: ownerData.phone,
-            idProofType: ownerData.idProofType,
-            idProofNumber: ownerData.idProofNumber,
-            idProofImageUrl: idProofUrl,
-          },
-          property: {
-            title: propertyData.title,
-            description: propertyData.description,
-            location: propertyData.location,
-            listingType: propertyData.listingType,
-            rent: propertyData.listingType === 'rent' ? parseInt(propertyData.rent) : undefined,
-            deposit: propertyData.listingType === 'rent' ? (parseInt(propertyData.deposit) || 0) : undefined,
-            price: propertyData.listingType !== 'rent' ? (parseInt(propertyData.price) || 0) : undefined,
-            propertyType: propertyData.propertyType,
-            bedrooms: parseInt(propertyData.bedrooms) || 0,
-            bathrooms: parseInt(propertyData.bathrooms) || 0,
-            area: parseInt(propertyData.area) || 0,
-            amenities: propertyData.amenities,
-            images: finalImages,
-          },
-        };
+            owner: ownerPayload,
+            property: propertyPayload,
+          };
 
       const url = isEdit
         ? buildApiUrl(`/admin/properties/${property.id}`)
@@ -588,7 +651,7 @@ const handleElectricityBillChange = (e) => {
             <p className="section-subtitle">Enter owner information</p>
 
             <div className="form-group">
-              <label htmlFor="email">Owner Email </label>
+              <label htmlFor="email">Owner Email *</label>
               <input
                 type="email"
                 id="email"
@@ -598,13 +661,14 @@ const handleElectricityBillChange = (e) => {
                 onBlur={!isEdit ? handleEmailBlur : undefined}
                 placeholder="owner@example.com"
                 disabled={checkingOwner}
+                required
               />
               {checkingOwner && <small>Checking...</small>}
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="name">Owner Name </label>
+                <label htmlFor="name">Owner Name *</label>
                 <input
                   type="text"
                   id="name"
@@ -613,11 +677,12 @@ const handleElectricityBillChange = (e) => {
                   onChange={handleOwnerChange}
                   placeholder="John Doe"
                   disabled={ownerExists && !isEdit}
+                  required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="phone">Owner Phone </label>
+                <label htmlFor="phone">Owner Phone *</label>
                 <input
                   type="tel"
                   id="phone"
@@ -626,6 +691,7 @@ const handleElectricityBillChange = (e) => {
                   onChange={handleOwnerChange}
                   placeholder="+1234567890"
                   disabled={ownerExists && !isEdit}
+                  required
                 />
               </div>
             </div>
@@ -634,14 +700,15 @@ const handleElectricityBillChange = (e) => {
               <>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="idProofType">ID Proof Type </label>
+                    <label htmlFor="idProofType">ID Proof Type *</label>
                     <select
                       id="idProofType"
                       name="idProofType"
                       value={ownerData.idProofType}
                       onChange={handleOwnerChange}
                       className="form-select"
-                      disabled={ownerExists && !isEdit ? true : false}
+                      disabled={ownerExists && !isEdit}
+                      required
                     >
                       <option value="">Select ID Proof</option>
                       {idProofTypes.map((type) => (
@@ -653,7 +720,7 @@ const handleElectricityBillChange = (e) => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="idProofNumber">ID Proof Number </label>
+                    <label htmlFor="idProofNumber">ID Proof Number *</label>
                     <input
                       type="text"
                       id="idProofNumber"
@@ -661,13 +728,14 @@ const handleElectricityBillChange = (e) => {
                       value={ownerData.idProofNumber}
                       onChange={handleOwnerChange}
                       placeholder="1234-5678-9012"
-                      disabled={ownerExists && !isEdit ? true : false}
+                      disabled={ownerExists && !isEdit}
+                      required
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="idProof">ID Proof Image </label>
+                  <label htmlFor="idProof">ID Proof Image *</label>
                   <div className="file-upload-area">
                     <input
                       type="file"
@@ -675,7 +743,7 @@ const handleElectricityBillChange = (e) => {
                       accept={allowedTypes.images.join(",")}
                       onChange={handleIdProofChange}
                       className="file-input"
-                      disabled={ownerExists && !isEdit ? true : false}
+                      disabled={ownerExists && !isEdit}
                     />
                     <label htmlFor="idProof" className="file-upload-label">
                       <div className="upload-icon">📄</div>
@@ -685,16 +753,64 @@ const handleElectricityBillChange = (e) => {
                     </label>
                   </div>
 
-                  {/* preview uses idProofPreview (set in useEffect or FileReader) */}
                   {(idProofPreview || ownerData.idProofImageUrl) && (
                     <div className="media-previews-container">
                       <img
                         src={idProofPreview || ownerData.idProofImageUrl}
                         alt="ID Proof"
-                        style={{ maxWidth: "200px", marginTop: "10px" }}
+                        style={{ maxWidth: "200px", marginTop: "10px", cursor: "pointer" }}
                         onClick={() => {
-                          const url =
-                            idProofPreview || ownerData.idProofImageUrl;
+                          const url = idProofPreview || ownerData.idProofImageUrl;
+                          if (url) window.open(url, "_blank");
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Electricity Bill Number */}
+                <div className="form-group">
+                  <label htmlFor="electricityBillNumber">Electricity Bill Number</label>
+                  <input
+                    type="text"
+                    id="electricityBillNumber"
+                    name="electricityBillNumber"
+                    value={ownerData.electricityBillNumber}
+                    onChange={handleOwnerChange}
+                    placeholder="EB-123456789"
+                    disabled={ownerExists && !isEdit}
+                  />
+                </div>
+
+                {/* Electricity Bill Image */}
+                <div className="form-group">
+                  <label htmlFor="electricityBillImage">Electricity Bill Image</label>
+
+                  <div className="file-upload-area">
+                    <input
+                      type="file"
+                      id="electricityBillImage"
+                      accept={allowedTypes.images.join(",")}
+                      onChange={handleElectricityBillChange}
+                      className="file-input"
+                      disabled={ownerExists && !isEdit}
+                    />
+                    <label htmlFor="electricityBillImage" className="file-upload-label">
+                      <div className="upload-icon">📄</div>
+                      <div className="upload-text">
+                        <strong>Click to upload Electricity Bill</strong>
+                      </div>
+                    </label>
+                  </div>
+
+                  {(electricityBillPreview || ownerData.electricityBillImageUrl) && (
+                    <div className="media-previews-container">
+                      <img
+                        src={electricityBillPreview || ownerData.electricityBillImageUrl}
+                        alt="Electricity Bill"
+                        style={{ maxWidth: "200px", marginTop: "10px", cursor: "pointer" }}
+                        onClick={() => {
+                          const url = electricityBillPreview || ownerData.electricityBillImageUrl;
                           if (url) window.open(url, "_blank");
                         }}
                       />
@@ -704,56 +820,7 @@ const handleElectricityBillChange = (e) => {
               </>
             )}
           </div>
-{/* Full-width Electricity Bill Number */}
-<div className="form-group">
-  <label htmlFor="electricityBillNumber">Electricity Bill Number </label>
-  <input
-    type="text"
-    id="electricityBillNumber"
-    name="electricityBillNumber"
-    value={ownerData.electricityBillNumber}
-    onChange={handleOwnerChange}
-    placeholder="EB-123456789"
-    disabled={ownerExists && !isEdit ? true : false}
-  />
-</div>
 
-{/* Electricity Bill Image */}
-<div className="form-group">
-  <label htmlFor="electricityBillImage">Electricity Bill Image </label>
-
-  <div className="file-upload-area">
-    <input
-      type="file"
-      id="electricityBillImage"
-      accept={allowedTypes.images.join(",")}
-      onChange={handleElectricityBillChange}
-      className="file-input"
-      disabled={ownerExists && !isEdit ? true : false}
-    />
-    <label htmlFor="electricityBillImage" className="file-upload-label">
-      <div className="upload-icon">📄</div>
-      <div className="upload-text">
-        <strong>Click to upload Electricity Bill</strong>
-      </div>
-    </label>
-  </div>
-
-  {(electricityBillPreview || ownerData.electricityBillImageUrl) && (
-    <div className="media-previews-container">
-      <img
-        src={electricityBillPreview || ownerData.electricityBillImageUrl}
-        alt="Electricity Bill"
-        style={{ maxWidth: "200px", marginTop: "10px" }}
-        onClick={() => {
-          const url =
-            electricityBillPreview || ownerData.electricityBillImageUrl;
-          if (url) window.open(url, "_blank");
-        }}
-      />
-    </div>
-  )}
-</div>
           {/* Property Information */}
           <div className="form-section">
             <h3 className="section-title">Property Information</h3>
@@ -861,83 +928,6 @@ const handleElectricityBillChange = (e) => {
           <div className="form-section">
             <h3 className="section-title">Property Details</h3>
 
-            {!isCommercial && (
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="propertyType">Type *</label>
-                  <select
-                    id="propertyType"
-                    name="propertyType"
-                    value={propertyData.propertyType}
-                    onChange={handlePropertyChange}
-                    className="form-select"
-                  >
-                    <option value="apartment">Apartment</option>
-                    <option value="house">House</option>
-                    <option value="villa">Villa</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="area">Area (sq ft)</label>
-                  <input
-                    type="number"
-                    id="area"
-                    name="area"
-                    value={propertyData.area}
-                    onChange={handlePropertyChange}
-                    placeholder="1200"
-                    min="1"
-                  />
-                </div>
-              </div>
-            )}
-
-            {isCommercial && (
-              <div className="form-group">
-                <label htmlFor="area">Area (sq ft)</label>
-                <input
-                  type="number"
-                  id="area"
-                  name="area"
-                  value={propertyData.area}
-                  onChange={handlePropertyChange}
-                  placeholder="1200"
-                  min="1"
-                />
-              </div>
-            )}
-
-            {!isCommercial && (
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="bedrooms">Bedrooms</label>
-                  <input
-                    type="number"
-                    id="bedrooms"
-                    name="bedrooms"
-                    value={propertyData.bedrooms}
-                    onChange={handlePropertyChange}
-                    placeholder="2"
-                    min="0"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="bathrooms">Bathrooms</label>
-                  <input
-                    type="number"
-                    id="bathrooms"
-                    name="bathrooms"
-                    value={propertyData.bathrooms}
-                    onChange={handlePropertyChange}
-                    placeholder="2"
-                    min="0"
-                  />
-                </div>
-              </div>
-            )}
-
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="listingType">Property For *</label>
@@ -947,6 +937,7 @@ const handleElectricityBillChange = (e) => {
                   value={propertyData.listingType}
                   onChange={handlePropertyChange}
                   className="form-select"
+                  required
                 >
                   <option value="rent">Rent</option>
                   <option value="sell">Sell</option>
@@ -955,76 +946,142 @@ const handleElectricityBillChange = (e) => {
                 </select>
               </div>
 
-              {propertyData.listingType === "rent" ? (
-                <>
+              <div className="form-group">
+                <label htmlFor="area">Area (sq ft) *</label>
+                <input
+                  type="number"
+                  id="area"
+                  name="area"
+                  value={propertyData.area}
+                  onChange={handlePropertyChange}
+                  placeholder="1200"
+                  min="1"
+                  required
+                />
+              </div>
+            </div>
+
+            {!isCommercial && (
+              <>
+                <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="rent">Monthly Rent (₹) *</label>
-                    <input
-                      type="number"
-                      id="rent"
-                      name="rent"
-                      value={propertyData.rent}
+                    <label htmlFor="propertyType">Type *</label>
+                    <select
+                      id="propertyType"
+                      name="propertyType"
+                      value={propertyData.propertyType}
                       onChange={handlePropertyChange}
-                      placeholder="25000"
-                      min="1"
+                      className="form-select"
                       required
-                    />
+                    >
+                      <option value="apartment">Apartment</option>
+                      <option value="house">House</option>
+                      <option value="villa">Villa</option>
+                    </select>
                   </div>
+
                   <div className="form-group">
-                    <label htmlFor="deposit">Security Deposit (₹)</label>
+                    <label htmlFor="bedrooms">Bedrooms</label>
                     <input
                       type="number"
-                      id="deposit"
-                      name="deposit"
-                      value={propertyData.deposit}
+                      id="bedrooms"
+                      name="bedrooms"
+                      value={propertyData.bedrooms}
                       onChange={handlePropertyChange}
-                      placeholder="50000"
+                      placeholder="2"
                       min="0"
                     />
                   </div>
-                </>
-              ) : (
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="bathrooms">Bathrooms</label>
+                    <input
+                      type="number"
+                      id="bathrooms"
+                      name="bathrooms"
+                      value={propertyData.bathrooms}
+                      onChange={handlePropertyChange}
+                      placeholder="2"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {propertyData.listingType === "rent" ? (
+              <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="price">
-                    {propertyData.listingType === "sell"
-                      ? "Sale Price"
-                      : propertyData.listingType === "lease"
-                        ? "Lease Amount"
-                        : "Commercial Price"}{" "}
-                    (₹) *
-                  </label>
+                  <label htmlFor="rent">Monthly Rent (₹) *</label>
                   <input
                     type="number"
-                    id="price"
-                    name="price"
-                    value={propertyData.price}
+                    id="rent"
+                    name="rent"
+                    value={propertyData.rent}
                     onChange={handlePropertyChange}
-                    placeholder="5000000"
+                    placeholder="25000"
                     min="1"
                     required
                   />
                 </div>
-              )}
-            </div>
+                <div className="form-group">
+                  <label htmlFor="deposit">Security Deposit (₹)</label>
+                  <input
+                    type="number"
+                    id="deposit"
+                    name="deposit"
+                    value={propertyData.deposit}
+                    onChange={handlePropertyChange}
+                    placeholder="50000"
+                    min="0"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="form-group">
+                <label htmlFor="price">
+                  {propertyData.listingType === "sell"
+                    ? "Sale Price"
+                    : propertyData.listingType === "lease"
+                      ? "Lease Amount"
+                      : "Commercial Price"}{" "}
+                  (₹) *
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={propertyData.price}
+                  onChange={handlePropertyChange}
+                  placeholder="5000000"
+                  min="1"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           {/* Amenities */}
-          <div className="form-section">
-            <h3 className="section-title">Amenities</h3>
-            <div className="amenities-grid">
-              {amenitiesList.map((amenity) => (
-                <label key={amenity} className="amenity-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={propertyData.amenities.includes(amenity)}
-                    onChange={() => handleAmenityToggle(amenity)}
-                  />
-                  <span className="Ownercheckmark"></span>
-                  {amenity}
-                </label>
-              ))}
+          {!isCommercial && (
+            <div className="form-section">
+              <h3 className="section-title">Amenities</h3>
+              <div className="amenities-grid">
+                {amenitiesList.map((amenity) => (
+                  <label key={amenity} className="amenity-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.amenities.includes(amenity)}
+                      onChange={() => handleAmenityToggle(amenity)}
+                    />
+                    <span className="Ownercheckmark"></span>
+                    {amenity}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Property Images */}
           <div className="form-section">
