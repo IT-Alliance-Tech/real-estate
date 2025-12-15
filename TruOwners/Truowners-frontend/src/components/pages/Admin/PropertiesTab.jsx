@@ -1634,8 +1634,8 @@ const PropertiesTab = () => {
     <ListItemText
       primary="Electricity Bill Number"
       secondary={
-        selectedProperty.owner.electricityBillNumber ||
-        selectedProperty.owner.electricity_bill_number ||
+        selectedProperty.owner.electricityBill ||
+  
         "Not provided"
       }
     />
