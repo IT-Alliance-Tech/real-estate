@@ -46,40 +46,36 @@ const formatBasicOwner = (owner) => {
 };
 
 const formatOwnerWithIdProof = (property) => {
-  // ✅ Admin-created property
-  if (property.ownerDetails) {
-    return {
-      name: property.ownerDetails.name || "",
-      email: property.ownerDetails.email || "",
-      phone: property.ownerDetails.phone || "",
-      idProofType: property.ownerDetails.idProofType || "",
-      idProofNumber: property.ownerDetails.idProofNumber || "",
-      idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
-      electricityBill: property.ownerDetails.electricityBill || "",
-      electricityBillImageUrl:
-        property.ownerDetails.electricityBillImageUrl || "",
-    };
-  }
+  const owner = property.owner || null;
+  const user = owner?.user || {};
 
-  // ✅ User-created property
-  if (property.owner) {
-    const owner = property.owner;
-    const user = owner.user || {};
+  const details = property.ownerDetails || {};
 
-    return {
-      name: owner.name || user.name || "",
-      email: owner.email || user.email || "",
-      phone: owner.phone || user.phone || "",
-      idProofType: owner.idProofType || "",
-      idProofNumber: owner.idProofNumber || "",
-      idProofImageUrl: owner.idProofImageUrl || "",
-      electricityBill: owner.electricityBill || "",
-      electricityBillImageUrl: owner.electricityBillImageUrl || "",
-    };
-  }
+  const name = isFilled(details.name)
+    ? details.name
+    : owner?.name || getUserFullName(user) || "";
 
-  return null;
+  const email = isFilled(details.email)
+    ? details.email
+    : owner?.email || user.email || "";
+
+  const phone = isFilled(details.phone)
+    ? details.phone
+    : owner?.phone || user.phone || "";
+
+  return {
+    name,
+    email,
+    phone,
+    idProofType: details.idProofType || owner?.idProofType || "",
+    idProofNumber: details.idProofNumber || owner?.idProofNumber || "",
+    idProofImageUrl: details.idProofImageUrl || owner?.idProofImageUrl || "",
+    electricityBill: details.electricityBill || owner?.electricityBill || "",
+    electricityBillImageUrl:
+      details.electricityBillImageUrl || owner?.electricityBillImageUrl || "",
+  };
 };
+
 const formatAdminProperty = (property) => {
   if (!property) return null;
 
@@ -931,30 +927,19 @@ const getPropertyByIdForAdmin = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      statusCode: 200,
-      success: true,
-      error: null,
-      data: {
-        message: "Property retrieved successfully",
-        property: {
-          ...formatAdminProperty(property),
-          owner: property.ownerDetails
-            ? {
-                name: property.ownerDetails.name || "",
-                email: property.ownerDetails.email || "",
-                phone: property.ownerDetails.phone || "",
-                idProofType: property.ownerDetails.idProofType || "",
-                idProofNumber: property.ownerDetails.idProofNumber || "",
-                idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
-                electricityBill: property.ownerDetails.electricityBill || "",
-                electricityBillImageUrl:
-                  property.ownerDetails.electricityBillImageUrl || "",
-              }
-            : null,
-        },
-      },
-    });
+   return res.status(200).json({
+  statusCode: 200,
+  success: true,
+  error: null,
+  data: {
+    message: "Property retrieved successfully",
+    property: {
+      ...formatAdminProperty(property),
+      owner: formatOwnerWithIdProof(property),
+    },
+  },
+});
+
   } catch (error) {
     console.error("Get property by id for admin error:", error);
     return res.status(500).json({

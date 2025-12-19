@@ -34,7 +34,7 @@ const uploadProperty = async (req, res) => {
       ownerIdProofType,
       ownerIdProofNumber,
       ownerIdProofImageUrl,
-      ownerElectricityBillNumber,
+      ownerElectricityBill,
       ownerElectricityBillImageUrl,
     } = req.body;
 
@@ -96,7 +96,7 @@ const uploadProperty = async (req, res) => {
         idProofType: ownerIdProofType,
         idProofNumber: ownerIdProofNumber,
         idProofImageUrl: ownerIdProofImageUrl,
-        electricityBill: ownerElectricityBillNumber || null,
+        electricityBill: ownerElectricityBill || null,
         electricityBillImageUrl: ownerElectricityBillImageUrl || null,
       },
       status: PROPERTY_STATUS.PENDING,
@@ -230,8 +230,8 @@ const getProperty = async (req, res) => {
         idProofNumber: perProp.idProofNumber || owner.idProofNumber || null,
         idProofImageUrl:
           perProp.idProofImageUrl || owner.idProofImageUrl || null,
-        electricityBillNumber:
-          perProp.electricityBillNumber || owner.electricityBill || null,
+        electricityBill:
+          perProp.electricityBill || owner.electricityBill || null,
         electricityBillImageUrl:
           perProp.electricityBillImageUrl ||
           owner.electricityBillImageUrl ||
