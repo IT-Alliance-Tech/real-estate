@@ -1,15 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import "./home.css";
-import Select from "react-select";
-import CreatableSelect from "react-select/creatable";
-import headerImage from "../../../../public/home_banner.jpeg"; // ✅ corrected path
-import search from "../../../assets/images/home/search.svg";
+import headerImage from "../../../../public/home_banner.jpeg";
 import useScreenSize from "../../helper/userScreenSize.jsx";
-import PropertyTypeSelect from "../search-screen/propertyTypeSelect.jsx";
-import { BudgetFilter } from "../search-screen/budgetFilter.jsx";
-import SearchBar from "../search-screen/searchBar.jsx";
 import { useNavigate } from "react-router-dom";
-import PropertyFilters from "./PropertyFilters.jsx";
 import PropertyFilter from "./PropertyFilter.jsx";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { API_CONFIG, buildApiUrl } from "../../../config/api.js";
@@ -22,42 +15,30 @@ import Register from "../Auth/SignUp";
 import PropertyDetailsModal from "./PropertyDetailsModal.jsx";
 import { motion } from "framer-motion";
 
-const HomeHeaderContainer = ({
-  activeBtn = "all",
-  activeTab,
-  setActiveTab,
-}) => {
+const HomeHeaderContainer = () => {
   const width = useScreenSize();
   const navigate = useNavigate();
-  const [searchedItems, setSearchedItems] = useState("");
-  let locationData = "Bangalore";
 
-  const [sortBy, setSortBy] = useState("newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
-  const { user, isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [wishlist, setWishlist] = useState([]);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
-  const [postType, setPostType] = useState(null);
 
   const [filters, setFilters] = useState({
-    status: "",
+    status: "All",
     propertyType: "",
     listingType: "",
     city: "",
     bedrooms: "",
     searchTerm: "",
     maxBudget: "",
-    minBudget: "", // ✅ ADD THIS
-    rentRange: [0, 500000], // ✅ ADD THIS
-    budgetRange: [0, 30000000], // ✅ ADD THIS
   });
 
   useEffect(() => {
@@ -65,88 +46,8 @@ const HomeHeaderContainer = ({
     if (isAuthenticated) {
       fetchWishlist();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, filters]);
-  const isInitialMount = useRef(true);
-
-  useEffect(() => {
-    // Skip first render
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      fetchProperties(); // Fetch without filters on first load
-      return;
-    }
-
-    // Subsequent renders use filters
-    fetchProperties();
-    if (isAuthenticated) {
-      fetchWishlist();
-    }
-  }, [isAuthenticated, filters]);
-  // Initial load - fetch ALL properties without filters
-  useEffect(() => {
-    const fetchInitialProperties = async () => {
-      setLoading(true);
-      setError("");
-
-      try {
-        const headers = {
-          "Content-Type": "application/json",
-        };
-
-        if (isAuthenticated && token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        // NO PARAMS - fetch all properties for home page
-        const response = await fetch(buildApiUrl(API_CONFIG.USER.PROPERTIES), {
-          method: "GET",
-          headers,
-        });
-
-        let data;
-        try {
-          data = await response.json();
-          validateApiResponse(data);
-        } catch (parseError) {
-          throw new Error("Invalid response from server");
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to fetch properties");
-        }
-
-        if (data.success) {
-          setProperties(data.data.properties || []);
-        }
-      } catch (err) {
-        console.error("Fetch properties error:", err);
-        setError(err.message || "Failed to load properties. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialProperties();
-
-    if (isAuthenticated) {
-      fetchWishlist();
-    }
-  }, [isAuthenticated]); // Only run on mount and auth change
-
-  // Separate effect for filter changes
-  useEffect(() => {
-    // Only fetch with filters if user has actually changed something
-    const hasActiveFilters =
-      filters.listingType ||
-      filters.propertyType ||
-      filters.city ||
-      filters.bedrooms ||
-      filters.searchTerm;
-
-    if (hasActiveFilters) {
-      fetchProperties();
-    }
-  }, [filters]); // Run when filters change
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -160,11 +61,11 @@ const HomeHeaderContainer = ({
 
   useEffect(() => {
     applyFilters();
-  }, [properties, searchTerm, sortBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties, searchTerm]);
 
   const fetchProperties = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const headers = {
@@ -176,50 +77,16 @@ const HomeHeaderContainer = ({
       }
 
       const params = new URLSearchParams();
-
-      // Only add params if they have actual values (not empty or default)
-      if (filters.listingType && filters.listingType !== "") {
+      if (filters.listingType) {
         params.append("listingType", filters.listingType);
       }
 
-      if (filters.propertyType && filters.propertyType !== "") {
+      if (filters.propertyType)
         params.append("propertyType", filters.propertyType);
-      }
-
-      if (filters.city && filters.city !== "") {
-        params.append("city", filters.city);
-      }
-
-      if (filters.bedrooms && filters.bedrooms !== "") {
-        params.append("bedrooms", filters.bedrooms);
-      }
-
-      if (filters.searchTerm && filters.searchTerm !== "") {
-        params.append("search", filters.searchTerm);
-      }
-
-      // Only send budget if listingType is selected
-      if (
-        filters.listingType === "rent" ||
-        filters.listingType === "commercial"
-      ) {
-        if (filters.rentRange && filters.rentRange[0] > 0) {
-          params.append("minRent", filters.rentRange[0]);
-        }
-        if (filters.rentRange && filters.rentRange[1] < 500000) {
-          params.append("maxRent", filters.rentRange[1]);
-        }
-      } else if (
-        filters.listingType === "sell" ||
-        filters.listingType === "lease"
-      ) {
-        if (filters.budgetRange && filters.budgetRange[0] > 0) {
-          params.append("minBudget", filters.budgetRange[0]);
-        }
-        if (filters.budgetRange && filters.budgetRange[1] < 30000000) {
-          params.append("maxBudget", filters.budgetRange[1]);
-        }
-      }
+      if (filters.city) params.append("city", filters.city);
+      if (filters.bedrooms) params.append("bedrooms", filters.bedrooms);
+      if (filters.searchTerm) params.append("search", filters.searchTerm);
+      if (filters.maxBudget) params.append("maxBudget", filters.maxBudget);
 
       console.log(params.toString(), "params");
 
@@ -248,7 +115,7 @@ const HomeHeaderContainer = ({
       }
     } catch (err) {
       console.error("Fetch properties error:", err);
-      setError(err.message || "Failed to load properties. Please try again.");
+      // Error handling - could show toast notification here
     } finally {
       setLoading(false);
     }
@@ -323,11 +190,7 @@ const HomeHeaderContainer = ({
     setShowLogin(true);
   };
 
-  const handleAuthSuccess = () => {
-    setShowLogin(false);
-    setShowRegister(false);
-    setShowAuthPrompt(false);
-  };
+  // Removed unused handleAuthSuccess function
 
   const handleSwitchToRegister = () => {
     setShowLogin(false);
@@ -413,7 +276,6 @@ const HomeHeaderContainer = ({
           }}
         />
       </motion.div>
-
       {/* ✅ FILTER SECTION — removed mt-3 (margin-top) */}
       <motion.div
         className={`home_filter_main_container card border-0 p-1 mt-0 bg-transparent`}
@@ -432,24 +294,18 @@ const HomeHeaderContainer = ({
                 bedrooms: "",
                 search: "",
                 maxBudget: "",
-                minBudget: "", // ADD THIS
-                rentRange: [0, 500000], // ADD THIS
-                budgetRange: [0, 30000000],
               }}
               currentFilters={filters}
               onSearch={(queryString, updatedFilters) => {
                 setFilters({
                   ...filters,
                   status: updatedFilters.status,
-                  // Map status to listingType for backend API
-                  listingType: updatedFilters.status && updatedFilters.status !== "All" ? updatedFilters.status : "",
+                  listingType: updatedFilters.listingType,
                   propertyType: updatedFilters.propertyType,
                   city: updatedFilters.city,
                   bedrooms: updatedFilters.bedrooms,
                   searchTerm: updatedFilters.search,
                   rentRange: updatedFilters.rentRange,
-                  budgetRange: updatedFilters.budgetRange,
-                  minBudget: updatedFilters.minBudget,
                   maxBudget: updatedFilters.maxBudget,
                 });
               }}
@@ -457,14 +313,12 @@ const HomeHeaderContainer = ({
           </div>
         </div>
       </motion.div>
-
       {/* ✅ Properties Section */}
       <div className="properties-section sec-top">
         <div className="properties-header">
           <h2>Featured Properties</h2>
           <p>Browse through our verified listings</p>
         </div>
-
         {filteredProperties.length === 0 ? (
           <div className="empty-properties d-flex flex-column align-items-center text-center">
             <div className="empty-icon">🏠</div>
@@ -476,11 +330,13 @@ const HomeHeaderContainer = ({
               className="btn btn-primary"
               onClick={() => {
                 setFilters({
-                  location: "",
-                  propertyType: "all",
-                  priceRange: { min: 0, max: 10000 },
-                  bedrooms: "any",
-                  amenities: [],
+                  status: "All",
+                  propertyType: "",
+                  listingType: "",
+                  city: "",
+                  bedrooms: "",
+                  searchTerm: "",
+                  maxBudget: "",
                 });
                 setSearchTerm("");
               }}
@@ -525,8 +381,7 @@ const HomeHeaderContainer = ({
             color="primary"
             onClick={() => {
               const urlParams = new URLSearchParams();
-              // Use listingType instead of status for backend compatibility
-              if (filters.listingType) urlParams.append("listingType", filters.listingType);
+              if (filters.status) urlParams.append("status", filters.status);
               if (filters.propertyType)
                 urlParams.append("propertyType", filters.propertyType);
               if (filters.city) urlParams.append("city", filters.city);
@@ -552,7 +407,6 @@ const HomeHeaderContainer = ({
           </Button>
         </div>
       </div>
-
       {/* ✅ Modals */}
       {showAuthPrompt && <AuthPromptModal onClose={handleCloseModals} />}
       {showLogin && (

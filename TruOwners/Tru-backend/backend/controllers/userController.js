@@ -41,7 +41,51 @@ const getAllProperties = async (req, res) => {
     filterQuery.status = {
       $in: [PROPERTY_STATUS.APPROVED, PROPERTY_STATUS.PUBLISHED],
     };
-    // Rent range filter (for rent/commercial listings)
+    // Budget filter - applies to rent OR price based on listing type
+    if (req.query.maxBudget || req.query.minBudget) {
+      const listingType = req.query.listingType;
+
+      // For rent/commercial listings, filter by rent field
+      if (listingType === 'rent' || listingType === 'commercial') {
+        filterQuery.rent = {};
+        if (req.query.minBudget) {
+          filterQuery.rent.$gte = parseInt(req.query.minBudget);
+        }
+        if (req.query.maxBudget) {
+          filterQuery.rent.$lte = parseInt(req.query.maxBudget);
+        }
+      }
+      // For sell/lease listings, filter by price field
+      else if (listingType === 'sell' || listingType === 'lease') {
+        filterQuery.price = {};
+        if (req.query.minBudget) {
+          filterQuery.price.$gte = parseInt(req.query.minBudget);
+        }
+        if (req.query.maxBudget) {
+          filterQuery.price.$lte = parseInt(req.query.maxBudget);
+        }
+      }
+      // If no listing type specified, apply to both rent and price
+      else {
+        const budgetFilter = {};
+        if (req.query.minBudget) {
+          budgetFilter.$gte = parseInt(req.query.minBudget);
+        }
+        if (req.query.maxBudget) {
+          budgetFilter.$lte = parseInt(req.query.maxBudget);
+        }
+        // Use $or to match either rent or price
+        if (!filterQuery.$or) {
+          filterQuery.$or = [];
+        }
+        filterQuery.$or.push(
+          { rent: budgetFilter },
+          { price: budgetFilter }
+        );
+      }
+    }
+
+    // Separate rent range filter (for backward compatibility)
     if (req.query.minRent || req.query.maxRent) {
       filterQuery.rent = {};
       if (req.query.minRent) {
@@ -49,17 +93,6 @@ const getAllProperties = async (req, res) => {
       }
       if (req.query.maxRent) {
         filterQuery.rent.$lte = parseInt(req.query.maxRent);
-      }
-    }
-
-    // Price range filter (for sell/lease listings) - ONLY if rent filter not applied
-    if (!filterQuery.rent && (req.query.minBudget || req.query.maxBudget)) {
-      filterQuery.price = {};
-      if (req.query.minBudget) {
-        filterQuery.price.$gte = parseInt(req.query.minBudget);
-      }
-      if (req.query.maxBudget) {
-        filterQuery.price.$lte = parseInt(req.query.maxBudget);
       }
     }
 
