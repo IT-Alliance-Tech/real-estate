@@ -22,7 +22,11 @@ import Register from "../Auth/SignUp";
 import PropertyDetailsModal from "./PropertyDetailsModal.jsx";
 import { motion } from "framer-motion";
 
-const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => {
+const HomeHeaderContainer = ({
+  activeBtn = "all",
+  activeTab,
+  setActiveTab,
+}) => {
   const width = useScreenSize();
   const navigate = useNavigate();
   const [searchedItems, setSearchedItems] = useState("");
@@ -44,12 +48,16 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
   const [postType, setPostType] = useState(null);
 
   const [filters, setFilters] = useState({
-    status: "All",
+    status: "",
     propertyType: "",
+    listingType: "",
     city: "",
     bedrooms: "",
     searchTerm: "",
     maxBudget: "",
+    minBudget: "", // ✅ ADD THIS
+    rentRange: [0, 500000], // ✅ ADD THIS
+    budgetRange: [0, 30000000], // ✅ ADD THIS
   });
 
   useEffect(() => {
@@ -58,6 +66,87 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
       fetchWishlist();
     }
   }, [isAuthenticated, filters]);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    // Skip first render
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchProperties(); // Fetch without filters on first load
+      return;
+    }
+
+    // Subsequent renders use filters
+    fetchProperties();
+    if (isAuthenticated) {
+      fetchWishlist();
+    }
+  }, [isAuthenticated, filters]);
+  // Initial load - fetch ALL properties without filters
+  useEffect(() => {
+    const fetchInitialProperties = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        if (isAuthenticated && token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        // NO PARAMS - fetch all properties for home page
+        const response = await fetch(buildApiUrl(API_CONFIG.USER.PROPERTIES), {
+          method: "GET",
+          headers,
+        });
+
+        let data;
+        try {
+          data = await response.json();
+          validateApiResponse(data);
+        } catch (parseError) {
+          throw new Error("Invalid response from server");
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch properties");
+        }
+
+        if (data.success) {
+          setProperties(data.data.properties || []);
+        }
+      } catch (err) {
+        console.error("Fetch properties error:", err);
+        setError(err.message || "Failed to load properties. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialProperties();
+
+    if (isAuthenticated) {
+      fetchWishlist();
+    }
+  }, [isAuthenticated]); // Only run on mount and auth change
+
+  // Separate effect for filter changes
+  useEffect(() => {
+    // Only fetch with filters if user has actually changed something
+    const hasActiveFilters =
+      filters.listingType ||
+      filters.propertyType ||
+      filters.city ||
+      filters.bedrooms ||
+      filters.searchTerm;
+
+    if (hasActiveFilters) {
+      fetchProperties();
+    }
+  }, [filters]); // Run when filters change
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -87,12 +176,50 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
       }
 
       const params = new URLSearchParams();
-      if (filters.status) params.append("status", filters.status);
-      if (filters.propertyType) params.append("propertyType", filters.propertyType);
-      if (filters.city) params.append("city", filters.city);
-      if (filters.bedrooms) params.append("bedrooms", filters.bedrooms);
-      if (filters.searchTerm) params.append("search", filters.searchTerm);
-      if (filters.maxBudget) params.append("maxBudget", filters.maxBudget);
+
+      // Only add params if they have actual values (not empty or default)
+      if (filters.listingType && filters.listingType !== "") {
+        params.append("listingType", filters.listingType);
+      }
+
+      if (filters.propertyType && filters.propertyType !== "") {
+        params.append("propertyType", filters.propertyType);
+      }
+
+      if (filters.city && filters.city !== "") {
+        params.append("city", filters.city);
+      }
+
+      if (filters.bedrooms && filters.bedrooms !== "") {
+        params.append("bedrooms", filters.bedrooms);
+      }
+
+      if (filters.searchTerm && filters.searchTerm !== "") {
+        params.append("search", filters.searchTerm);
+      }
+
+      // Only send budget if listingType is selected
+      if (
+        filters.listingType === "rent" ||
+        filters.listingType === "commercial"
+      ) {
+        if (filters.rentRange && filters.rentRange[0] > 0) {
+          params.append("minRent", filters.rentRange[0]);
+        }
+        if (filters.rentRange && filters.rentRange[1] < 500000) {
+          params.append("maxRent", filters.rentRange[1]);
+        }
+      } else if (
+        filters.listingType === "sell" ||
+        filters.listingType === "lease"
+      ) {
+        if (filters.budgetRange && filters.budgetRange[0] > 0) {
+          params.append("minBudget", filters.budgetRange[0]);
+        }
+        if (filters.budgetRange && filters.budgetRange[1] < 30000000) {
+          params.append("maxBudget", filters.budgetRange[1]);
+        }
+      }
 
       console.log(params.toString(), "params");
 
@@ -217,7 +344,9 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
       const searchLower = searchTerm.toLowerCase();
       const filtered = properties.filter((property) => {
         const titleMatch = property.title?.toLowerCase().includes(searchLower);
-        const descMatch = property.description?.toLowerCase().includes(searchLower);
+        const descMatch = property.description
+          ?.toLowerCase()
+          .includes(searchLower);
         const locationMatch = getLocationString(property.location)
           .toLowerCase()
           .includes(searchLower);
@@ -234,7 +363,8 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
     if (location && typeof location === "object") {
       if (location.address) return location.address;
       if (location.street) return location.street;
-      if (location.city && location.state) return `${location.city}, ${location.state}`;
+      if (location.city && location.state)
+        return `${location.city}, ${location.state}`;
       return "Location not specified";
     }
     return "Location not specified";
@@ -279,7 +409,7 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
             height: "100%",
             maxHeight: "400px",
             objectFit: "cover",
-            objectPosition: "0% 0%"
+            objectPosition: "0% 0%",
           }}
         />
       </motion.div>
@@ -302,17 +432,24 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
                 bedrooms: "",
                 search: "",
                 maxBudget: "",
+                minBudget: "", // ADD THIS
+                rentRange: [0, 500000], // ADD THIS
+                budgetRange: [0, 30000000],
               }}
               currentFilters={filters}
               onSearch={(queryString, updatedFilters) => {
                 setFilters({
                   ...filters,
                   status: updatedFilters.status,
+                  // Map status to listingType for backend API
+                  listingType: updatedFilters.status && updatedFilters.status !== "All" ? updatedFilters.status : "",
                   propertyType: updatedFilters.propertyType,
                   city: updatedFilters.city,
                   bedrooms: updatedFilters.bedrooms,
                   searchTerm: updatedFilters.search,
                   rentRange: updatedFilters.rentRange,
+                  budgetRange: updatedFilters.budgetRange,
+                  minBudget: updatedFilters.minBudget,
                   maxBudget: updatedFilters.maxBudget,
                 });
               }}
@@ -332,18 +469,20 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
           <div className="empty-properties d-flex flex-column align-items-center text-center">
             <div className="empty-icon">🏠</div>
             <h3>No properties match your criteria</h3>
-            <p>Try adjusting your filters or search terms to see more results.</p>
+            <p>
+              Try adjusting your filters or search terms to see more results.
+            </p>
             <button
               className="btn btn-primary"
               onClick={() => {
                 setFilters({
-                  location: '',
-                  propertyType: 'all',
+                  location: "",
+                  propertyType: "all",
                   priceRange: { min: 0, max: 10000 },
-                  bedrooms: 'any',
-                  amenities: []
-                })
-                setSearchTerm('')
+                  bedrooms: "any",
+                  amenities: [],
+                });
+                setSearchTerm("");
               }}
             >
               Clear All Filters
@@ -356,7 +495,13 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
             {filteredProperties.slice(0, 6).map((property, index) => (
               <motion.div
                 key={property.id}
-                initial={{ opacity: 0, y: 20, display: "flex", justifyContent: "center", alignItems: "center" }}
+                initial={{
+                  opacity: 0,
+                  y: 20,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
@@ -380,12 +525,17 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
             color="primary"
             onClick={() => {
               const urlParams = new URLSearchParams();
-              if (filters.status) urlParams.append("status", filters.status);
-              if (filters.propertyType) urlParams.append("propertyType", filters.propertyType);
+              // Use listingType instead of status for backend compatibility
+              if (filters.listingType) urlParams.append("listingType", filters.listingType);
+              if (filters.propertyType)
+                urlParams.append("propertyType", filters.propertyType);
               if (filters.city) urlParams.append("city", filters.city);
-              if (filters.bedrooms) urlParams.append("bedrooms", filters.bedrooms);
-              if (filters.searchTerm) urlParams.append("search", filters.searchTerm);
-              if (filters.maxBudget) urlParams.append("maxBudget", filters.maxBudget);
+              if (filters.bedrooms)
+                urlParams.append("bedrooms", filters.bedrooms);
+              if (filters.searchTerm)
+                urlParams.append("search", filters.searchTerm);
+              if (filters.maxBudget)
+                urlParams.append("maxBudget", filters.maxBudget);
               navigate(`/properties?${urlParams.toString()}`);
             }}
             sx={{
@@ -406,10 +556,16 @@ const HomeHeaderContainer = ({ activeBtn = "all", activeTab, setActiveTab }) => 
       {/* ✅ Modals */}
       {showAuthPrompt && <AuthPromptModal onClose={handleCloseModals} />}
       {showLogin && (
-        <Login onClose={handleCloseModals} onSwitchToSignUp={handleSwitchToRegister} />
+        <Login
+          onClose={handleCloseModals}
+          onSwitchToSignUp={handleSwitchToRegister}
+        />
       )}
       {showRegister && (
-        <Register onClose={handleCloseModals} onSwitchToLogin={handleSwitchToLogin} />
+        <Register
+          onClose={handleCloseModals}
+          onSwitchToLogin={handleSwitchToLogin}
+        />
       )}
       {showPropertyDetails && selectedProperty && (
         <PropertyDetailsModal
