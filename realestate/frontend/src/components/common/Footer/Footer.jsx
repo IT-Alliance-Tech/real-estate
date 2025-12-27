@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import './Footer.css'
 import { FaFacebookF, FaYoutube, FaWhatsapp, FaInstagram } from 'react-icons/fa'
 import redlogo from "../../../assets/images/real_estate_logo.png";
@@ -30,11 +31,11 @@ const Footer = () => {
           <div className="footer-center">
             <h3 className="footer-title">Useful Links</h3>
             <ul className="footer-links">
-              <li><a href="/about">About Us</a></li>
-              <li><a href="/termcondition">Terms and Conditions</a></li>
-              <li><a href="/privacy">Privacy Policy</a></li>
-              <li><a href="/faq">FAQ</a></li>
-              <li><a href="/contact">Contact</a></li>
+              <li><Link to="/about">About Us</Link></li>
+              <li><Link to="/termcondition">Terms and Conditions</Link></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/faq">FAQ</Link></li>
+              <li><Link to="/contact">Contact</Link></li>
             </ul>
           </div>
 

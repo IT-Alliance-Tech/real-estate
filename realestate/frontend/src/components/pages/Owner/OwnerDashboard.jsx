@@ -442,79 +442,17 @@ const OwnerDashboard = () => {
 
 
                                             {property.amenities && property.amenities.length > 0 && (
-                                                <div
-                                                    className="property-amenities"
-                                                    ref={(el) => {
-                                                        if (!el) return;
-                                                        const containerWidth = el.clientWidth;
-                                                        const gap = 8; // must match CSS
-                                                        let usedWidth = 0;
-                                                        let count = 0;
-
-                                                        const measureWidth = (text) => {
-                                                            const canvas = document.createElement("canvas");
-                                                            const ctx = canvas.getContext("2d");
-                                                            ctx.font = "500 14px Inter, sans-serif";
-                                                            const textWidth = ctx.measureText(text).width;
-                                                            return Math.ceil(textWidth + 24 + 2); // padding + border
-                                                        };
-
-                                                        const maxVisible = 2; // target max
-
-                                                        for (let i = 0; i < property.amenities.length && count < maxVisible; i++) {
-                                                            const chipWidth = measureWidth(property.amenities[i]);
-                                                            const newWidth = count === 0 ? chipWidth : usedWidth + gap + chipWidth;
-
-                                                            const remaining = property.amenities.length - (i + 1);
-                                                            let moreWidth = 0;
-                                                            if (remaining > 0) {
-                                                                moreWidth = gap + measureWidth(`+${remaining} more`);
-                                                            }
-
-                                                            if (newWidth + moreWidth <= containerWidth) {
-                                                                usedWidth = newWidth;
-                                                                count++;
-                                                            } else {
-                                                                break;
-                                                            }
-                                                        }
-
-                                                        // If we reached 4 but overflow happens, drop to 3
-                                                        if (count === 3) {
-                                                            const chip4Width = measureWidth(property.amenities[3]);
-                                                            if (usedWidth + gap + chip4Width > containerWidth) {
-                                                                count = 2;
-                                                            }
-                                                        }
-
-                                                        el.dataset.visibleCount = count;
-                                                    }}
-                                                >
-                                                    {property.amenities
-                                                        .slice(
-                                                            0,
-                                                            parseInt(
-                                                                document.querySelector(".property-amenities")?.dataset.visibleCount || 3
-                                                            )
-                                                        )
-                                                        .map((amenity) => (
-                                                            <span key={amenity} className="amenity-tag">
-                                                                {amenity}
-                                                            </span>
-                                                        ))}
-                                                    {property.amenities.length >
-                                                        parseInt(
-                                                            document.querySelector(".property-amenities")?.dataset.visibleCount || 3
-                                                        ) && (
-                                                            <span className="amenity-tag more">
-                                                                +
-                                                                {property.amenities.length -
-                                                                    parseInt(
-                                                                        document.querySelector(".property-amenities")?.dataset.visibleCount || 3
-                                                                    )}{" "}
-                                                                more
-                                                            </span>
-                                                        )}
+                                                <div className="property-amenities">
+                                                    {property.amenities.slice(0, 3).map((amenity) => (
+                                                        <span key={amenity} className="amenity-tag">
+                                                            {amenity}
+                                                        </span>
+                                                    ))}
+                                                    {property.amenities.length > 3 && (
+                                                        <span className="amenity-tag more">
+                                                            +{property.amenities.length - 3} more
+                                                        </span>
+                                                    )}
                                                 </div>
                                             )}
 

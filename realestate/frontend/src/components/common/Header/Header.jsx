@@ -383,6 +383,21 @@ const Header = () => {
                 </Box> */}
 
                 <Button
+                  onClick={() => handleNavigation('/properties')}
+                  sx={{
+                    color: '#333',
+                    textTransform: 'none',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    '&:hover': { backgroundColor: '#f5f5f5' }
+                  }}
+                >
+                  Properties
+                </Button>
+
+                <Button
                   onClick={() => handleNavigation('/about')}
                   sx={{
                     color: '#333',
@@ -756,6 +771,14 @@ const Header = () => {
                         {isOwner && (
                           <>
                             <MenuItem
+                              onClick={() => { navigate('/owner-dashboard'); handleUserMenuClose(); }}
+                              sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                            >
+                              <BusinessIcon sx={{ mr: 2, fontSize: 20, color: '#1976d2' }} />
+                              <Typography variant="body2">Dashboard</Typography>
+                            </MenuItem>
+
+                            <MenuItem
                               onClick={() => { setShowEditProfile(true); handleUserMenuClose(); }}
                               sx={{ padding: '12px 20px', '&:hover': { backgroundColor: '#f5f5f5' } }}
                             >
@@ -920,12 +943,26 @@ const Header = () => {
                   )}
 
                   {isOwner && (
-                    <button
-                      className="btn btn-secondary btn-mobile"
-                      onClick={handleAddPropertyClick}
-                    >
-                      Add Property
-                    </button>
+                    <>
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={() => handleNavigation('/owner-dashboard')}
+                      >
+                        📊 Dashboard
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={() => handleNavigation('/properties')}
+                      >
+                        🏘️ Properties
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-mobile"
+                        onClick={handleAddPropertyClick}
+                      >
+                        ➕ Add Property
+                      </button>
+                    </>
                   )}
 
                   <button className="btn btn-danger btn-mobile" onClick={handleLogout}>
@@ -934,6 +971,13 @@ const Header = () => {
                 </>
               ) : (
                 <>
+                  <button
+                    className="btn color-change btn-mobile"
+                    onClick={() => handleNavigation('/properties')}
+                  >
+                    🏘️ Properties
+                  </button>
+
                   <button
                     className="btn color-change btn-mobile"
                     onClick={handleSignUpClick}

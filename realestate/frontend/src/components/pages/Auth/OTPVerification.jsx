@@ -198,8 +198,8 @@ const OTPVerification = ({ email, onSuccess, onBack, onClose }) => {
       }
 
       if (!response.ok) {
-        const errorMessage = handleApiError(null, response)
-        throw new Error(data.error || errorMessage)
+        const errorMsg = data.error?.message || data.error || handleApiError(null, response)
+        throw new Error(errorMsg)
       }
 
       if (data.success) {
@@ -322,7 +322,8 @@ const OTPVerification = ({ email, onSuccess, onBack, onClose }) => {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || handleApiError(null, response))
+        const errorMsg = data.error?.message || data.error || handleApiError(null, response)
+        throw new Error(errorMsg)
       }
       
       if (data.success) {

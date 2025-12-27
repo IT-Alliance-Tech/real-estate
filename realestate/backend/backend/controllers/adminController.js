@@ -70,6 +70,7 @@ const formatOwnerWithIdProof = (property) => {
     electricityBill: details.electricityBill || owner?.electricityBill || "",
     electricityBillImageUrl:
       details.electricityBillImageUrl || owner?.electricityBillImageUrl || "",
+    verified: !!(owner?.verified || user?.verified || hasOwnerDetails(property)),
   };
 };
 
@@ -531,12 +532,13 @@ const updatePropertyStatus = async (req, res) => {
     if (status === PROPERTY_STATUS.PUBLISHED) {
       const owner = property.owner;
       const ownerVerified =
-        !!owner && (owner.verified === true || !!owner.user?.verified === true);
+        (!!owner && (owner.verified === true || !!owner.user?.verified === true)) ||
+        hasOwnerDetails(property);
 
       const isFirstTimePublish = property.status === PROPERTY_STATUS.APPROVED;
 
       if (isFirstTimePublish) {
-        if (!hasOwnerDetails(property)) {
+        if (!ownerVerified) {
           return res.status(400).json({
             statusCode: 400,
             success: false,
@@ -570,8 +572,14 @@ const updatePropertyStatus = async (req, res) => {
         }
 
         if (ownerVerified) {
-          const email = owner.email || owner.user?.email;
-          const phone = owner.phone || owner.user?.phone || owner.mobile;
+          const email =
+            property.ownerDetails?.email || owner?.email || owner?.user?.email;
+          const phone =
+            property.ownerDetails?.phone ||
+            owner?.phone ||
+            owner?.user?.phone ||
+            owner?.mobile;
+
           if (!isFilled(email) || !isFilled(phone)) {
             return res.status(400).json({
               statusCode: 400,
@@ -630,17 +638,27 @@ const updatePropertyStatus = async (req, res) => {
 
 // Helper: check if owner details are complete
 const hasOwnerDetails = (property) => {
-  const details = property.ownerDetails;
-  if (!details) return false;
+  const details = property.ownerDetails || {};
+  const owner = property.owner || {};
+  const user = owner.user || {};
 
-  return (
-    isFilled(details.name) &&
-    isFilled(details.email) &&
-    isFilled(details.phone) &&
-    isFilled(details.idProofType) &&
-    isFilled(details.idProofNumber) &&
-    isFilled(details.idProofImageUrl) & isFilled(details.electricityBill)
-  );
+  // Consolidated check helper
+  const isOk = (propVal, ownerVal) => isFilled(propVal) || isFilled(ownerVal);
+
+  const name = isOk(details.name, owner.name) || isFilled(getUserFullName(user));
+  const email = isOk(details.email, owner.email) || isFilled(user.email);
+  const phone =
+    isOk(details.phone, owner.phone) || isOk(owner.mobile, user.phone);
+
+  if (!name || !email || !phone) return false;
+
+  const idType = isOk(details.idProofType, owner.idProofType);
+  const idNum = isOk(details.idProofNumber, owner.idProofNumber);
+  const idImg = isOk(details.idProofImageUrl, owner.idProofImageUrl);
+  const ebNum = isOk(details.electricityBill, owner.electricityBill);
+  const ebImg = isOk(details.electricityBillImageUrl, owner.electricityBillImageUrl);
+
+  return !!(idType && idNum && idImg && ebNum && ebImg);
 };
 
 // Manage site visit requests
@@ -876,7 +894,7 @@ const getAllPropertiesForAdmin = async (req, res) => {
       status: property.status,
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
-      owner: property.owner ? formatOwnerWithIdProof(property) : null,
+      owner: formatOwnerWithIdProof(property),
     }));
 
     const pagination = getPaginationMeta(pageNum, limitNum, totalCount);
@@ -911,7 +929,7 @@ const getPropertyByIdForAdmin = async (req, res) => {
       populate: {
         path: "user",
         model: "User",
-        select: "name email phone",
+        select: "name email phone verified firstName lastName",
       },
     });
 
@@ -1030,7 +1048,14 @@ const updatePropertyForAdmin = async (req, res) => {
 
     await property.save();
 
-    property = await Property.findById(id).populate("owner");
+    property = await Property.findById(id).populate({
+      path: "owner",
+      populate: {
+        path: "user",
+        model: "User",
+        select: "name email phone verified firstName lastName",
+      },
+    });
 
     return res.status(200).json({
       statusCode: 200,
@@ -1040,20 +1065,7 @@ const updatePropertyForAdmin = async (req, res) => {
         message: "Property updated successfully",
         property: {
           ...formatAdminProperty(property),
-
-          owner: property.ownerDetails
-            ? {
-              name: property.ownerDetails.name || "",
-              email: property.ownerDetails.email || "",
-              phone: property.ownerDetails.phone || "",
-              idProofType: property.ownerDetails.idProofType || "",
-              idProofNumber: property.ownerDetails.idProofNumber || "",
-              idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
-              electricityBill: property.ownerDetails.electricityBill || "",
-              electricityBillImageUrl:
-                property.ownerDetails.electricityBillImageUrl || "",
-            }
-            : null,
+          owner: formatOwnerWithIdProof(property),
         },
       },
     });

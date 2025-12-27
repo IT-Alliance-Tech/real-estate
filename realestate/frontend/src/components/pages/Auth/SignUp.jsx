@@ -40,6 +40,10 @@ const SignUp = ({ onClose, onSwitchToLogin }) => {
       setError('Please enter a valid email address')
       return false
     }
+    if (!formData.phone || formData.phone.length < 10) {
+      setError('Please enter a valid phone number')
+      return false
+    }
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long')
       return false
@@ -68,6 +72,7 @@ const SignUp = ({ onClose, onSwitchToLogin }) => {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           password: formData.password,
           role: formData.role
         }),
@@ -79,7 +84,8 @@ const SignUp = ({ onClose, onSwitchToLogin }) => {
         setUserEmail(formData.email)
         setCurrentStep('otp')
       } else {
-        setError(data.error || 'Registration failed. Please try again.')
+        const errorMsg = data.error?.message || data.error || 'Registration failed. Please try again.'
+        setError(errorMsg)
       }
     } catch (err) {
       setError('Network error. Please check your connection and try again.')

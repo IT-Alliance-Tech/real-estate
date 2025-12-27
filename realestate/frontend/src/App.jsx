@@ -14,7 +14,6 @@ const HomePage = lazy(() => import('./components/pages/Home/HomePage'))
 // Removed NewHomePage import
 
 import OwnerDashboard from './components/pages/Owner/OwnerDashboard'
-import AdminDashboard from './components/pages/Admin/AdminDashboard'
 import SecretAdminAccess from './components/pages/Admin/SecretAdminAccess'
 import PropertyDetailsPage from './components/pages/Property/PropertyDetailsPage'
 import WishlistPage from './components/pages/Wishlist/WishlistPage'
@@ -35,33 +34,10 @@ import PaymentCallback from './components/pages/Payment/PaymentCallback'
 import './styles/globals.css'
 import './styles/components.css'
 
+import AdminDashboardRoute from './components/pages/Admin/AdminDashboardRoute'
+import ProtectedRoute from './components/common/ProtectedRoute'
+
 // comment added
-
-function AppContent() {
-  const { user, isAuthenticated } = useAuth()
-
-  // Show Owner Dashboard for logged-in owners
-  if (isAuthenticated && user?.role === 'owner') {
-    return (
-      <Layout>
-        <ErrorBoundary>
-          <OwnerDashboard />
-        </ErrorBoundary>
-      </Layout>
-    )
-  }
-
-  // Show regular HomePage for other users
-  return (
-    <Layout>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <HomePage />
-        </Suspense>
-      </ErrorBoundary>
-    </Layout>
-  )
-}
 
 // Helper component to wrap routes with Layout and ErrorBoundary
 const LayoutWrapper = ({ children }) => (
@@ -81,7 +57,17 @@ function App() {
             <ScrollToTop />
             <Routes>
               {/* Main App Route */}
-              <Route path="/" element={<AppContent />} />
+              <Route path="/" element={<LayoutWrapper><Suspense fallback={null}><HomePage /></Suspense></LayoutWrapper>} />
+
+              {/* Owner Routes */}
+              <Route 
+                path="/owner-dashboard" 
+                element={
+                  <ProtectedRoute allowedRoles={['owner']}>
+                    <LayoutWrapper><OwnerDashboard /></LayoutWrapper>
+                  </ProtectedRoute>
+                } 
+              />
 
               {/* Public Pages */}
               <Route path="/contact" element={<LayoutWrapper><ContactPage /></LayoutWrapper>} />
@@ -99,12 +85,33 @@ function App() {
 
               {/* Property & User Pages */}
               <Route path="/property/:id" element={<LayoutWrapper><PropertyDetailsPage /></LayoutWrapper>} />
-              <Route path="/wishlist" element={<LayoutWrapper><WishlistPage /></LayoutWrapper>} />
-              <Route path="/my-bookings" element={<LayoutWrapper><MyBookings /></LayoutWrapper>} />
-              <Route path="/my-subscription" element={<LayoutWrapper><MySubscription /></LayoutWrapper>} />
+              <Route 
+                path="/wishlist" 
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'owner']}>
+                    <LayoutWrapper><WishlistPage /></LayoutWrapper>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-bookings" 
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <LayoutWrapper><MyBookings /></LayoutWrapper>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-subscription" 
+                element={
+                    <ProtectedRoute allowedRoles={['user', 'owner']}>
+                    <LayoutWrapper><MySubscription /></LayoutWrapper>
+                  </ProtectedRoute>
+                } 
+              />
 
               {/* ✅ FontPage / PhonePe Integration Result Pages */}
-              <Route path="/processing" element={<LayoutWrapper><ProcessingPage /></LayoutWrapper>} /> {/* <-- Added */}
+              <Route path="/processing" element={<LayoutWrapper><ProcessingPage /></LayoutWrapper>} />
               <Route path="/success" element={<LayoutWrapper><SuccessPage /></LayoutWrapper>} />
               <Route path="/error" element={<LayoutWrapper><ErrorPage /></LayoutWrapper>} />
 
@@ -115,11 +122,11 @@ function App() {
               />
               <Route
                 path="/admin/dashboard"
-                element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>}
+                element={<ErrorBoundary><AdminDashboardRoute /></ErrorBoundary>}
               />
 
               {/* Fallback Route */}
-              <Route path="*" element={<AppContent />} />
+              <Route path="*" element={<LayoutWrapper><Suspense fallback={null}><HomePage /></Suspense></LayoutWrapper>} />
             </Routes>
           </Router>
         </AdminAuthProvider>
