@@ -9,7 +9,7 @@ import IconButton from "@mui/material/IconButton";
 import FavoriteOutlined from "@mui/icons-material/FavoriteOutlined";
 import Favorite from "@mui/icons-material/Favorite";
 import { useWishlist } from "../../../context/Wishlist";
-import watermark from "../../../assets/images/water1.png";
+// import watermark from "../../../assets/images/water1.png";
 import fallbackImg from "../../../assets/images/Errorimg.png";
 import { motion } from "framer-motion";
 
@@ -94,10 +94,7 @@ const PropertyCard = ({
       (img) =>
         img &&
         typeof img === "string" &&
-        img.trim() &&
-        !img.toLowerCase().includes("car") &&
-        !img.toLowerCase().includes("vehicle") &&
-        !img.toLowerCase().includes("auto")
+        img.trim()
     );
   };
 
@@ -256,7 +253,7 @@ const PropertyCard = ({
               whileHover={{ scale: 1.1 }}
               transition={{ duration: 0.6 }}
             />
-            <img src={watermark} alt="Watermark" className="property-overlay" />
+            <div className="property-overlay">realestate</div>
           </div>
         ) : (
           <div
@@ -273,7 +270,7 @@ const PropertyCard = ({
               whileHover={{ scale: 1.1 }}
               transition={{ duration: 0.6 }}
             />
-            <img src={watermark} alt="Watermark" className="property-overlay" />
+            <div className="property-overlay">realestate</div>
           </div>
         )}
       </div>

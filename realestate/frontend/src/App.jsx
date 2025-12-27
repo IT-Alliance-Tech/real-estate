@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AdminAuthProvider } from './context/AdminAuthContext'
 import Layout from './components/common/Layout/Layout'
@@ -30,6 +30,7 @@ import SubscriptionPlans from './components/pages/General/SubscriptionPlans'
 import TermsAndConditions from './components/pages/Legal/TermConditionPage' // Renamed from TermConditionPage
 import PrivacyPolicy from './components/pages/Legal/PrivacyPolicyPage'
 import PaymentCallback from './components/pages/Payment/PaymentCallback'
+import DummyPayment from './components/pages/Payment/DummyPayment'
 
 import './styles/globals.css'
 import './styles/components.css'
@@ -82,6 +83,7 @@ function App() {
 
               {/* Payment Callback Page */}
               <Route path="/payment/callback" element={<LayoutWrapper><PaymentCallback /></LayoutWrapper>} />
+              <Route path="/payment/dummy" element={<DummyPayment />} />
 
               {/* Property & User Pages */}
               <Route path="/property/:id" element={<LayoutWrapper><PropertyDetailsPage /></LayoutWrapper>} />
@@ -116,6 +118,7 @@ function App() {
               <Route path="/error" element={<LayoutWrapper><ErrorPage /></LayoutWrapper>} />
 
               {/* Admin Routes */}
+              <Route path="/admin" element={<Navigate to="/system/admin/secure-access-portal-2025" replace />} />
               <Route
                 path="/system/admin/secure-access-portal-2025"
                 element={<ErrorBoundary><SecretAdminAccess /></ErrorBoundary>}

@@ -9,6 +9,8 @@ import {
   Tabs,
   Tab,
   InputAdornment,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -21,8 +23,6 @@ const propertyTypes = [
   { label: "Apartment", value: "apartment" },
   { label: "House", value: "house" },
   { label: "Villa", value: "villa" },
-  { label: "Studio", value: "studio" },
-  { label: "Commercial", value: "commercial" },
 ];
 
 const bedroomOptions = [
@@ -35,7 +35,7 @@ const bedroomOptions = [
 ];
 
 const defaultFilters = {
-  status: "",
+  status: "rent",
   propertyType: "",
   city: "",
   bedrooms: "",
@@ -47,17 +47,9 @@ const defaultFilters = {
 const StyledTabs = styled(Tabs)(({ theme }) => ({
   "& .MuiTabs-flexContainer": {
     display: "flex",
-    justifyContent: "center",
-    // flexWrap: "wrap",  
-    [theme.breakpoints.down(568)]: {
-      flexDirection: "column",
-      alignItems: "center",
-    },
+    width: "100%",
     [theme.breakpoints.down(992)]: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "8px",
-      justifyContent: "center",
+      justifyContent: "spaceevenly",
       alignItems: "center",
     },
   },
@@ -67,10 +59,11 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
 }));
 
 const StyledTab = styled(Tab)(({ theme }) => ({
-  minWidth: "160px",
+  flex: 1,
+  minWidth: 0,
   fontWeight: "700",
   textTransform: "uppercase",
-  fontSize: "14px",
+  fontSize: "12px",
   borderRadius: "12px 12px 0 0",
   color: theme.palette.text.secondary,
   backgroundColor: "#f8f9fa",
@@ -80,18 +73,26 @@ const StyledTab = styled(Tab)(({ theme }) => ({
     fontWeight: "800",
   },
   "@media (max-width:568px)": {
-    minWidth: "250px",
+    minWidth: "0",
+    flex: "1 1 0",
+    fontSize: "11px",
+    padding: "10px 8px",
+    whiteSpace: "nowrap",
   },
 }));
 
-const StyledTextField = styled(TextField)(() => ({
+const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
-    borderRadius: "6px",
+    borderRadius: "8px",
     backgroundColor: "#ffffff",
     transition: "all 0.3s ease",
+    fontSize: "13px",
     width: "100%",
-    height: "40px",
-    maxWidth: "170px",
+    height: "44px",
+    maxWidth: "120px",
+    [theme.breakpoints.down("lg")]: {
+      maxWidth: "100%",
+    },
   },
   "& .MuiInputLabel-root": {
     display: "none",
@@ -105,6 +106,7 @@ const StyledButton = styled(Button)(() => ({
   fontSize: "14px",
   height: "40px",
   borderRadius: "12px",
+  justifyContent: "center",
   "&:hover": {
     backgroundColor: "#1565c0",
   },
@@ -122,30 +124,39 @@ const SectionLabel = styled(Typography)(() => ({
 }));
 
 // ======== Component ========
-export default function PropertyFilter({ initialFilters = {}, currentFilters = {}, onSearch }) {
+export default function PropertyFilter({
+  initialFilters = {},
+  currentFilters = {},
+  onSearch,
+}) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [filters, setFilters] = useState(() => ({
     ...defaultFilters,
     ...initialFilters,
   }));
 
-  // Map status to tab index
+  // Map status to tab index (0=RENT, 1=SALE, 2=LEASE, 3=COMMERCIAL)
   const getStatusTabIndex = (status) => {
     switch (status) {
       case "rent":
-        return 1;
-      case "sale":
-      case "sell": // Backend uses 'sell'
-        return 2;
-      case "lease":
-        return 3;
-      case "commercial":
-        return 4;
-      default:
         return 0;
+      case "sale":
+      case "sell":
+        return 1;
+      case "lease":
+        return 2;
+      case "commercial":
+        return 3;
+      default:
+        return 0; // Default to RENT
     }
   };
 
-  const [statusTab, setStatusTab] = useState(getStatusTabIndex(filters.status));
+  const [statusTab, setStatusTab] = useState(
+    getStatusTabIndex(filters.status || "rent")
+  );
 
   const lastSearchRef = useRef("");
   const isInitialMount = useRef(true);
@@ -162,7 +173,12 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         ...currentFilters,
       }));
       const newTabIndex = getStatusTabIndex(currentFilters.status);
-      console.log("PropertyFilter: Setting tab index to", newTabIndex, "for status", currentFilters.status);
+      console.log(
+        "PropertyFilter: Setting tab index to",
+        newTabIndex,
+        "for status",
+        currentFilters.status
+      );
       setStatusTab(newTabIndex);
     }
   }, [currentFilters]);
@@ -175,7 +191,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
       }
     }, 500);
     return () => clearTimeout(delay);
-  }, );
+  }, [filters.search]);
 
   const handleChange = (name, value) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -184,7 +200,7 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
   const handleTabChange = (event, newValue) => {
     setStatusTab(newValue);
     // Backend expects 'sell' not 'sale'
-    const statusMap = ["All", "rent", "sell", "lease", "commercial"];
+    const statusMap = ["rent", "sell", "lease", "commercial"];
     const newStatus = statusMap[newValue];
     setFilters((prev) => ({ ...prev, status: newStatus }));
   };
@@ -192,13 +208,17 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
   const handleSearchClick = () => {
     const params = new URLSearchParams();
 
-    console.log("PropertyFilter: handleSearchClick called with filters", filters);
+    console.log(
+      "PropertyFilter: handleSearchClick called with filters",
+      filters
+    );
 
-    // Map status to listingType for backend compatibility
-    if (filters.status && filters.status !== "All") {
-      params.append("listingType", filters.status);
+    // Use 'status' key for URL params to match Properties.jsx expectation
+    if (filters.status) {
+      params.append("status", filters.status);
     }
-    if (filters.propertyType) params.append("propertyType", filters.propertyType);
+    if (filters.propertyType)
+      params.append("propertyType", filters.propertyType);
     if (filters.city) params.append("city", filters.city);
     if (filters.bedrooms) params.append("bedrooms", filters.bedrooms);
     if (filters.search) params.append("search", filters.search);
@@ -206,7 +226,10 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
 
     lastSearchRef.current = filters.search;
 
-    console.log("PropertyFilter: Calling onSearch with params:", params.toString());
+    console.log(
+      "PropertyFilter: Calling onSearch with params:",
+      params.toString()
+    );
     console.log("PropertyFilter: Calling onSearch with filters:", filters);
     onSearch(params.toString(), filters);
   };
@@ -217,34 +240,39 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
       <StyledTabs
         value={statusTab}
         onChange={handleTabChange}
-        centered
-        sx={{ display: { xs: "none", lg: "flex" } }}
+        variant="fullWidth" // 🔥 FIX
+        centered={false} // 🔥 IMPORTANT
+        scrollButtons={false}
+        allowScrollButtonsMobile={false}
+        sx={{ width: "100%" }}
       >
-        <StyledTab label="ALL STATUS" />
-        <StyledTab label="FOR RENT" />
-        <StyledTab label="FOR SALE" />
-        <StyledTab label="FOR LEASE" />
-        <StyledTab label="FOR COMMERCIAL" />
+        <StyledTab label="RENT" />
+        <StyledTab label="SALE" />
+        <StyledTab
+          label="LEASE"
+          sx={{ display: { xs: "none", sm: "inline-flex" } }}
+        />
+        <StyledTab label="COMMERCIAL" />
       </StyledTabs>
 
       {/* Filters */}
       <Grid
         container
-        spacing={3}
+        spacing={2}
         sx={{
-          p: 4,
-          justifyContent: "center",
-          alignItems: "end",
+          p: { xs: 2, lg: 2 },
+          justifyContent: "center", // 🔥 KEY FIX
+          alignItems: "center",
           backgroundColor: "white",
           borderRadius: "10px",
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}
       >
-        {/* Property Type */}
-        <Grid item xs={12} sm={6} md={3} sx={{ display: { xs: "none", lg: "block" } }}>
+        {/* Property Type - Desktop Only */}
+        <Grid item xs={12} lg={3} sx={{ display: { xs: "none", lg: "block" } }}>
           <SectionLabel>
             <HomeIcon sx={{ fontSize: 16 }} />
-            LOOKING FOR
+            PROPERTY TYPE
           </SectionLabel>
           <StyledTextField
             select
@@ -254,7 +282,9 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
             SelectProps={{
               displayEmpty: true,
               renderValue: (value) =>
-                value || <span style={{ color: "#9e9e9e" }}>PROPERTY TYPE</span>,
+                value || (
+                  <span style={{ color: "#9e9e9e" }}>PROPERTY TYPE</span>
+                ),
             }}
           >
             {propertyTypes.map((type) => (
@@ -266,8 +296,8 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
         </Grid>
 
         {/* Location */}
-        <Grid item xs={12} sm={8} lg={3}>
-          <SectionLabel>
+        <Grid item xs={12} lg={3}>
+          <SectionLabel sx={{ display: { xs: "none", lg: "flex" } }}>
             <LocationOnIcon sx={{ fontSize: 16 }} />
             LOCATION
           </SectionLabel>
@@ -286,11 +316,11 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
           />
         </Grid>
 
-        {/* Bedrooms */}
-        <Grid item xs={12} sm={6} md={3} sx={{ display: { xs: "none", lg: "block" } }}>
+        {/* Bedrooms - Desktop Only */}
+        <Grid item xs={12} lg={3} sx={{ display: { xs: "none", lg: "block" } }}>
           <SectionLabel>
             <BedIcon sx={{ fontSize: 16 }} />
-            PROPERTY SIZE
+            BEDROOMS
           </SectionLabel>
           <StyledTextField
             select
@@ -300,7 +330,11 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
             SelectProps={{
               displayEmpty: true,
               renderValue: (value) =>
-                value ? `${value} BHK` : <span style={{ color: "#9e9e9e" }}>BEDROOMS</span>,
+                value ? (
+                  `${value} BHK`
+                ) : (
+                  <span style={{ color: "#9e9e9e" }}>BEDROOMS</span>
+                ),
             }}
           >
             {bedroomOptions.map((option) => (
@@ -311,27 +345,39 @@ export default function PropertyFilter({ initialFilters = {}, currentFilters = {
           </StyledTextField>
         </Grid>
 
-        {/* Budget */}
-        <Grid item xs={12} sm={6} md={3} sx={{ display: { xs: "none", lg: "block" } }}>
+        {/* Budget - Desktop Only */}
+        <Grid item xs={12} lg={3} sx={{ display: { xs: "none", lg: "block" } }}>
           <SectionLabel>
             <BedIcon sx={{ fontSize: 16 }} />
-            YOUR BUDGET
+            BUDGET
           </SectionLabel>
           <StyledTextField
             fullWidth
             value={filters.maxBudget}
             onChange={(e) => handleChange("maxBudget", e.target.value)}
             InputProps={{
-              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">₹</InputAdornment>
+              ),
             }}
             placeholder={"MAX PRICE"}
           />
         </Grid>
 
-        {/* Search Button */}
-        <Grid item xs={12} sm={4} lg={2}>
-          <StyledButton variant="contained" fullWidth onClick={handleSearchClick}>
-            Search
+        {/* Search Button - Centered on both mobile and desktop */}
+        <Grid item xs={12} lg={2}>
+          <SectionLabel sx={{ visibility: "hidden" }}>SEARCH</SectionLabel>
+
+          <StyledButton
+            fullWidth
+            sx={{
+              height: "38px", // same as inputs
+              borderRadius: "8px",
+              fontSize: "13px",
+            }}
+            onClick={handleSearchClick}
+          >
+            SEARCH
           </StyledButton>
         </Grid>
       </Grid>

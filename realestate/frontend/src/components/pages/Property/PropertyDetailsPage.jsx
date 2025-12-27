@@ -58,7 +58,7 @@ import { Favorite, FavoriteOutlined } from '@mui/icons-material'
 import { styled } from "@mui/material/styles";
 import LockIcon from '@mui/icons-material/Lock';
 import SubscriptionBanner from '../../common/SubscriptionBanner';
-import watermark from "../../../assets/images/water1.png";
+// import watermark from "../../../assets/images/water1.png";
 
 
 const PropertyDetailsPage = () => {
@@ -216,15 +216,7 @@ const PropertyDetailsPage = () => {
         return
       }
 
-      const headers = {
-        'Content-Type': 'application/json'
-      }
-
-      // Add auth header if user is authenticated and token exists
-      if (isAuthenticated && token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-
+      setLoading(true)
       const response = await fetch(buildApiUrl(API_CONFIG.PROPERTY_VIEWS.VIEW_OWNER), {
         method: 'POST',
         headers: {
@@ -262,6 +254,14 @@ const PropertyDetailsPage = () => {
         setUnlockContact(data.data)
         // Refresh subscription data to update credits
         fetchSubscription()
+        
+        // Scroll to owner info after a short delay to allow rendering
+        setTimeout(() => {
+          const ownerSection = document.getElementById('owner-info-section');
+          if (ownerSection) {
+            ownerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
       } else {
         throw new Error(data.error?.message || 'Failed to unlock contact')
       }
@@ -902,7 +902,7 @@ const PropertyDetailsPage = () => {
                 className="property-image"
                 onError={(e) => { e.target.src = '/placeholder-property.jpg' }}
               />
-              <img src={watermark} alt="Watermark" className="property-overlay" />
+              <div className="property-overlay">realestate</div>
               <IconButton
                 onClick={() => setShareOpen(true)}
                 size="small"
@@ -1077,9 +1077,16 @@ const PropertyDetailsPage = () => {
                 {isAuthenticated ? (
                   <>
                     {subscription ? (
-                      <button className="contact-btn" onClick={contactOwnerFn}>
-                        📞 Contact Owner
-                      </button>
+                      unlockContact ? (
+                        <div className="contact-unlocked-msg">
+                          <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+                          Contact Details Unlocked
+                        </div>
+                      ) : (
+                        <button className="contact-btn" onClick={contactOwnerFn} disabled={loading}>
+                          {loading ? 'Unlocking...' : '📞 Contact Owner'}
+                        </button>
+                      )
                     ) : (
                       <button className="contact-btn locked" onClick={() => navigate('/subscription-plans')}>
                         <LockIcon fontSize="small" style={{ marginRight: '8px' }} />
@@ -1116,7 +1123,7 @@ const PropertyDetailsPage = () => {
 
               {/* Owner Info */}
               {unlockContact && (
-                <div className="property-info-card owner-info-highlight">
+                <div id="owner-info-section" className="property-info-card owner-info-highlight">
                   <h3>OWNER INFORMATION</h3>
                   <div className="info-list">
                     <div className="info-item">

@@ -278,39 +278,30 @@ const HomeHeaderContainer = () => {
       </motion.div>
       {/* ✅ FILTER SECTION — removed mt-3 (margin-top) */}
       <motion.div
-        className={`home_filter_main_container card border-0 p-1 mt-0 bg-transparent`}
-        style={{ marginTop: "0 !important" }}
+        className="home_filter_main_container mt-0"
         initial={{ x: "-50%", y: "-50%", opacity: 0, scale: 0.9 }}
         animate={{ x: "-50%", y: "-50%", opacity: 1, scale: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        <div className={width < 576 ? "pb-2" : "card-body"}>
-          <div className="search-filter-container">
-            <PropertyFilter
-              initialFilters={{
-                status: "",
-                propertyType: "",
-                city: "",
-                bedrooms: "",
-                search: "",
-                maxBudget: "",
-              }}
-              currentFilters={filters}
-              onSearch={(queryString, updatedFilters) => {
-                setFilters({
-                  ...filters,
-                  status: updatedFilters.status,
-                  listingType: updatedFilters.status, // Map status to listingType for API
-                  propertyType: updatedFilters.propertyType,
-                  city: updatedFilters.city,
-                  bedrooms: updatedFilters.bedrooms,
-                  searchTerm: updatedFilters.search,
-                  rentRange: updatedFilters.rentRange,
-                  maxBudget: updatedFilters.maxBudget,
-                });
-              }}
-            />
-          </div>
+        <div className="search-filter-container d-flex justify-content-center">
+          <PropertyFilter
+            initialFilters={{
+              status: "rent",
+              propertyType: "",
+              city: "",
+              bedrooms: "",
+              search: "",
+              maxBudget: "",
+            }}
+            currentFilters={filters}
+            onSearch={(queryString, updatedFilters) => {
+              setFilters({
+                ...filters,
+                ...updatedFilters,
+                listingType: updatedFilters.status,
+              });
+            }}
+          />
         </div>
       </motion.div>
       {/* ✅ Properties Section */}

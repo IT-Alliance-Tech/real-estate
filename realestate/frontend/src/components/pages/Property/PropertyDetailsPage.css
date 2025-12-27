@@ -146,12 +146,23 @@
   position: absolute;
   top: 0;
   left: 0;
-  opacity: 0.17;
-  pointer-events: none;
-  user-select: none;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.15;
+  pointer-events: none;
+  user-select: none;
+  z-index: 5;
+  overflow: hidden;
+  font-size: 4rem;
+  font-weight: 800;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 0.3rem;
+  white-space: nowrap;
+  transform: rotate(-30deg);
 }
 
 /* Wishlist Icon inside Property Image */
@@ -459,6 +470,55 @@
   background: linear-gradient(135deg, #b91c1c, #991b1b);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+}
+
+.contact-unlocked-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.owner-info-highlight {
+  border: 2px solid #2F80ED !important;
+  background: #f0f7ff !important;
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% {
+    border-color: #2F80ED;
+    box-shadow: 0 0 0 0 rgba(47, 128, 237, 0.4);
+  }
+
+  70% {
+    border-color: #2F80ED;
+    box-shadow: 0 0 0 10px rgba(47, 128, 237, 0);
+  }
+
+  100% {
+    border-color: #2F80ED;
+    box-shadow: 0 0 0 0 rgba(47, 128, 237, 0);
+  }
+}
+
+.highlight-credits {
+  background: #fff7ed;
+  padding: 8px 12px !important;
+  border-radius: 6px;
+  border: 1px solid #ffedd5;
+  margin-top: 5px;
+}
+
+.highlight-credits .info-value {
+  color: #c2410c !important;
+  font-size: 1.1em !important;
 }
 
 /* Property Info Card */

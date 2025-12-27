@@ -1,5 +1,3 @@
-// src/components/pages/other/SubscriptionPlans.jsx
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -16,6 +14,7 @@ const SubscriptionPlans = () => {
   const { user, isAuthenticated, token } = useAuth();
 
   useEffect(() => {
+    console.log("SubscriptionPlans mounted");
     fetchPlans();
     if (isAuthenticated) {
       fetchCurrentSubscription();
@@ -90,6 +89,14 @@ const SubscriptionPlans = () => {
   };
 
   const getPlanStyle = (planName) => {
+    if (!planName) return {
+      theme: "default",
+      icon: "✨",
+      gradient: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+      accent: "#34495e",
+      shadow: "0 10px 30px rgba(0,0,0,0.1)"
+    };
+    
     const name = planName.toLowerCase();
     if (name.includes("silver")) {
       return {
@@ -266,7 +273,7 @@ const SubscriptionPlans = () => {
               <p>1. Plans are valid for the specified duration only.</p>
               <p>2. Contact credits are deducted only for unique property views.</p>
               <p>3. Subscription fees are non-refundable.</p>
-              <p>4. Real Estate reserves the right to modify plan benefits.</p>
+              <p>4. TruOwners reserves the right to modify plan benefits.</p>
               <Link to="/termcondition" className="full-tnc-link">Read Full Terms</Link>
             </div>
           </div>
