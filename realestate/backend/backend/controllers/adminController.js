@@ -7,10 +7,7 @@ const { PROPERTY_STATUS, BOOKING_STATUS } = require("../utils/constants");
 const UserSubscription = require("../models/UserSubscription");
 const PropertyView = require("../models/PropertyView");
 
-// ------------------------
 // COMMON HELPERS
-// ------------------------
-
 const isNonEmptyString = (value) =>
   typeof value === "string" && value.trim().length > 0;
 
@@ -288,15 +285,15 @@ const createPropertyWithOwner = async (req, res) => {
       ownerDetails:
         ownerData && Object.keys(ownerData).length > 0
           ? {
-              name: ownerData.name || "",
-              email: ownerData.email || "",
-              phone: ownerData.phone || "",
-              idProofType: ownerData.idProofType || "",
-              idProofNumber: ownerData.idProofNumber || "",
-              idProofImageUrl: ownerData.idProofImageUrl || "",
-              electricityBill: ownerData.electricityBill || "",
-              electricityBillImageUrl: ownerData.electricityBillImageUrl || "",
-            }
+            name: ownerData.name || "",
+            email: ownerData.email || "",
+            phone: ownerData.phone || "",
+            idProofType: ownerData.idProofType || "",
+            idProofNumber: ownerData.idProofNumber || "",
+            idProofImageUrl: ownerData.idProofImageUrl || "",
+            electricityBill: ownerData.electricityBill || "",
+            electricityBillImageUrl: ownerData.electricityBillImageUrl || "",
+          }
           : undefined,
 
       title: propertyData.title,
@@ -927,18 +924,18 @@ const getPropertyByIdForAdmin = async (req, res) => {
       });
     }
 
-   return res.status(200).json({
-  statusCode: 200,
-  success: true,
-  error: null,
-  data: {
-    message: "Property retrieved successfully",
-    property: {
-      ...formatAdminProperty(property),
-      owner: formatOwnerWithIdProof(property),
-    },
-  },
-});
+    return res.status(200).json({
+      statusCode: 200,
+      success: true,
+      error: null,
+      data: {
+        message: "Property retrieved successfully",
+        property: {
+          ...formatAdminProperty(property),
+          owner: formatOwnerWithIdProof(property),
+        },
+      },
+    });
 
   } catch (error) {
     console.error("Get property by id for admin error:", error);
@@ -1046,16 +1043,16 @@ const updatePropertyForAdmin = async (req, res) => {
 
           owner: property.ownerDetails
             ? {
-                name: property.ownerDetails.name || "",
-                email: property.ownerDetails.email || "",
-                phone: property.ownerDetails.phone || "",
-                idProofType: property.ownerDetails.idProofType || "",
-                idProofNumber: property.ownerDetails.idProofNumber || "",
-                idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
-                electricityBill: property.ownerDetails.electricityBill || "",
-                electricityBillImageUrl:
-                  property.ownerDetails.electricityBillImageUrl || "",
-              }
+              name: property.ownerDetails.name || "",
+              email: property.ownerDetails.email || "",
+              phone: property.ownerDetails.phone || "",
+              idProofType: property.ownerDetails.idProofType || "",
+              idProofNumber: property.ownerDetails.idProofNumber || "",
+              idProofImageUrl: property.ownerDetails.idProofImageUrl || "",
+              electricityBill: property.ownerDetails.electricityBill || "",
+              electricityBillImageUrl:
+                property.ownerDetails.electricityBillImageUrl || "",
+            }
             : null,
         },
       },
@@ -1090,18 +1087,18 @@ const getAllBookings = async (req, res) => {
           id: booking._id,
           user: booking.user
             ? {
-                id: booking.user._id,
-                name: booking.user.name,
-                email: booking.user.email,
-              }
+              id: booking.user._id,
+              name: booking.user.name,
+              email: booking.user.email,
+            }
             : null,
           property: booking.property
             ? {
-                id: booking.property._id,
-                title: booking.property.title,
-                location: booking.property.location,
-                rent: booking.property.rent,
-              }
+              id: booking.property._id,
+              title: booking.property.title,
+              location: booking.property.location,
+              rent: booking.property.rent,
+            }
             : null,
           visitDate: booking.visitDate,
           status: booking.status,
@@ -1160,12 +1157,12 @@ const getUsersWithSubscriptions = async (req, res) => {
           createdAt: user.createdAt,
           activeSubscription: activeSub
             ? {
-                planName: activeSub.plan.name,
-                startDate: activeSub.startDate,
-                endDate: activeSub.endDate,
-                contactsViewed: activeSub.contactsViewed,
-                contactLimit: activeSub.plan.contactLimit,
-              }
+              planName: activeSub.plan.name,
+              startDate: activeSub.startDate,
+              endDate: activeSub.endDate,
+              contactsViewed: activeSub.contactsViewed,
+              contactLimit: activeSub.plan.contactLimit,
+            }
             : null,
         };
       })
@@ -1209,17 +1206,17 @@ const getAllPayments = async (req, res) => {
           status: payment.status,
           user: payment.user
             ? {
-                id: payment.user._id,
-                name: payment.user.name,
-                email: payment.user.email,
-                phone: payment.user.phone,
-              }
+              id: payment.user._id,
+              name: payment.user.name,
+              email: payment.user.email,
+              phone: payment.user.phone,
+            }
             : null,
           plan: payment.plan
             ? {
-                name: payment.plan.name,
-                price: payment.plan.price,
-              }
+              name: payment.plan.name,
+              price: payment.plan.price,
+            }
             : null,
           createdAt: payment.createdAt,
         })),
