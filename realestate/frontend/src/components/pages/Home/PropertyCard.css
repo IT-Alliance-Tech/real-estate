@@ -1,7 +1,6 @@
 /* PropertyCard.css */
 .property-card {
-  min-height: 480px;
-  height: auto;
+  height: 520px;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -15,6 +14,7 @@
   max-width: 325px;
   text-align: left;
 }
+
 
 
 .property-card:hover {
@@ -113,10 +113,10 @@
   justify-content: flex-start;
   text-align: left;
   gap: 8px;
-  min-height: 260px;
-  height: auto;
+  height: calc(520px - 200px);
   overflow: hidden;
 }
+
 
 
 .property-card__title {
@@ -131,7 +131,10 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-height: 68px;
+  /* Reserves space for 3 lines (16 * 1.4 * 3 = 67.2) */
 }
+
 
 
 
