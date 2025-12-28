@@ -636,64 +636,79 @@ const HomePage = () => {
 
         </motion.div>
         <motion.section
-          className="about-cta"
+          className="contact-redesign-section"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <div className="three-column-layout">
-            {/* Column 3 (Form) */}
-            <div className="column form-column">
-              <form>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <img src={RealEstateLogo} alt="Real Estate Logo" style={{ width: '200px' }} />
-                  <label className='title-color'>VIEW LISTINGS</label>
+          <div className="contact-layout-container">
+            {/* Left Column: Form Card */}
+            <div className="contact-form-card">
+              <form className="redesign-form">
+                <div className="form-header-redesign">
+                  <img src={RealEstateLogo} alt="Real Estate Logo" className="form-logo-redesign" />
                 </div>
 
-                <input type="text" placeholder="NAME" />
-                <input type="email" placeholder="EMAIL ADDRESS" />
-                <input type="number" placeholder="PHONE NUMBER" />
-
-                <textarea placeholder="HELLO, I AM INTERESTED IN 2 BHK 2ND FLOOR, NORTH FACING MAIN DOOR, 32000 RENT." rows="4"></textarea>
-
-                <select>
-                  <option value="">INTERESTED IN</option>
-                  <option value="SELL">SELL</option>
-                  <option value="RENT">RENT</option>
-                  <option value="LEASE">LEASE</option>
-                </select>
-
-                <label style={{ color: '#000' }}>
-                  <input type="checkbox" /> By submitting this form I agree to Terms of Use
-                </label>
-
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', columnGap: '20px' }}>
-                  <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>SEND MESSAGE</button>
-                  <button type="submit" className="submit-btn mar-btn" style={{ width: "50%" }}>CALL</button>
+                <div className="form-inputs-redesign">
+                  <div className="input-group-redesign">
+                    <input type="text" placeholder="NAME" />
+                  </div>
+                  <div className="input-group-redesign">
+                    <input type="email" placeholder="EMAIL ADDRESS" />
+                  </div>
+                  <div className="input-group-redesign">
+                    <input type="text" placeholder="PHONE NUMBER" />
+                  </div>
+                  <div className="input-group-redesign">
+                    <textarea 
+                      placeholder="HELLO, I AM INTERESTED IN 2 BHK 2ND FLOOR, NORTH FACING MAIN DOOR, 32000 RENT." 
+                      rows="4"
+                    ></textarea>
+                  </div>
+                  <div className="input-group-redesign">
+                    <select>
+                      <option value="">INTERESTED IN</option>
+                      <option value="SELL">SELL</option>
+                      <option value="RENT">RENT</option>
+                      <option value="LEASE">LEASE</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className='whatsapp-btn'>
-                  <button type="submit" className="submit-btn mar-btn1">WHATSAPP</button>
+                <div className="form-terms-redesign">
+                  <label>
+                    <input type="checkbox" /> 
+                    <span>By submitting this form I agree to Terms of Use</span>
+                  </label>
+                </div>
+
+                <div className="form-actions-redesign">
+                  <div className="action-row-top">
+                    <button type="button" className="action-btn-blue">SEND MESSAGE</button>
+                    <button type="button" className="action-btn-blue">CALL</button>
+                  </div>
+                  <div className="action-row-bottom">
+                    <button type="button" className="action-btn-blue whatsapp-full">WHATSAPP</button>
+                  </div>
                 </div>
               </form>
             </div>
 
-            {/* Column 1 */}
-            <div className="column center1">
-              <div className="section12">
-                <h3 style={{ color: '#fff' }}>Putting a plan to action,
-                  to assure your satisfaction!
-                </h3>
-                <p style={{ color: '#fff' }}>
-                  Every property listed on our platform is thoroughly verified for authenticity, location accuracy,
-                  and pricing—so you can rent or buy with complete confidence.
-                </p>
-              </div>
+            {/* Right Column: Text Content */}
+            <div className="contact-text-content">
+              <h2 className="contact-heading-redesign">
+                Putting a plan to action,<br />
+                to assure your satisfaction!
+              </h2>
+              <p className="contact-subtext-redesign">
+                Every property listed on our platform is thoroughly verified for authenticity, location accuracy, 
+                and pricing—so you can rent or buy with complete confidence.
+              </p>
             </div>
           </div>
-
         </motion.section>
+
 
         <motion.div
           style={{
