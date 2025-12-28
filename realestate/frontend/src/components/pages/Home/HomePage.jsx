@@ -698,7 +698,7 @@ const HomePage = () => {
         <motion.div
           style={{
             width: '100%',
-            background: 'linear-gradient(180deg, #E1EDFF 0%, rgba(255, 255, 255, 0.14) 100%)'
+            background: '#E6F0FF'
           }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -721,53 +721,38 @@ const HomePage = () => {
             <p
               style={{
                 textAlign: 'center',
-                marginBottom: '40px',
+                marginBottom: '60px',
                 fontSize: '16px',
-                color: '#000',
-                opacity: '60%'
+                color: '#666'
               }}
             >
               See what our property managers, landlords, and tenants have to say
             </p>
 
+
             <Swiper
               modules={[Autoplay, Pagination, Navigation]}
-              spaceBetween={30}
+              spaceBetween={0}
               slidesPerView={1}
+              centeredSlides={true}
+              loop={true}
               autoplay={{
-                delay: 3000,
+                delay: 4000,
                 disableOnInteraction: false
               }}
               pagination={{ clickable: true }}
               navigation={true}
-              breakpoints={{
-                640: {
-                  slidesPerView: 1,
-                  spaceBetween: 20,
-                },
-                768: {
-                  slidesPerView: 2,
-                  spaceBetween: 30,
-                },
-                1024: {
-                  slidesPerView: 3,
-                  spaceBetween: 40,
-                },
-              }}
-              className="testimonial-slider"
+              className="testimonial-slider-new"
             >
               {testimonials.map((testimonial, index) => (
                 <SwiperSlide key={index}>
-                  <div className="testimonial-card">
-                    <div className="testimonial-content">
-                      <div className="quote-icon">❝</div>
-                      <p className="testimonial-text">{testimonial.text}</p>
-                    </div>
-                    <div className="testimonial-author">
-                      <img src={testimonial.image} alt={testimonial.name} className="author-image" />
-                      <div className="author-info">
-                        <h4>{testimonial.name}</h4>
-                        <p>{testimonial.role}</p>
+                  <div className="testimonial-slide-content">
+                    <p className="testimonial-text-large">"{testimonial.text}"</p>
+                    <div className="testimonial-author-centered">
+                      <img src={testimonial.image} alt={testimonial.name} className="author-avatar-centered" />
+                      <div className="author-meta-centered">
+                        <h4 className="author-name-new">{testimonial.name}</h4>
+                        <p className="author-role-new">{testimonial.role}</p>
                       </div>
                     </div>
                   </div>
