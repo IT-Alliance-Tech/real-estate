@@ -4,16 +4,26 @@ const supabaseUrl = import.meta.env.VITE_SUPER_BASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPER_BASE_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  console.warn('Supabase environment variables are missing. Some features like file uploads may not work.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
 
 // Updated upload function with better error handling
 export const uploadFile = async (file, path) => {
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase is not configured. Please check your environment variables.'
+    };
+  }
   try {
     // First, try uploading with upsert: true to allow overwrites
     const { data, error } = await supabase.storage
+
       .from('idproofs-properties')
       .upload(path, file, {
         cacheControl: '3600',

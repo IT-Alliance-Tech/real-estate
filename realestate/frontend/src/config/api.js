@@ -2,9 +2,9 @@
 // const BASE_URL = import.meta.env.BACKEND_BASE_URL
 
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_BACKEND_BASE_URL,
+  BASE_URL: import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:5001/api',
   // BASE_URL: 'http://localhost:5001/api',
-  
+
   // Auth endpoints
   AUTH: {
     REGISTER: '/auth/register',
@@ -18,7 +18,7 @@ export const API_CONFIG = {
     RESET_PASSWORD: '/auth/reset-password',     // Verify OTP & set new password
     RESEND_OTP: '/auth/resend-otp'               // Optional: separate resend OTP route if available
   },
-  
+
   // Owner endpoints
   OWNER: {
     PROPERTIES: '/owner/properties'
@@ -29,8 +29,8 @@ export const API_CONFIG = {
     PROPERTIES: '/admin/properties',
     REVIEW_PROPERTY: '/admin/properties/:id/review',
     PUBLISH_PROPERTY: '/admin/properties/:id/status',
-    BOOKINGS: '/booking/all',                    
-    BOOKING_ANALYTICS: '/booking/analytics',     
+    BOOKINGS: '/booking/all',
+    BOOKING_ANALYTICS: '/booking/analytics',
     UPDATE_BOOKING: '/booking/:id/status',
     PAYMENTS: '/admin/payments',
     USER_SUBSCRIPTION_HISTORY: '/admin/users/:userId/history'

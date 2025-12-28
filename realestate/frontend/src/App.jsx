@@ -8,10 +8,9 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 // ✅ Newly added imports
 import SuccessPage from './components/pages/subscription/SuccessPage'
 import ErrorPage from './components/pages/subscription/ErrorPage'
-import ProcessingPage from './components/pages/subscription/ProcessingPage' // <-- Added
+import ProcessingPage from './components/pages/subscription/ProcessingPage'
 
 const HomePage = lazy(() => import('./components/pages/Home/HomePage'))
-// Removed NewHomePage import
 
 import OwnerDashboard from './components/pages/Owner/OwnerDashboard'
 import SecretAdminAccess from './components/pages/Admin/SecretAdminAccess'
@@ -27,7 +26,7 @@ import ContactPage from './components/pages/General/ContactPage'
 import AboutPage from './components/pages/General/AboutPage'
 import FaqPage from './components/pages/General/FaqPage'
 import SubscriptionPlans from './components/pages/General/SubscriptionPlans'
-import TermsAndConditions from './components/pages/Legal/TermConditionPage' // Renamed from TermConditionPage
+import TermsAndConditions from './components/pages/Legal/TermConditionPage'
 import PrivacyPolicy from './components/pages/Legal/PrivacyPolicyPage'
 import PaymentCallback from './components/pages/Payment/PaymentCallback'
 import DummyPayment from './components/pages/Payment/DummyPayment'
@@ -37,8 +36,6 @@ import './styles/components.css'
 
 import AdminDashboardRoute from './components/pages/Admin/AdminDashboardRoute'
 import ProtectedRoute from './components/common/ProtectedRoute'
-
-// comment added
 
 // Helper component to wrap routes with Layout and ErrorBoundary
 const LayoutWrapper = ({ children }) => (

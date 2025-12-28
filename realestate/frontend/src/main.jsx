@@ -4,18 +4,16 @@ import './index.css'
 import App from './App.jsx'
 import { WishlistProvider } from './context/Wishlist.jsx';
 
+const rootElement = document.getElementById('root');
 
-
-// createRoot(document.getElementById('root')).render(
-//   <StrictMode>
-//     <App />
-//   </StrictMode>,
-// )
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <WishlistProvider>
-      <App />
-    </WishlistProvider>
-  </StrictMode>
-);
+if (rootElement) {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <WishlistProvider>
+        <App />
+      </WishlistProvider>
+    </StrictMode>
+  );
+} else {
+  console.error('Root element not found!');
+}
