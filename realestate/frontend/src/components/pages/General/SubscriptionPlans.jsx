@@ -38,11 +38,14 @@ const SubscriptionPlans = () => {
   const fetchCurrentSubscription = async () => {
     try {
       // const token = localStorage.getItem("token"); // Use token from context
-      const response = await fetch(buildApiUrl(API_CONFIG.SUBSCRIPTION.MY_SUBSCRIPTION), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.SUBSCRIPTION.MY_SUBSCRIPTION),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await response.json();
       if (data.success && data.data) {
         setCurrentSubscription(data.data);
@@ -55,7 +58,7 @@ const SubscriptionPlans = () => {
   const handleSubscribe = async (plan) => {
     if (!isAuthenticated) {
       // Save current path to redirect back after login
-      localStorage.setItem('redirectAfterLogin', '/subscription-plans');
+      localStorage.setItem("redirectAfterLogin", "/subscription-plans");
       navigate("/login");
       return;
     }
@@ -89,14 +92,15 @@ const SubscriptionPlans = () => {
   };
 
   const getPlanStyle = (planName) => {
-    if (!planName) return {
-      theme: "default",
-      icon: "✨",
-      gradient: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-      accent: "#34495e",
-      shadow: "0 10px 30px rgba(0,0,0,0.1)"
-    };
-    
+    if (!planName)
+      return {
+        theme: "default",
+        icon: "✨",
+        gradient: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        accent: "#34495e",
+        shadow: "0 10px 30px rgba(0,0,0,0.1)",
+      };
+
     const name = planName.toLowerCase();
     if (name.includes("silver")) {
       return {
@@ -104,7 +108,7 @@ const SubscriptionPlans = () => {
         icon: "🥈",
         gradient: "linear-gradient(135deg, #94d0cbff 0%, #CFDEF3 100%)",
         accent: "#5fa5a9ff",
-        shadow: "0 10px 30px rgba(189, 195, 199, 0.4)"
+        shadow: "0 10px 30px rgba(189, 195, 199, 0.4)",
       };
     }
     if (name.includes("gold")) {
@@ -113,7 +117,7 @@ const SubscriptionPlans = () => {
         icon: "👑",
         gradient: "linear-gradient(135deg, #FFF6B7 0%, #F6416C 100%)", // Richer gold/pink gradient
         accent: "#d35400",
-        shadow: "0 10px 30px rgba(243, 156, 18, 0.4)"
+        shadow: "0 10px 30px rgba(243, 156, 18, 0.4)",
       };
     }
     if (name.includes("diamond")) {
@@ -122,7 +126,7 @@ const SubscriptionPlans = () => {
         icon: "💎",
         gradient: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)", // Premium holographic feel
         accent: "#8e44ad",
-        shadow: "0 10px 30px rgba(142, 68, 173, 0.4)"
+        shadow: "0 10px 30px rgba(142, 68, 173, 0.4)",
       };
     }
     return {
@@ -130,7 +134,7 @@ const SubscriptionPlans = () => {
       icon: "✨",
       gradient: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       accent: "#34495e",
-      shadow: "0 10px 30px rgba(0,0,0,0.1)"
+      shadow: "0 10px 30px rgba(0,0,0,0.1)",
     };
   };
 
@@ -154,7 +158,8 @@ const SubscriptionPlans = () => {
         <div className="subscription-header-section">
           <h1 className="main-title">Unlock Your Dream Home</h1>
           <p className="sub-title">
-            Get direct access to verified property owners. No middlemen, no hidden fees.
+            Get direct access to verified property owners. No middlemen, no
+            hidden fees.
           </p>
 
           {currentSubscription && (
@@ -165,7 +170,8 @@ const SubscriptionPlans = () => {
                   Active Plan: <strong>{currentSubscription.plan.name}</strong>
                 </span>
                 <span className="active-details">
-                  {currentSubscription.contactsViewed}/{currentSubscription.plan.contactLimit} contacts used
+                  {currentSubscription.contactsViewed}/
+                  {currentSubscription.plan.contactLimit} contacts used
                 </span>
               </div>
             </div>
@@ -182,14 +188,21 @@ const SubscriptionPlans = () => {
             return (
               <div
                 key={plan._id}
-                className={`premium-plan-card ${isPopular ? 'popular-card' : ''} ${isCurrent ? 'current-card' : ''}`}
+                className={`premium-plan-card ${
+                  isPopular ? "popular-card" : ""
+                } ${isCurrent ? "current-card" : ""}`}
               >
                 {isPopular && <div className="popular-tag">Most Popular</div>}
                 {isCurrent && <div className="current-tag">Active</div>}
 
-                <div className="card-header" style={{ background: style.gradient }}>
+                <div
+                  className="card-header"
+                  style={{ background: style.gradient }}
+                >
                   <div className="plan-icon">{style.icon}</div>
-                  <h2 className="plan-title" style={{ color: style.accent }}>{plan.name}</h2>
+                  <h2 className="plan-title" style={{ color: style.accent }}>
+                    {plan.name}
+                  </h2>
                   <div className="plan-price-container">
                     <span className="currency">₹</span>
                     <span className="price">{plan.price}</span>
@@ -218,10 +231,10 @@ const SubscriptionPlans = () => {
                   </ul>
 
                   <button
-                    className={`action-button ${isCurrent ? 'disabled' : ''}`}
+                    className={`action-button ${isCurrent ? "disabled" : ""}`}
                     style={{
-                      background: isCurrent ? '#ccc' : style.accent,
-                      boxShadow: isCurrent ? 'none' : style.shadow
+                      background: isCurrent ? "#ccc" : style.accent,
+                      boxShadow: isCurrent ? "none" : style.shadow,
                     }}
                     onClick={() => !isCurrent && handleSubscribe(plan)}
                     disabled={subscribing === plan._id || isCurrent}
@@ -266,15 +279,21 @@ const SubscriptionPlans = () => {
       {/* T&C Modal */}
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button className="close-modal" onClick={() => setShowModal(false)}>×</button>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setShowModal(false)}>
+              ×
+            </button>
             <h3>Terms & Conditions</h3>
             <div className="modal-body">
               <p>1. Plans are valid for the specified duration only.</p>
-              <p>2. Contact credits are deducted only for unique property views.</p>
+              <p>
+                2. Contact credits are deducted only for unique property views.
+              </p>
               <p>3. Subscription fees are non-refundable.</p>
-              <p>4. TruOwners reserves the right to modify plan benefits.</p>
-              <Link to="/termcondition" className="full-tnc-link">Read Full Terms</Link>
+              <p>4. RealEstate reserves the right to modify plan benefits.</p>
+              <Link to="/termcondition" className="full-tnc-link">
+                Read Full Terms
+              </Link>
             </div>
           </div>
         </div>

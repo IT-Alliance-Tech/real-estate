@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../context/AuthContext'
-import { buildApiUrl, API_CONFIG } from '../../../config/api'
-import { handleApiError, getErrorMessage, validateApiResponse } from '../../../utils/errorHandler'
-import './PropertyDetailsPage.css'
-
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import { buildApiUrl, API_CONFIG } from "../../../config/api";
+import {
+  handleApiError,
+  getErrorMessage,
+  validateApiResponse,
+} from "../../../utils/errorHandler";
+import "./PropertyDetailsPage.css";
 
 // MUI imports
 
@@ -23,10 +26,8 @@ import {
   Chip,
   Divider,
   Grid,
-  IconButton
-}
-  from '@mui/material'
-
+  IconButton,
+} from "@mui/material";
 
 import ShareIcon from "@mui/icons-material/Share";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
@@ -38,629 +39,678 @@ import CloseIcon from "@mui/icons-material/Close";
 // Temporary placeholder for "X" (Twitter) – later we can replace with correct SVG
 import ClearIcon from "@mui/icons-material/Clear";
 
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import BlockIcon from '@mui/icons-material/Block'
-import EditIcon from '@mui/icons-material/Edit'
-import PendingIcon from '@mui/icons-material/Pending'
-import CancelIcon from '@mui/icons-material/Cancel'
-import TaskAltIcon from '@mui/icons-material/TaskAlt'
-import dayjs from 'dayjs'
-import PropertyCard from '../Home/PropertyCard'
-import bed from '../../../assets/images/Bed.png';
-import bath from '../../../assets/images/Bath.png';
-import areaImg from '../../../assets/images/area.png';
-import trueOwnersLogo from "../../../assets/images/truownerslogo.png"
-import { Favorite, FavoriteOutlined } from '@mui/icons-material'
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import BlockIcon from "@mui/icons-material/Block";
+import EditIcon from "@mui/icons-material/Edit";
+import PendingIcon from "@mui/icons-material/Pending";
+import CancelIcon from "@mui/icons-material/Cancel";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import dayjs from "dayjs";
+import PropertyCard from "../Home/PropertyCard";
+import bed from "../../../assets/images/Bed.png";
+import bath from "../../../assets/images/Bath.png";
+import areaImg from "../../../assets/images/area.png";
+import realEstateLogo from "../../../assets/images/real_estate_logo.png";
+import { Favorite, FavoriteOutlined } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
-import LockIcon from '@mui/icons-material/Lock';
-import SubscriptionBanner from '../../common/SubscriptionBanner';
+import LockIcon from "@mui/icons-material/Lock";
+import SubscriptionBanner from "../../common/SubscriptionBanner";
 // import watermark from "../../../assets/images/water1.png";
 
-
 const PropertyDetailsPage = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { user, isAuthenticated, token, loading: authLoading, validateSession } = useAuth()
-  const [property, setProperty] = useState(null)
-  const [similarProperties, setSimilarProperties] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [isInWishlist, setIsInWishlist] = useState(false)
-  const [wishlistLoading, setWishlistLoading] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [unlockContact, setUnlockContact] = useState()
-  const [subscription, setSubscription] = useState(null)
-  const [checkingSubscription, setCheckingSubscription] = useState(true)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const {
+    user,
+    isAuthenticated,
+    token,
+    loading: authLoading,
+    validateSession,
+  } = useAuth();
+  const [property, setProperty] = useState(null);
+  const [similarProperties, setSimilarProperties] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [unlockContact, setUnlockContact] = useState();
+  const [subscription, setSubscription] = useState(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   // Booking state
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
-  const [bookingLoading, setBookingLoading] = useState(false)
-  const [bookingError, setBookingError] = useState('')
-  const [bookingSuccess, setBookingSuccess] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [editingBookingId, setEditingBookingId] = useState(null)
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingBookingId, setEditingBookingId] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const shareUrl = `https://truowners.com/property-details/${id}`;; // ✅ later replace with dynamic property link
+  const shareUrl = `https://realestate.com/property-details/${id}`; // ✅ later replace with dynamic property link
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
     alert("Link copied!");
   };
 
-
   // New booking info state
   const [bookingInfo, setBookingInfo] = useState({
     userHasBooking: false,
-    bookedSlots: []
-  })
+    bookedSlots: [],
+  });
 
   // Available time slots
   const timeSlots = [
-    '9:00 AM - 10:00 AM',
-    '10:00 AM - 11:00 AM',
-    '11:00 AM - 12:00 PM',
-    '12:00 PM - 1:00 PM',
-    '2:00 PM - 3:00 PM',
-    '3:00 PM - 4:00 PM',
-    '4:00 PM - 5:00 PM',
-    '5:00 PM - 6:00 PM'
-  ]
+    "9:00 AM - 10:00 AM",
+    "10:00 AM - 11:00 AM",
+    "11:00 AM - 12:00 PM",
+    "12:00 PM - 1:00 PM",
+    "2:00 PM - 3:00 PM",
+    "3:00 PM - 4:00 PM",
+    "4:00 PM - 5:00 PM",
+    "5:00 PM - 6:00 PM",
+  ];
 
   useEffect(() => {
     // Wait for auth context to finish loading before fetching data
     if (!authLoading) {
-      fetchPropertyDetails()
-      if (isAuthenticated && user?.role === 'user') {
-        checkWishlistStatus()
-        fetchSubscription()
+      fetchPropertyDetails();
+      if (isAuthenticated && user?.role === "user") {
+        checkWishlistStatus();
+        fetchSubscription();
       } else {
-        setCheckingSubscription(false)
+        setCheckingSubscription(false);
       }
     }
-  }, [id, isAuthenticated, user?.role, authLoading])
+  }, [id, isAuthenticated, user?.role, authLoading]);
 
   const fetchSubscription = async () => {
     try {
       // const token = localStorage.getItem('token') // Use token from context
-      const response = await fetch(buildApiUrl(API_CONFIG.SUBSCRIPTION.MY_SUBSCRIPTION), {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await response.json()
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.SUBSCRIPTION.MY_SUBSCRIPTION),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await response.json();
       if (data.success && data.data) {
-        setSubscription(data.data)
+        setSubscription(data.data);
       }
     } catch (error) {
-      console.error('Error fetching subscription:', error)
+      console.error("Error fetching subscription:", error);
     } finally {
-      setCheckingSubscription(false)
+      setCheckingSubscription(false);
     }
-  }
+  };
 
   const fetchPropertyDetails = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
 
     try {
       // Validate session if user is authenticated
       if (isAuthenticated && !(await validateSession())) {
-        setError('Session expired. Please login again.')
-        return
+        setError("Session expired. Please login again.");
+        return;
       }
 
       const headers = {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      };
 
       // Add auth header if user is authenticated and token exists
       if (isAuthenticated && token) {
-        headers['Authorization'] = `Bearer ${token}`
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(buildApiUrl(`${API_CONFIG.USER.PROPERTIES}/${id}`), {
-        method: 'GET',
-        headers
-      })
+      const response = await fetch(
+        buildApiUrl(`${API_CONFIG.USER.PROPERTIES}/${id}`),
+        {
+          method: "GET",
+          headers,
+        }
+      );
 
-      let data
+      let data;
       try {
-        data = await response.json()
-        validateApiResponse(data)
+        data = await response.json();
+        validateApiResponse(data);
       } catch (parseError) {
-        throw new Error('Invalid response from server')
+        throw new Error("Invalid response from server");
       }
 
       if (!response.ok) {
         if (response.status === 401) {
           // Unauthorized - token might be expired
-          setError('Authentication expired. Please login again.')
+          setError("Authentication expired. Please login again.");
           // Don't auto-logout here as property might be viewable without auth
-          return
+          return;
         }
         if (response.status === 404) {
-          throw new Error('Property not found')
+          throw new Error("Property not found");
         }
-        throw new Error(data.error || handleApiError(null, response))
+        throw new Error(data.error || handleApiError(null, response));
       }
 
       if (data.success) {
-        setProperty(data.data.property)
+        setProperty(data.data.property);
         setSimilarProperties(data.data.similarProperties);
         // Set booking info if available
         if (data.data.bookingInfo) {
-          setBookingInfo(data.data.bookingInfo)
+          setBookingInfo(data.data.bookingInfo);
         }
       } else {
-        throw new Error(getErrorMessage(data))
+        throw new Error(getErrorMessage(data));
       }
     } catch (err) {
-      console.error('Fetch property details error:', err)
-      setError(err.message || 'Failed to load property details. Please try again.')
+      console.error("Fetch property details error:", err);
+      setError(
+        err.message || "Failed to load property details. Please try again."
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-
+  };
 
   const contactOwnerFn = async () => {
     try {
       // Validate session if user is authenticated
       if (isAuthenticated && !(await validateSession())) {
-        setError('Session expired. Please login again.')
-        return
+        setError("Session expired. Please login again.");
+        return;
       }
 
-      setLoading(true)
-      const response = await fetch(buildApiUrl(API_CONFIG.PROPERTY_VIEWS.VIEW_OWNER), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          propertyId: id
-        })
-      })
+      setLoading(true);
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.PROPERTY_VIEWS.VIEW_OWNER),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            propertyId: id,
+          }),
+        }
+      );
 
-      let data
+      let data;
       try {
-        data = await response.json()
+        data = await response.json();
       } catch (parseError) {
-        throw new Error('Invalid response from server')
+        throw new Error("Invalid response from server");
       }
 
       if (!response.ok) {
         if (response.status === 401) {
-          setError('Authentication expired. Please login again.')
-          return
+          setError("Authentication expired. Please login again.");
+          return;
         }
         if (response.status === 403) {
           // Subscription issue (expired, limit reached, or none)
-          alert(data.error?.message || 'Please subscribe to view owner details')
-          navigate('/subscription-plans')
-          return
+          alert(
+            data.error?.message || "Please subscribe to view owner details"
+          );
+          navigate("/subscription-plans");
+          return;
         }
-        throw new Error(data.error?.message || 'Failed to unlock contact')
+        throw new Error(data.error?.message || "Failed to unlock contact");
       }
 
       if (data.success) {
-        console.log('Owner details unlocked:', data.data)
-        setUnlockContact(data.data)
+        console.log("Owner details unlocked:", data.data);
+        setUnlockContact(data.data);
         // Refresh subscription data to update credits
-        fetchSubscription()
-        
+        fetchSubscription();
+
         // Scroll to owner info after a short delay to allow rendering
         setTimeout(() => {
-          const ownerSection = document.getElementById('owner-info-section');
+          const ownerSection = document.getElementById("owner-info-section");
           if (ownerSection) {
-            ownerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            ownerSection.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
           }
         }, 100);
       } else {
-        throw new Error(data.error?.message || 'Failed to unlock contact')
+        throw new Error(data.error?.message || "Failed to unlock contact");
       }
     } catch (err) {
-      console.error('Contact owner error:', err)
-      alert(err.message || 'Failed to contact owner. Please try again.')
+      console.error("Contact owner error:", err);
+      alert(err.message || "Failed to contact owner. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-
-
-
+  };
 
   const checkWishlistStatus = async () => {
-    if (!isAuthenticated || !token || user?.role !== 'user') return
+    if (!isAuthenticated || !token || user?.role !== "user") return;
 
     try {
       // Validate session before making API call
       if (!(await validateSession())) {
-        return
+        return;
       }
 
       const response = await fetch(buildApiUrl(API_CONFIG.USER.WISHLIST), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json();
         if (data.success && data.data.wishlist) {
-          const wishlistPropertyIds = data.data.wishlist.properties.map(prop => prop.id) || []
-          setIsInWishlist(wishlistPropertyIds.includes(id))
+          const wishlistPropertyIds =
+            data.data.wishlist.properties.map((prop) => prop.id) || [];
+          setIsInWishlist(wishlistPropertyIds.includes(id));
         }
       } else if (response.status === 401) {
-        console.warn('Unauthorized access to wishlist')
+        console.warn("Unauthorized access to wishlist");
         // Token might be expired, but don't force logout
       }
     } catch (err) {
-      console.warn('Failed to fetch wishlist:', err)
+      console.warn("Failed to fetch wishlist:", err);
     }
-  }
+  };
 
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
-      localStorage.setItem('redirectAfterLogin', `/property/${id}`)
-      navigate('/login')
-      return
+      localStorage.setItem("redirectAfterLogin", `/property/${id}`);
+      navigate("/login");
+      return;
     }
 
-    if (user?.role !== 'user') {
-      alert('Only users can add properties to wishlist')
-      return
+    if (user?.role !== "user") {
+      alert("Only users can add properties to wishlist");
+      return;
     }
 
     // Validate session before making API call
     if (!(await validateSession())) {
-      setError('Session expired. Please login again.')
-      return
+      setError("Session expired. Please login again.");
+      return;
     }
 
-    setWishlistLoading(true)
+    setWishlistLoading(true);
 
     try {
-      let response
+      let response;
 
       if (isInWishlist) {
         // REMOVE from wishlist
-        response = await fetch(buildApiUrl(`${API_CONFIG.USER.WISHLIST_REMOVE}`), {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            propertyId: id
-          })
-        })
+        response = await fetch(
+          buildApiUrl(`${API_CONFIG.USER.WISHLIST_REMOVE}`),
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              propertyId: id,
+            }),
+          }
+        );
       } else {
         // ADD to wishlist
         response = await fetch(buildApiUrl(API_CONFIG.USER.WISHLIST), {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            propertyId: id
-          })
-        })
+            propertyId: id,
+          }),
+        });
       }
 
-      let data
+      let data;
       try {
-        data = await response.json()
-        validateApiResponse(data)
+        data = await response.json();
+        validateApiResponse(data);
       } catch (parseError) {
-        throw new Error('Invalid response from server')
+        throw new Error("Invalid response from server");
       }
 
       if (response.status === 401) {
-        throw new Error('Session expired. Please login again.')
+        throw new Error("Session expired. Please login again.");
       }
 
       if (response.ok && data.success) {
-        setIsInWishlist(!isInWishlist)
+        setIsInWishlist(!isInWishlist);
 
-        const action = !isInWishlist ? 'added to' : 'removed from'
-        console.log(`Property ${action} wishlist successfully`)
+        const action = !isInWishlist ? "added to" : "removed from";
+        console.log(`Property ${action} wishlist successfully`);
       } else {
-        throw new Error(data.error || getErrorMessage(data))
+        throw new Error(data.error || getErrorMessage(data));
       }
     } catch (err) {
-      console.error('Wishlist toggle error:', err)
-      setError(err.message || 'Failed to update wishlist. Please try again.')
+      console.error("Wishlist toggle error:", err);
+      setError(err.message || "Failed to update wishlist. Please try again.");
     } finally {
-      setWishlistLoading(false)
+      setWishlistLoading(false);
     }
-  }
+  };
 
   // Check if a specific date and time slot is booked by others (not current user)
   const isSlotBookedByOthers = (date, timeSlot) => {
-    if (!bookingInfo.bookedSlots || bookingInfo.bookedSlots.length === 0) return false
+    if (!bookingInfo.bookedSlots || bookingInfo.bookedSlots.length === 0)
+      return false;
 
-    return bookingInfo.bookedSlots.some(slot => {
-      const slotDate = dayjs(slot.date).format('YYYY-MM-DD')
-      const selectedDateStr = date.format('YYYY-MM-DD')
-      return slotDate === selectedDateStr && slot.timeSlot === timeSlot && !slot.bookedByCurrentUser
-    })
-  }
+    return bookingInfo.bookedSlots.some((slot) => {
+      const slotDate = dayjs(slot.date).format("YYYY-MM-DD");
+      const selectedDateStr = date.format("YYYY-MM-DD");
+      return (
+        slotDate === selectedDateStr &&
+        slot.timeSlot === timeSlot &&
+        !slot.bookedByCurrentUser
+      );
+    });
+  };
 
   // Check if current user has booked a specific slot
   const isSlotBookedByCurrentUser = (date, timeSlot) => {
-    if (!bookingInfo.bookedSlots || bookingInfo.bookedSlots.length === 0) return false
+    if (!bookingInfo.bookedSlots || bookingInfo.bookedSlots.length === 0)
+      return false;
 
-    return bookingInfo.bookedSlots.some(slot => {
-      const slotDate = dayjs(slot.date).format('YYYY-MM-DD')
-      const selectedDateStr = date.format('YYYY-MM-DD')
-      return slotDate === selectedDateStr && slot.timeSlot === timeSlot && slot.bookedByCurrentUser
-    })
-  }
+    return bookingInfo.bookedSlots.some((slot) => {
+      const slotDate = dayjs(slot.date).format("YYYY-MM-DD");
+      const selectedDateStr = date.format("YYYY-MM-DD");
+      return (
+        slotDate === selectedDateStr &&
+        slot.timeSlot === timeSlot &&
+        slot.bookedByCurrentUser
+      );
+    });
+  };
 
   // Get current user's bookings for display
   const getCurrentUserBookings = () => {
-    if (!bookingInfo.bookedSlots) return []
+    if (!bookingInfo.bookedSlots) return [];
 
-    return bookingInfo.bookedSlots.filter(slot => slot.bookedByCurrentUser)
-  }
+    return bookingInfo.bookedSlots.filter((slot) => slot.bookedByCurrentUser);
+  };
 
   // Get booking status icon and color
   const getBookingStatusConfig = (status) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return {
           icon: <PendingIcon />,
-          color: 'warning',
-          label: 'Pending Confirmation'
-        }
-      case 'approved':
+          color: "warning",
+          label: "Pending Confirmation",
+        };
+      case "approved":
         return {
           icon: <CheckCircleIcon />,
-          color: 'success',
-          label: 'Confirmed'
-        }
-      case 'rejected':
+          color: "success",
+          label: "Confirmed",
+        };
+      case "rejected":
         return {
           icon: <CancelIcon />,
-          color: 'error',
-          label: 'Rejected'
-        }
-      case 'completed':
+          color: "error",
+          label: "Rejected",
+        };
+      case "completed":
         return {
           icon: <TaskAltIcon />,
-          color: 'info',
-          label: 'Completed'
-        }
+          color: "info",
+          label: "Completed",
+        };
       default:
         return {
           icon: <PendingIcon />,
-          color: 'default',
-          label: 'Unknown'
-        }
+          color: "default",
+          label: "Unknown",
+        };
     }
-  }
+  };
 
   // Get available time slots for selected date
   const getAvailableTimeSlots = () => {
-    if (!selectedDate) return timeSlots
+    if (!selectedDate) return timeSlots;
 
-    return timeSlots.map(slot => ({
+    return timeSlots.map((slot) => ({
       value: slot,
       label: slot,
       isBookedByOthers: isSlotBookedByOthers(selectedDate, slot),
-      isBookedByCurrentUser: isSlotBookedByCurrentUser(selectedDate, slot)
-    }))
-  }
+      isBookedByCurrentUser: isSlotBookedByCurrentUser(selectedDate, slot),
+    }));
+  };
 
   // Check if user can make a new booking (doesn't have existing booking)
   const canMakeNewBooking = () => {
-    return !bookingInfo.userHasBooking || getCurrentUserBookings().length === 0
-  }
+    return !bookingInfo.userHasBooking || getCurrentUserBookings().length === 0;
+  };
 
   // Booking functionality
   const handleBookVisit = () => {
     if (!isAuthenticated) {
-      localStorage.setItem('redirectAfterLogin', `/property/${id}`)
-      navigate('/login')
-      return
+      localStorage.setItem("redirectAfterLogin", `/property/${id}`);
+      navigate("/login");
+      return;
     }
 
-    if (user?.role !== 'user') {
-      alert('Only users can book property visits')
-      return
+    if (user?.role !== "user") {
+      alert("Only users can book property visits");
+      return;
     }
 
-    setBookingDialogOpen(true)
-    setBookingError('')
-    setBookingSuccess(false)
-    setIsEditMode(false)
-    setEditingBookingId(null)
-  }
+    setBookingDialogOpen(true);
+    setBookingError("");
+    setBookingSuccess(false);
+    setIsEditMode(false);
+    setEditingBookingId(null);
+  };
 
   // Edit booking functionality
   const handleEditBooking = (booking) => {
-    setIsEditMode(true)
-    setEditingBookingId(booking.id || booking._id) // Handle both id formats
-    setSelectedDate(dayjs(booking.date))
-    setSelectedTimeSlot(booking.timeSlot)
-    setBookingDialogOpen(true)
-    setBookingError('')
-    setBookingSuccess(false)
-  }
+    setIsEditMode(true);
+    setEditingBookingId(booking.id || booking._id); // Handle both id formats
+    setSelectedDate(dayjs(booking.date));
+    setSelectedTimeSlot(booking.timeSlot);
+    setBookingDialogOpen(true);
+    setBookingError("");
+    setBookingSuccess(false);
+  };
 
   const handleBookingSubmit = async () => {
     if (!selectedDate || !selectedTimeSlot) {
-      setBookingError('Please select both date and time slot')
-      return
+      setBookingError("Please select both date and time slot");
+      return;
     }
 
     // Check if slot is already booked by others (exclude current user's booking in edit mode)
     if (!isEditMode && isSlotBookedByOthers(selectedDate, selectedTimeSlot)) {
-      setBookingError('This time slot is already booked by someone else. Please select another slot.')
-      return
+      setBookingError(
+        "This time slot is already booked by someone else. Please select another slot."
+      );
+      return;
     }
 
     // In edit mode, check if the new slot conflicts with other bookings
     if (isEditMode && isSlotBookedByOthers(selectedDate, selectedTimeSlot)) {
-      setBookingError('This time slot is already booked by someone else. Please select another slot.')
-      return
+      setBookingError(
+        "This time slot is already booked by someone else. Please select another slot."
+      );
+      return;
     }
 
     // Validate session before making API call
     if (!(await validateSession())) {
-      setBookingError('Session expired. Please login again.')
-      return
+      setBookingError("Session expired. Please login again.");
+      return;
     }
 
-    setBookingLoading(true)
-    setBookingError('')
+    setBookingLoading(true);
+    setBookingError("");
 
     try {
-      let response
+      let response;
 
       if (isEditMode) {
         // Update existing booking
-        response = await fetch(buildApiUrl(API_CONFIG.USER.BOOKING_UPDATE.replace(':id', editingBookingId)), {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            date: selectedDate.format('YYYY-MM-DD'),
-            timeSlot: selectedTimeSlot
-          })
-        })
+        response = await fetch(
+          buildApiUrl(
+            API_CONFIG.USER.BOOKING_UPDATE.replace(":id", editingBookingId)
+          ),
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              date: selectedDate.format("YYYY-MM-DD"),
+              timeSlot: selectedTimeSlot,
+            }),
+          }
+        );
       } else {
         // Create new booking
         response = await fetch(buildApiUrl(API_CONFIG.USER.BOOKING_ADD), {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             property: id,
-            date: selectedDate.format('YYYY-MM-DD'),
-            timeSlot: selectedTimeSlot
-          })
-        })
+            date: selectedDate.format("YYYY-MM-DD"),
+            timeSlot: selectedTimeSlot,
+          }),
+        });
       }
 
-      let data
+      let data;
       try {
-        data = await response.json()
-        validateApiResponse(data)
+        data = await response.json();
+        validateApiResponse(data);
       } catch (parseError) {
-        throw new Error('Invalid response from server')
+        throw new Error("Invalid response from server");
       }
 
       if (response.status === 401) {
-        throw new Error('Session expired. Please login again.')
+        throw new Error("Session expired. Please login again.");
       }
 
       if (response.ok && data.success) {
-        setBookingSuccess(true)
-        setSelectedDate(null)
-        setSelectedTimeSlot('')
+        setBookingSuccess(true);
+        setSelectedDate(null);
+        setSelectedTimeSlot("");
 
         // Show success message and close dialog
         setTimeout(() => {
-          setBookingDialogOpen(false)
-          setBookingSuccess(false)
-          setIsEditMode(false)
-          setEditingBookingId(null)
-          fetchPropertyDetails() // Refresh to get updated booking info
-        }, 3000) // Show success message for 3 seconds
+          setBookingDialogOpen(false);
+          setBookingSuccess(false);
+          setIsEditMode(false);
+          setEditingBookingId(null);
+          fetchPropertyDetails(); // Refresh to get updated booking info
+        }, 3000); // Show success message for 3 seconds
       } else {
-        throw new Error(data.error || getErrorMessage(data))
+        throw new Error(data.error || getErrorMessage(data));
       }
     } catch (err) {
-      console.error('Booking error:', err)
-      setBookingError(err.message || `Failed to ${isEditMode ? 'update' : 'book'} visit. Please try again.`)
+      console.error("Booking error:", err);
+      setBookingError(
+        err.message ||
+          `Failed to ${isEditMode ? "update" : "book"} visit. Please try again.`
+      );
     } finally {
-      setBookingLoading(false)
+      setBookingLoading(false);
     }
-  }
+  };
 
   const handleBookingCancel = () => {
-    setBookingDialogOpen(false)
-    setSelectedDate(null)
-    setSelectedTimeSlot('')
-    setBookingError('')
-    setBookingSuccess(false)
-    setIsEditMode(false)
-    setEditingBookingId(null)
-  }
+    setBookingDialogOpen(false);
+    setSelectedDate(null);
+    setSelectedTimeSlot("");
+    setBookingError("");
+    setBookingSuccess(false);
+    setIsEditMode(false);
+    setEditingBookingId(null);
+  };
 
   // Handle return to home
   const handleReturnToHome = () => {
-    navigate(`/properties?propertyType=${property?.propertyType}&title=${property?.title}`)
-  }
+    navigate(
+      `/properties?propertyType=${property?.propertyType}&title=${property?.title}`
+    );
+  };
 
   const getLocationString = (location) => {
     try {
-      if (typeof location === 'string' && location.trim()) {
-        return location
+      if (typeof location === "string" && location.trim()) {
+        return location;
       }
-      if (location && typeof location === 'object') {
-        if (location.address && typeof location.address === 'string') return location.address
-        if (location.street && typeof location.street === 'string') return location.street
-        if (location.city && location.state) return `${location.city}, ${location.state}`
-        return 'Location not specified'
+      if (location && typeof location === "object") {
+        if (location.address && typeof location.address === "string")
+          return location.address;
+        if (location.street && typeof location.street === "string")
+          return location.street;
+        if (location.city && location.state)
+          return `${location.city}, ${location.state}`;
+        return "Location not specified";
       }
-      return 'Location not specified'
+      return "Location not specified";
     } catch (error) {
-      return 'Location not specified'
+      return "Location not specified";
     }
-  }
+  };
 
   const formatCurrency = (amount) => {
-    const num = parseInt(amount) || 0
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0
-    }).format(num)
-  }
+    const num = parseInt(amount) || 0;
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
+    }).format(num);
+  };
 
   const formatDate = (dateString) => {
     try {
-      if (!dateString) return 'Date not available'
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
+      if (!dateString) return "Date not available";
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     } catch (error) {
-      return 'Invalid date'
+      return "Invalid date";
     }
-  }
+  };
 
   const getSafeImages = (images) => {
     if (Array.isArray(images)) {
-      return images.filter(img => img && typeof img === 'string' && img.trim())
+      return images.filter(
+        (img) => img && typeof img === "string" && img.trim()
+      );
     }
-    return []
-  }
+    return [];
+  };
 
   const getSafeAmenities = (amenities) => {
     if (Array.isArray(amenities)) {
-      return amenities.filter(amenity => amenity && typeof amenity === 'string' && amenity.trim())
+      return amenities.filter(
+        (amenity) => amenity && typeof amenity === "string" && amenity.trim()
+      );
     }
-    return []
-  }
+    return [];
+  };
 
   // Show loading while auth is initializing
   if (authLoading) {
@@ -673,7 +723,7 @@ const PropertyDetailsPage = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -686,7 +736,7 @@ const PropertyDetailsPage = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -701,14 +751,17 @@ const PropertyDetailsPage = () => {
               <button className="btn btn-primary" onClick={handleReturnToHome}>
                 Back to Home
               </button>
-              <button className="btn btn-secondary" onClick={fetchPropertyDetails}>
+              <button
+                className="btn btn-secondary"
+                onClick={fetchPropertyDetails}
+              >
                 Try Again
               </button>
             </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!property) {
@@ -718,20 +771,21 @@ const PropertyDetailsPage = () => {
           <div className="error-state">
             <div className="error-icon">🏠</div>
             <h2>Property Not Found</h2>
-            <p>The property you're looking for doesn't exist or has been removed.</p>
+            <p>
+              The property you're looking for doesn't exist or has been removed.
+            </p>
             <button className="btn btn-primary" onClick={handleReturnToHome}>
               Back to Home
             </button>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const safeImages = getSafeImages(property.images)
-  const safeAmenities = getSafeAmenities(property.amenities)
-  const currentUserBookings = getCurrentUserBookings()
-
+  const safeImages = getSafeImages(property.images);
+  const safeAmenities = getSafeAmenities(property.amenities);
+  const currentUserBookings = getCurrentUserBookings();
 
   function timeAgo(dateString) {
     const now = new Date();
@@ -746,14 +800,15 @@ const PropertyDetailsPage = () => {
     const years = Math.floor(diff / 31536000);
 
     if (years > 0) return years + (years === 1 ? " year ago" : " years ago");
-    if (months > 0) return months + (months === 1 ? " month ago" : " months ago");
+    if (months > 0)
+      return months + (months === 1 ? " month ago" : " months ago");
     if (weeks > 0) return weeks + (weeks === 1 ? " week ago" : " weeks ago");
     if (days > 0) return days + (days === 1 ? " day ago" : " days ago");
     if (hours > 0) return hours + (hours === 1 ? " hour ago" : " hours ago");
-    if (minutes > 0) return minutes + (minutes === 1 ? " minute ago" : " minutes ago");
+    if (minutes > 0)
+      return minutes + (minutes === 1 ? " minute ago" : " minutes ago");
     return "just now";
   }
-
 
   const WishlistButton = styled(IconButton)(({ theme, isWishlisted }) => ({
     position: "absolute",
@@ -769,8 +824,6 @@ const PropertyDetailsPage = () => {
       transform: "scale(1.1)",
     },
   }));
-
-
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -794,14 +847,20 @@ const PropertyDetailsPage = () => {
           {/* Property Header */}
           <div className="property-header">
             <div className="property-title-section">
-              <h1 className="property-title">{property.title || 'Untitled Property'}</h1>
+              <h1 className="property-title">
+                {property.title || "Untitled Property"}
+              </h1>
 
               <div className="property-location-wrapper">
                 {isAuthenticated && subscription ? (
-                  <p className="property-location">📍 {getLocationString(property.location)}</p>
+                  <p className="property-location">
+                    📍 {getLocationString(property.location)}
+                  </p>
                 ) : (
                   <div className="blurred-location">
-                    <p className="property-location blur-text">📍 {getLocationString(property.location)}</p>
+                    <p className="property-location blur-text">
+                      📍 {getLocationString(property.location)}
+                    </p>
                     <div className="lock-overlay">
                       <LockIcon fontSize="small" />
                       <span>Subscribe to view address</span>
@@ -811,12 +870,19 @@ const PropertyDetailsPage = () => {
               </div>
 
               <div className="property-meta">
-                <span className="property-type">{property.propertyType || 'Property'}</span>
-                <span className="listed-date">Listed on {formatDate(property.createdAt)}</span>
+                <span className="property-type">
+                  {property.propertyType || "Property"}
+                </span>
+                <span className="listed-date">
+                  Listed on {formatDate(property.createdAt)}
+                </span>
               </div>
             </div>
 
-            <div className="subscription-banner-wrapper" style={{ marginTop: '20px' }}>
+            <div
+              className="subscription-banner-wrapper"
+              style={{ marginTop: "20px" }}
+            >
               <SubscriptionBanner variant="compact" />
             </div>
 
@@ -853,46 +919,63 @@ const PropertyDetailsPage = () => {
           </div>
 
           {/* Current User's Bookings Display */}
-          {isAuthenticated && bookingInfo.userHasBooking && currentUserBookings.length > 0 && (
-            <div className="user-bookings-section">
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    <CalendarTodayIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Your Scheduled Visit
-                  </Typography>
-                  {currentUserBookings.map((booking, index) => {
-                    const statusConfig = getBookingStatusConfig(booking.status)
-                    return (
-                      <Box key={index} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                        <Chip
-                          icon={<CalendarTodayIcon />}
-                          label={`${dayjs(booking.date).format('MMM DD, YYYY')} at ${booking.timeSlot}`}
-                          color="primary"
-                          variant="outlined"
-                        />
-                        <Chip
-                          icon={statusConfig.icon}
-                          label={statusConfig.label}
-                          color={statusConfig.color}
-                          size="small"
-                        />
-                        <Button
-                          size="small"
-                          startIcon={<EditIcon />}
-                          onClick={() => handleEditBooking(booking)}
-                          variant="outlined"
-                          color="primary"
+          {isAuthenticated &&
+            bookingInfo.userHasBooking &&
+            currentUserBookings.length > 0 && (
+              <div className="user-bookings-section">
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      <CalendarTodayIcon
+                        sx={{ mr: 1, verticalAlign: "middle" }}
+                      />
+                      Your Scheduled Visit
+                    </Typography>
+                    {currentUserBookings.map((booking, index) => {
+                      const statusConfig = getBookingStatusConfig(
+                        booking.status
+                      );
+                      return (
+                        <Box
+                          key={index}
+                          sx={{
+                            mb: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            flexWrap: "wrap",
+                          }}
                         >
-                          Edit
-                        </Button>
-                      </Box>
-                    )
-                  })}
-                </Box>
-              </Alert>
-            </div>
-          )}
+                          <Chip
+                            icon={<CalendarTodayIcon />}
+                            label={`${dayjs(booking.date).format(
+                              "MMM DD, YYYY"
+                            )} at ${booking.timeSlot}`}
+                            color="primary"
+                            variant="outlined"
+                          />
+                          <Chip
+                            icon={statusConfig.icon}
+                            label={statusConfig.label}
+                            color={statusConfig.color}
+                            size="small"
+                          />
+                          <Button
+                            size="small"
+                            startIcon={<EditIcon />}
+                            onClick={() => handleEditBooking(booking)}
+                            variant="outlined"
+                            color="primary"
+                          >
+                            Edit
+                          </Button>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Alert>
+              </div>
+            )}
 
           <div className="main-image">
             <div className="property-image-wrapper">
@@ -900,7 +983,9 @@ const PropertyDetailsPage = () => {
                 src={safeImages[currentImageIndex]}
                 alt={`${property.title} - Image ${currentImageIndex + 1}`}
                 className="property-image"
-                onError={(e) => { e.target.src = '/placeholder-property.jpg' }}
+                onError={(e) => {
+                  e.target.src = "/placeholder-property.jpg";
+                }}
               />
               <div className="property-overlay">realestate</div>
               <IconButton
@@ -922,8 +1007,6 @@ const PropertyDetailsPage = () => {
               >
                 <ShareIcon />
               </IconButton>
-
-
 
               <IconButton
                 onClick={handleBookVisit}
@@ -964,24 +1047,27 @@ const PropertyDetailsPage = () => {
               <>
                 <button
                   className="image-nav prev"
-                  onClick={() => setCurrentImageIndex(prev =>
-                    prev === 0 ? safeImages.length - 1 : prev - 1
-                  )}
+                  onClick={() =>
+                    setCurrentImageIndex((prev) =>
+                      prev === 0 ? safeImages.length - 1 : prev - 1
+                    )
+                  }
                 >
                   ‹
                 </button>
                 <button
                   className="image-nav next"
-                  onClick={() => setCurrentImageIndex(prev =>
-                    prev === safeImages.length - 1 ? 0 : prev + 1
-                  )}
+                  onClick={() =>
+                    setCurrentImageIndex((prev) =>
+                      prev === safeImages.length - 1 ? 0 : prev + 1
+                    )
+                  }
                 >
                   ›
                 </button>
               </>
             )}
           </div>
-
 
           {/* Property Content */}
           <div className="property-content">
@@ -1014,15 +1100,15 @@ const PropertyDetailsPage = () => {
               {/* Description */}
               <div className="description-section">
                 <h3>Description</h3>
-                <p>{property.description || 'No description provided'}</p>
+                <p>{property.description || "No description provided"}</p>
               </div>
 
               {/* Amenities */}
               {safeAmenities.length > 0 && (
-                <div className="amenities-section" style={{ color: '#2F80ED' }}>
+                <div className="amenities-section" style={{ color: "#2F80ED" }}>
                   <h3>Amenities</h3>
                   <div className="amenities-grid">
-                    {safeAmenities.map(amenity => (
+                    {safeAmenities.map((amenity) => (
                       <div key={amenity} className="amenity-item">
                         <span className="amenity-icon">✓</span>
                         <span className="amenity-name">{amenity}</span>
@@ -1039,22 +1125,29 @@ const PropertyDetailsPage = () => {
               <div className="pricing-card">
                 <div className="rent-info">
                   <div className="rent-amount">
-                    <span className="rent-price">{formatCurrency(property.rent || property.price)}</span>
-                    {(property.listingType === 'rent' || (!property.listingType && property.rent)) &&
+                    <span className="rent-price">
+                      {formatCurrency(property.rent || property.price)}
+                    </span>
+                    {(property.listingType === "rent" ||
+                      (!property.listingType && property.rent)) && (
                       <span className="rent-period">/month</span>
-                    }
+                    )}
                   </div>
-                  {(property.listingType === 'rent' || (!property.listingType && property.rent)) && property.deposit && (
-                    <div className="deposit-amount">
-                      Security Deposit: {formatCurrency(property.deposit)}
-                    </div>
-                  )}
+                  {(property.listingType === "rent" ||
+                    (!property.listingType && property.rent)) &&
+                    property.deposit && (
+                      <div className="deposit-amount">
+                        Security Deposit: {formatCurrency(property.deposit)}
+                      </div>
+                    )}
                 </div>
 
                 {/* Add another wishlist button in sidebar for easier access */}
-                {(user?.role === 'user' || !isAuthenticated) && (
+                {(user?.role === "user" || !isAuthenticated) && (
                   <button
-                    className={`wishlist-sidebar-btn ${isInWishlist ? 'active' : ''} ${wishlistLoading ? 'loading' : ''}`}
+                    className={`wishlist-sidebar-btn ${
+                      isInWishlist ? "active" : ""
+                    } ${wishlistLoading ? "loading" : ""}`}
                     onClick={handleWishlistToggle}
                     disabled={wishlistLoading}
                   >
@@ -1066,9 +1159,11 @@ const PropertyDetailsPage = () => {
                     ) : (
                       <>
                         <span className="wishlist-icon">
-                          {isInWishlist ? '❤️' : '🤍'}
+                          {isInWishlist ? "❤️" : "🤍"}
                         </span>
-                        {isInWishlist ? 'Saved to Wishlist' : 'Save to Wishlist'}
+                        {isInWishlist
+                          ? "Saved to Wishlist"
+                          : "Save to Wishlist"}
                       </>
                     )}
                   </button>
@@ -1083,13 +1178,23 @@ const PropertyDetailsPage = () => {
                           Contact Details Unlocked
                         </div>
                       ) : (
-                        <button className="contact-btn" onClick={contactOwnerFn} disabled={loading}>
-                          {loading ? 'Unlocking...' : '📞 Contact Owner'}
+                        <button
+                          className="contact-btn"
+                          onClick={contactOwnerFn}
+                          disabled={loading}
+                        >
+                          {loading ? "Unlocking..." : "📞 Contact Owner"}
                         </button>
                       )
                     ) : (
-                      <button className="contact-btn locked" onClick={() => navigate('/subscription-plans')}>
-                        <LockIcon fontSize="small" style={{ marginRight: '8px' }} />
+                      <button
+                        className="contact-btn locked"
+                        onClick={() => navigate("/subscription-plans")}
+                      >
+                        <LockIcon
+                          fontSize="small"
+                          style={{ marginRight: "8px" }}
+                        />
                         Subscribe to Contact Owner
                       </button>
                     )}
@@ -1115,7 +1220,10 @@ const PropertyDetailsPage = () => {
                     )} */}
                   </>
                 ) : (
-                  <button className="login-btn" onClick={() => navigate('/login')}>
+                  <button
+                    className="login-btn"
+                    onClick={() => navigate("/login")}
+                  >
                     🔐 Login to Contact Owner
                   </button>
                 )}
@@ -1123,38 +1231,47 @@ const PropertyDetailsPage = () => {
 
               {/* Owner Info */}
               {unlockContact && (
-                <div id="owner-info-section" className="property-info-card owner-info-highlight">
+                <div
+                  id="owner-info-section"
+                  className="property-info-card owner-info-highlight"
+                >
                   <h3>OWNER INFORMATION</h3>
                   <div className="info-list">
                     <div className="info-item">
                       <span className="info-label">NAME: </span>
                       <span className="info-value">
-                        {unlockContact.owner?.name || unlockContact.ownerContact?.name || 'N/A'}
+                        {unlockContact.owner?.name ||
+                          unlockContact.ownerContact?.name ||
+                          "N/A"}
                       </span>
                     </div>
                     <div className="info-item">
                       <span className="info-label">EMAIL:</span>
                       <span className="info-value">
-                        {unlockContact.owner?.email || unlockContact.ownerContact?.email || 'N/A'}
+                        {unlockContact.owner?.email ||
+                          unlockContact.ownerContact?.email ||
+                          "N/A"}
                       </span>
                     </div>
                     <div className="info-item">
                       <span className="info-label">PHONE:</span>
                       <span className="info-value">
-                        {unlockContact.owner?.phone || unlockContact.ownerContact?.phone || 'N/A'}
+                        {unlockContact.owner?.phone ||
+                          unlockContact.ownerContact?.phone ||
+                          "N/A"}
                       </span>
                     </div>
                     {unlockContact.remainingContacts !== undefined && (
                       <div className="info-item highlight-credits">
                         <span className="info-label">CREDITS LEFT:</span>
-                        <span className="info-value">{unlockContact.remainingContacts}</span>
+                        <span className="info-value">
+                          {unlockContact.remainingContacts}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
               )}
-
-
 
               {/* Property Info */}
               <div className="property-info-card">
@@ -1163,18 +1280,22 @@ const PropertyDetailsPage = () => {
                   <div className="info-item" key={property._id}>
                     <span className="info-label">ID:</span>
                     <span className="info-value">
-                      {property._id || 'N/A'}
+                      {property._id || "N/A"}
 
                       {/* {property.id !== undefined && property.id !== null ? property.id : 'N/A'} */}
                     </span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Type:</span>
-                    <span className="info-value">{property.propertyType || 'N/A'}</span>
+                    <span className="info-value">
+                      {property.propertyType || "N/A"}
+                    </span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Status:</span>
-                    <span className="info-value status-available">🟢 Available</span>
+                    <span className="info-value status-available">
+                      🟢 Available
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1190,45 +1311,63 @@ const PropertyDetailsPage = () => {
                 🏠 Browse All Properties
               </button> */}
               <h3>Similar Properties</h3>
-              <button className="return-home-btn" onClick={handleReturnToHome} style={{ maxWidth: "150px", fontSize: "12px", maxHeight: "35px" }}>
+              <button
+                className="return-home-btn"
+                onClick={handleReturnToHome}
+                style={{
+                  maxWidth: "150px",
+                  fontSize: "12px",
+                  maxHeight: "35px",
+                }}
+              >
                 Show more
               </button>
             </div>
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
                 gap: 3,
                 mb: 4,
                 mt: 4,
-                '@media (max-width: 768px)': {
-                  gridTemplateColumns: '1fr',
+                "@media (max-width: 768px)": {
+                  gridTemplateColumns: "1fr",
                   gap: 2,
                 },
               }}
             >
-              {similarProperties?.map((item, index) =>
-                index < 3 &&
-                (
-                  <div className='my-3 mb-md-4'>
-                    <div style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)", maxWidth: "325px" }}
-                      className='rounded-2 my-2 py-2 px-3 d-flex justify-content-between align-items-center'>
-                      <img src={trueOwnersLogo} alt='truowners' width={110} />
-                      <span> {timeAgo(item?.createdAt)}</span>
+              {similarProperties?.map(
+                (item, index) =>
+                  index < 3 && (
+                    <div className="my-3 mb-md-4">
+                      <div
+                        style={{
+                          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+                          maxWidth: "325px",
+                        }}
+                        className="rounded-2 my-2 py-2 px-3 d-flex justify-content-between align-items-center"
+                      >
+                        <img
+                          src={realEstateLogo}
+                          alt="realestate"
+                          width={110}
+                        />
+                        <span> {timeAgo(item?.createdAt)}</span>
+                      </div>
+                      <div>
+                        <PropertyCard
+                          key={item.id}
+                          property={item}
+                          // isInWishlist={wishlist.includes(property.id)}
+                          onWishlistToggle={() => handleWishlistToggle(item.id)}
+                          onClick={() => handlePropertyClick(item)}
+                          // onLoginRequired={handleLoginRequired}
+                          isAuthenticated={isAuthenticated}
+                          postType={item?.listingType ?? "Rent"}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <PropertyCard
-                        key={item.id}
-                        property={item}
-                        // isInWishlist={wishlist.includes(property.id)}
-                        onWishlistToggle={() => handleWishlistToggle(item.id)}
-                        onClick={() => handlePropertyClick(item)}
-                        // onLoginRequired={handleLoginRequired}
-                        isAuthenticated={isAuthenticated}
-                        postType={item?.listingType ?? "Rent"}
-                      /></div>
-                  </div>
-                )
+                  )
               )}
             </Box>
           </div>
@@ -1243,9 +1382,13 @@ const PropertyDetailsPage = () => {
         >
           <DialogTitle>
             <Box display="flex" alignItems="center" gap={1}>
-              {isEditMode ? <EditIcon color="primary" /> : <CalendarTodayIcon color="primary" />}
+              {isEditMode ? (
+                <EditIcon color="primary" />
+              ) : (
+                <CalendarTodayIcon color="primary" />
+              )}
               <Typography variant="h6">
-                {isEditMode ? 'Edit Your Visit' : 'Book a Visit'}
+                {isEditMode ? "Edit Your Visit" : "Book a Visit"}
               </Typography>
             </Box>
           </DialogTitle>
@@ -1254,10 +1397,13 @@ const PropertyDetailsPage = () => {
             {bookingSuccess ? (
               <Alert severity="success" sx={{ mb: 2 }}>
                 <Typography variant="h6" sx={{ mb: 1 }}>
-                  {isEditMode ? 'Visit Updated Successfully!' : 'Visit Booked Successfully!'}
+                  {isEditMode
+                    ? "Visit Updated Successfully!"
+                    : "Visit Booked Successfully!"}
                 </Typography>
                 <Typography variant="body2">
-                  Our team will confirm your booking shortly. You will receive a notification once confirmed.
+                  Our team will confirm your booking shortly. You will receive a
+                  notification once confirmed.
                 </Typography>
               </Alert>
             ) : (
@@ -1268,11 +1414,14 @@ const PropertyDetailsPage = () => {
                   </Alert>
                 )}
 
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  sx={{ mb: 3 }}
+                >
                   {isEditMode
-                    ? 'Update your preferred date and time for the property visit.'
-                    : 'Select your preferred date and time to visit this property.'
-                  }
+                    ? "Update your preferred date and time for the property visit."
+                    : "Select your preferred date and time to visit this property."}
                 </Typography>
 
                 <Box sx={{ mb: 3 }}>
@@ -1280,18 +1429,18 @@ const PropertyDetailsPage = () => {
                     label="Select Date"
                     value={selectedDate}
                     onChange={(newValue) => {
-                      setSelectedDate(newValue)
+                      setSelectedDate(newValue);
                       if (!isEditMode) {
-                        setSelectedTimeSlot('') // Reset time slot when date changes (not in edit mode)
+                        setSelectedTimeSlot(""); // Reset time slot when date changes (not in edit mode)
                       }
                     }}
                     minDate={dayjs()}
-                    maxDate={dayjs().add(30, 'day')}
+                    maxDate={dayjs().add(30, "day")}
                     slotProps={{
                       textField: {
                         fullWidth: true,
-                        variant: "outlined"
-                      }
+                        variant: "outlined",
+                      },
                     }}
                   />
                 </Box>
@@ -1312,7 +1461,12 @@ const PropertyDetailsPage = () => {
                       value={slot.value}
                       disabled={slot.isBookedByOthers}
                     >
-                      <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        width="100%"
+                      >
                         <Typography>{slot.label}</Typography>
                         {slot.isBookedByCurrentUser ? (
                           <Chip
@@ -1351,15 +1505,25 @@ const PropertyDetailsPage = () => {
                 variant="contained"
                 color="primary"
                 disabled={bookingLoading || !selectedDate || !selectedTimeSlot}
-                startIcon={bookingLoading ? <CircularProgress size={20} /> : null}
+                startIcon={
+                  bookingLoading ? <CircularProgress size={20} /> : null
+                }
               >
-                {bookingLoading ? (isEditMode ? 'Updating...' : 'Booking...') : (isEditMode ? 'Update Visit' : 'Book Visit')}
+                {bookingLoading
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Booking..."
+                  : isEditMode
+                  ? "Update Visit"
+                  : "Book Visit"}
               </Button>
             </DialogActions>
           )}
         </Dialog>
         <Dialog open={shareOpen} onClose={() => setShareOpen(false)}>
-          <DialogTitle sx={{ display: "flex", justifyContent: "space-between" }}>
+          <DialogTitle
+            sx={{ display: "flex", justifyContent: "space-between" }}
+          >
             <Typography variant="h6" color="primary">
               Share property
             </Typography>
@@ -1374,11 +1538,15 @@ const PropertyDetailsPage = () => {
             </Typography>
 
             {/* Social Media Icons */}
-            <Box sx={{ display: "flex", justifyContent: "space-around", mb: 3 }}>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-around", mb: 3 }}
+            >
               <Box
                 textAlign="center"
                 sx={{ cursor: "pointer" }}
-                onClick={() => window.open(`https://wa.me/?text=${shareUrl}`, "_blank")}
+                onClick={() =>
+                  window.open(`https://wa.me/?text=${shareUrl}`, "_blank")
+                }
               >
                 <WhatsAppIcon sx={{ fontSize: 36, color: "#25D366" }} />
                 <Typography variant="caption" display="block">
@@ -1389,7 +1557,11 @@ const PropertyDetailsPage = () => {
               <Box
                 textAlign="center"
                 sx={{ cursor: "pointer" }}
-                onClick={() => window.open(`mailto:?subject=Check this property&body=${shareUrl}`)}
+                onClick={() =>
+                  window.open(
+                    `mailto:?subject=Check this property&body=${shareUrl}`
+                  )
+                }
               >
                 <EmailIcon sx={{ fontSize: 36, color: "#0072c6" }} />
                 <Typography variant="caption" display="block">
@@ -1400,7 +1572,12 @@ const PropertyDetailsPage = () => {
               <Box
                 textAlign="center"
                 sx={{ cursor: "pointer" }}
-                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, "_blank")}
+                onClick={() =>
+                  window.open(
+                    `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+                    "_blank"
+                  )
+                }
               >
                 <FacebookIcon sx={{ fontSize: 36, color: "#1877F2" }} />
                 <Typography variant="caption" display="block">
@@ -1410,7 +1587,12 @@ const PropertyDetailsPage = () => {
               <Box
                 textAlign="center"
                 sx={{ cursor: "pointer" }}
-                onClick={() => window.open(`https://t.me/share/url?url=${shareUrl}`, "_blank")}
+                onClick={() =>
+                  window.open(
+                    `https://t.me/share/url?url=${shareUrl}`,
+                    "_blank"
+                  )
+                }
               >
                 <TelegramIcon sx={{ fontSize: 36, color: "#0088cc" }} />
                 <Typography variant="caption" display="block">
@@ -1438,10 +1620,9 @@ const PropertyDetailsPage = () => {
             </Box>
           </DialogContent>
         </Dialog>
-
       </div>
     </LocalizationProvider>
-  )
-}
+  );
+};
 
-export default PropertyDetailsPage
+export default PropertyDetailsPage;
