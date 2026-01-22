@@ -1,24 +1,17 @@
-const transporter = require('../config/email');
+const gmailApiService = require("./gmailApiService");
 
 const sendEmail = async (to, subject, text, html, fromName = null) => {
   try {
-    const fromOptions = fromName 
-      ? {
-          name: fromName,
-          address: process.env.GMAIL_USER
-        }
-      : process.env.GMAIL_USER;
-
-    await transporter.sendMail({
-      from: fromOptions,
+    await gmailApiService.sendMail({
       to,
       subject,
       text,
-      html
+      html,
+      fromName,
     });
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("Error sending email:", error);
     return false;
   }
 };
@@ -31,14 +24,14 @@ const getBaseTemplate = (content) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${process.env.APP_NAME || 'Rental Platform'}</title>
+      <title>${process.env.APP_NAME || "Rental Platform"}</title>
     </head>
     <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center;">
           <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
-            ${process.env.APP_NAME || 'Rental Platform'}
+            ${process.env.APP_NAME || "Rental Platform"}
           </h1>
         </div>
         
@@ -50,10 +43,10 @@ const getBaseTemplate = (content) => {
         <!-- Footer -->
         <div style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e9ecef;">
           <p style="color: #6c757d; font-size: 12px; margin: 0; line-height: 1.5;">
-            This is an automated email from ${process.env.APP_NAME || 'Rental Platform'}. Please do not reply to this email.
+            This is an automated email from ${process.env.APP_NAME || "Rental Platform"}. Please do not reply to this email.
           </p>
           <p style="color: #6c757d; font-size: 12px; margin: 10px 0 0 0;">
-            © ${new Date().getFullYear()} ${process.env.APP_NAME || 'Rental Platform'}. All rights reserved.
+            © ${new Date().getFullYear()} ${process.env.APP_NAME || "Rental Platform"}. All rights reserved.
           </p>
         </div>
       </div>
@@ -63,10 +56,10 @@ const getBaseTemplate = (content) => {
 };
 
 // OTP Verification Email
-const sendOTPEmail = async (email, otp, purpose = 'account verification') => {
-  const subject = `Your OTP for ${process.env.APP_NAME || 'Rental Platform'}`;
+const sendOTPEmail = async (email, otp, purpose = "account verification") => {
+  const subject = `Your OTP for ${process.env.APP_NAME || "Rental Platform"}`;
   const fromName = `"No Reply - ${process.env.APP_NAME}" <${process.env.GMAIL_USER}>`;
-  
+
   const content = `
     <div style="text-align: center;">
       <h2 style="color: #333; margin-bottom: 20px; font-size: 24px;">Verification Required</h2>
@@ -89,24 +82,24 @@ const sendOTPEmail = async (email, otp, purpose = 'account verification') => {
       </p>
     </div>
   `;
-  
+
   const html = getBaseTemplate(content);
   const text = `Your OTP for ${purpose} is: ${otp}. This code will expire in 10 minutes.`;
-  
+
   return await sendEmail(email, subject, text, html, fromName);
 };
 
 // Welcome Email
-const sendWelcomeEmail = async (email, userName, userType = 'user') => {
-  const subject = `Welcome to ${process.env.APP_NAME || 'Rental Platform'}!`;
+const sendWelcomeEmail = async (email, userName, userType = "user") => {
+  const subject = `Welcome to ${process.env.APP_NAME || "Rental Platform"}!`;
   const fromName = `"No Reply - ${process.env.APP_NAME}" <${process.env.GMAIL_USER}>`;
-  
+
   const content = `
     <div style="text-align: center;">
       <h2 style="color: #333; margin-bottom: 20px; font-size: 24px;">Welcome Aboard! 🎉</h2>
       <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
         Hi <strong>${userName}</strong>,<br>
-        Thank you for joining ${process.env.APP_NAME || 'our platform'} as a ${userType}. We're excited to have you with us!
+        Thank you for joining ${process.env.APP_NAME || "our platform"} as a ${userType}. We're excited to have you with us!
       </p>
       
       <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin: 30px 0; text-align: left;">
@@ -124,19 +117,19 @@ const sendWelcomeEmail = async (email, userName, userType = 'user') => {
       </p>
     </div>
   `;
-  
+
   const html = getBaseTemplate(content);
-  const text = `Welcome to ${process.env.APP_NAME || 'Rental Platform'}, ${userName}! Thank you for joining us as a ${userType}.`;
-  
+  const text = `Welcome to ${process.env.APP_NAME || "Rental Platform"}, ${userName}! Thank you for joining us as a ${userType}.`;
+
   return await sendEmail(email, subject, text, html, fromName);
 };
 
 // Password Reset Email
 const sendPasswordResetEmail = async (email, resetToken, userName) => {
-  const subject = `Password Reset Request - ${process.env.APP_NAME || 'Rental Platform'}`;
+  const subject = `Password Reset Request - ${process.env.APP_NAME || "Rental Platform"}`;
   const fromName = `"No Reply - ${process.env.APP_NAME}" <${process.env.GMAIL_USER}>`;
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-  
+
   const content = `
     <div style="text-align: center;">
       <h2 style="color: #333; margin-bottom: 20px; font-size: 24px;">Password Reset Request</h2>
@@ -167,18 +160,22 @@ const sendPasswordResetEmail = async (email, resetToken, userName) => {
       </p>
     </div>
   `;
-  
+
   const html = getBaseTemplate(content);
-  const text = `Password reset requested for ${process.env.APP_NAME || 'Rental Platform'}. Visit: ${resetUrl}`;
-  
+  const text = `Password reset requested for ${process.env.APP_NAME || "Rental Platform"}. Visit: ${resetUrl}`;
+
   return await sendEmail(email, subject, text, html, fromName);
 };
 
 // Booking Confirmation Email
-const sendBookingConfirmationEmail = async (email, userName, bookingDetails) => {
-  const subject = `Booking Confirmation - ${process.env.APP_NAME || 'Rental Platform'}`;
+const sendBookingConfirmationEmail = async (
+  email,
+  userName,
+  bookingDetails,
+) => {
+  const subject = `Booking Confirmation - ${process.env.APP_NAME || "Rental Platform"}`;
   const fromName = `"No Reply - ${process.env.APP_NAME}" <${process.env.GMAIL_USER}>`;
-  
+
   const content = `
     <div>
       <h2 style="color: #333; margin-bottom: 20px; font-size: 24px; text-align: center;">Booking Confirmed! ✅</h2>
@@ -218,18 +215,17 @@ const sendBookingConfirmationEmail = async (email, userName, bookingDetails) => 
       </p>
     </div>
   `;
-  
+
   const html = getBaseTemplate(content);
   const text = `Booking confirmed for ${bookingDetails.propertyName}. Booking ID: ${bookingDetails.id}`;
-  
+
   return await sendEmail(email, subject, text, html, fromName);
 };
-
 
 module.exports = {
   sendEmail,
   sendOTPEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
-  sendBookingConfirmationEmail
+  sendBookingConfirmationEmail,
 };
