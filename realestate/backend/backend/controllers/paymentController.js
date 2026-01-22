@@ -1,30 +1,36 @@
-const { StandardCheckoutClient, Env, StandardCheckoutPayRequest, MetaInfo } = require('pg-sdk-node');
-const { randomUUID } = require('crypto');
-const Payment = require('../models/Payment');
-const UserSubscription = require('../models/UserSubscription');
-const SubscriptionPlan = require('../models/SubscriptionPlan');
+const {
+  StandardCheckoutClient,
+  Env,
+  StandardCheckoutPayRequest,
+  MetaInfo,
+} = require("pg-sdk-node");
+const { randomUUID } = require("crypto");
+const Payment = require("../models/Payment");
+const UserSubscription = require("../models/UserSubscription");
+const SubscriptionPlan = require("../models/SubscriptionPlan");
 
 // PhonePe SDK Configuration
 const clientId = process.env.CLIENT_ID || process.env.PHONEPE_MERCHANT_ID;
 const clientSecret = process.env.CLIENT_SECRET || process.env.PHONEPE_SALT_KEY;
-const clientVersion = parseInt(process.env.CLIENT_VERSION || '1');
-const env = process.env.NODE_ENV === 'production' ? Env.PRODUCTION : Env.SANDBOX;
+const clientVersion = parseInt(process.env.CLIENT_VERSION || "1");
+const env =
+  process.env.NODE_ENV === "production" ? Env.PRODUCTION : Env.SANDBOX;
 
 // Initialize PhonePe Client (singleton)
 let phonePeClient = null;
 
 const getPhonePeClient = () => {
   if (!phonePeClient) {
-    console.log('Initializing PhonePe SDK Client...');
-    console.log('Client ID:', clientId);
-    console.log('Client Version:', clientVersion);
-    console.log('Environment:', env);
+    console.log("Initializing PhonePe SDK Client...");
+    console.log("Client ID:", clientId);
+    console.log("Client Version:", clientVersion);
+    console.log("Environment:", env);
 
     phonePeClient = StandardCheckoutClient.getInstance(
       clientId,
       clientSecret,
       clientVersion,
-      env
+      env,
     );
   }
   return phonePeClient;
@@ -41,7 +47,7 @@ const initiatePayment = async (req, res) => {
     if (!plan) {
       return res.status(404).json({
         success: false,
-        error: { message: 'Plan not found' }
+        error: { message: "Plan not found" },
       });
     }
 
@@ -61,7 +67,7 @@ const initiatePayment = async (req, res) => {
       gstAmount,
       totalAmount,
       merchantTransactionId,
-      status: 'pending'
+      status: "pending",
     });
 
     await payment.save();
@@ -73,8 +79,8 @@ const initiatePayment = async (req, res) => {
 
     // Cancel any existing active subscriptions
     await UserSubscription.updateMany(
-      { user: userId, status: 'active' },
-      { status: 'cancelled', endDate: new Date() }
+      { user: userId, status: "active" },
+      { status: "cancelled", endDate: new Date() },
     );
 
     const subscription = new UserSubscription({
@@ -82,9 +88,9 @@ const initiatePayment = async (req, res) => {
       plan: planId,
       startDate,
       endDate,
-      status: 'pending',
+      status: "pending",
       payment: payment._id,
-      contactsViewed: 0
+      contactsViewed: 0,
     });
 
     await subscription.save();
@@ -94,7 +100,8 @@ const initiatePayment = async (req, res) => {
     await payment.save();
 
     // Prepare redirect URL
-    const redirectUrl = `${process.env.PHONEPE_REDIRECT_URL || 'http://localhost:5173/payment/callback'}?merchantTransactionId=${merchantTransactionId}`;
+    const frontendOrigin = req.get("origin") || "http://localhost:5173";
+    const redirectUrl = `${process.env.PHONEPE_REDIRECT_URL || `${frontendOrigin}/payment/callback`}?merchantTransactionId=${merchantTransactionId}`;
 
     // Create meta info
     const metaInfo = MetaInfo.builder()
@@ -111,18 +118,22 @@ const initiatePayment = async (req, res) => {
       .metaInfo(metaInfo)
       .build();
 
-    console.log('Initiating payment request...');
-    console.log('Merchant Order ID:', merchantTransactionId);
+    console.log("Initiating payment request...");
+    console.log("Merchant Order ID:", merchantTransactionId);
 
     // Get PhonePe client and initiate payment
     try {
-      if (!clientId || !clientSecret || clientId === 'YOUR_PHONEPE_MERCHANT_ID') {
-        throw new Error('PhonePe credentials not configured');
+      if (
+        !clientId ||
+        !clientSecret ||
+        clientId === "YOUR_PHONEPE_MERCHANT_ID"
+      ) {
+        throw new Error("PhonePe credentials not configured");
       }
 
       const client = getPhonePeClient();
       const phonepeResponse = await client.pay(paymentRequest);
-      console.log('PhonePe Response:', phonepeResponse);
+      console.log("PhonePe Response:", phonepeResponse);
 
       if (phonepeResponse && phonepeResponse.redirectUrl) {
         return res.status(200).json({
@@ -130,43 +141,45 @@ const initiatePayment = async (req, res) => {
           data: {
             paymentUrl: phonepeResponse.redirectUrl,
             merchantTransactionId: merchantTransactionId,
-            orderId: phonepeResponse.orderId
-          }
+            orderId: phonepeResponse.orderId,
+          },
         });
       } else {
-        throw new Error('No redirect URL received from PhonePe');
+        throw new Error("No redirect URL received from PhonePe");
       }
     } catch (paymentError) {
-      console.warn('PhonePe initiation failed, falling back to dummy payment:', paymentError.message);
+      console.warn(
+        "PhonePe initiation failed, falling back to dummy payment:",
+        paymentError.message,
+      );
 
       // Fallback to dummy payment URL (on our frontend)
-      const dummyPaymentUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/dummy?merchantTransactionId=${merchantTransactionId}`;
+      const dummyPaymentUrl = `${process.env.FRONTEND_URL || frontendOrigin}/payment/dummy?merchantTransactionId=${merchantTransactionId}`;
 
       return res.status(200).json({
         success: true,
         data: {
           paymentUrl: dummyPaymentUrl,
           merchantTransactionId: merchantTransactionId,
-          isDummy: true
-        }
+          isDummy: true,
+        },
       });
     }
-
   } catch (error) {
-    console.error('Payment initiation error:', error);
+    console.error("Payment initiation error:", error);
 
     // Log PhonePe specific error details
     if (error.data) {
-      console.error('PhonePe SDK Error:', JSON.stringify(error.data, null, 2));
+      console.error("PhonePe SDK Error:", JSON.stringify(error.data, null, 2));
     }
 
     return res.status(500).json({
       success: false,
       error: {
-        message: 'Internal server error',
+        message: "Internal server error",
         details: error.message,
-        phonepeError: error.data
-      }
+        phonepeError: error.data,
+      },
     });
   }
 };
@@ -174,22 +187,25 @@ const initiatePayment = async (req, res) => {
 // Handle PhonePe Callback
 const handleCallback = async (req, res) => {
   try {
-    let merchantOrderId = req.body?.merchantOrderId ||
+    let merchantOrderId =
+      req.body?.merchantOrderId ||
       req.query?.merchantTransactionId ||
       req.body?.originalMerchantOrderId;
 
     if (!merchantOrderId) {
       return res.status(400).json({
         success: false,
-        error: { message: 'Missing merchant order ID' }
+        error: { message: "Missing merchant order ID" },
       });
     }
 
-    const payment = await Payment.findOne({ merchantTransactionId: merchantOrderId });
+    const payment = await Payment.findOne({
+      merchantTransactionId: merchantOrderId,
+    });
     if (!payment) {
       return res.status(404).json({
         success: false,
-        error: { message: 'Payment not found' }
+        error: { message: "Payment not found" },
       });
     }
 
@@ -200,31 +216,40 @@ const handleCallback = async (req, res) => {
       payment.phonepeTransactionId = orderStatus.orderId;
       payment.callbackData = orderStatus;
 
-      if (orderStatus.state === 'COMPLETED') {
-        payment.status = 'success';
-        const subscription = await UserSubscription.findById(payment.subscription);
+      if (orderStatus.state === "COMPLETED") {
+        payment.status = "success";
+        const subscription = await UserSubscription.findById(
+          payment.subscription,
+        );
         if (subscription) {
-          subscription.status = 'active';
+          subscription.status = "active";
           subscription.paymentId = orderStatus.orderId;
           await subscription.save();
         }
-      } else if (orderStatus.state === 'FAILED') {
-        payment.status = 'failed';
-        const subscription = await UserSubscription.findById(payment.subscription);
+      } else if (orderStatus.state === "FAILED") {
+        payment.status = "failed";
+        const subscription = await UserSubscription.findById(
+          payment.subscription,
+        );
         if (subscription) {
-          subscription.status = 'cancelled';
+          subscription.status = "cancelled";
           await subscription.save();
         }
       }
 
       await payment.save();
-      return res.status(200).json({ success: true, message: 'Callback processed' });
-
+      return res
+        .status(200)
+        .json({ success: true, message: "Callback processed" });
     } catch (sdkError) {
-      return res.status(200).json({ success: true, message: 'Callback received' });
+      return res
+        .status(200)
+        .json({ success: true, message: "Callback received" });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+    return res
+      .status(500)
+      .json({ success: false, error: { message: "Internal server error" } });
   }
 };
 
@@ -234,38 +259,48 @@ const checkPaymentStatus = async (req, res) => {
 
   try {
     const payment = await Payment.findOne({ merchantTransactionId })
-      .populate('plan')
-      .populate('subscription');
+      .populate("plan")
+      .populate("subscription");
 
     if (!payment) {
-      return res.status(404).json({ success: false, error: { message: 'Payment not found' } });
+      return res
+        .status(404)
+        .json({ success: false, error: { message: "Payment not found" } });
     }
 
-    if (payment.status === 'pending' && !merchantTransactionId.startsWith('TEST_') && !payment.merchantTransactionId.includes('DUMMY')) {
+    if (
+      payment.status === "pending" &&
+      !merchantTransactionId.startsWith("TEST_") &&
+      !payment.merchantTransactionId.includes("DUMMY")
+    ) {
       try {
         const client = getPhonePeClient();
         const orderStatus = await client.getOrderStatus(merchantTransactionId);
 
-        if (orderStatus.state === 'COMPLETED') {
-          payment.status = 'success';
+        if (orderStatus.state === "COMPLETED") {
+          payment.status = "success";
           payment.phonepeTransactionId = orderStatus.orderId;
-          const subscription = await UserSubscription.findById(payment.subscription);
+          const subscription = await UserSubscription.findById(
+            payment.subscription,
+          );
           if (subscription) {
-            subscription.status = 'active';
+            subscription.status = "active";
             subscription.paymentId = orderStatus.orderId;
             await subscription.save();
           }
-        } else if (orderStatus.state === 'FAILED') {
-          payment.status = 'failed';
-          const subscription = await UserSubscription.findById(payment.subscription);
+        } else if (orderStatus.state === "FAILED") {
+          payment.status = "failed";
+          const subscription = await UserSubscription.findById(
+            payment.subscription,
+          );
           if (subscription) {
-            subscription.status = 'cancelled';
+            subscription.status = "cancelled";
             await subscription.save();
           }
         }
         await payment.save();
       } catch (sdkError) {
-        console.error('Error checking status with PhonePe SDK:', sdkError);
+        console.error("Error checking status with PhonePe SDK:", sdkError);
       }
     }
 
@@ -279,16 +314,20 @@ const checkPaymentStatus = async (req, res) => {
           amount: payment.amount,
           gstAmount: payment.gstAmount,
           totalAmount: payment.totalAmount,
-          createdAt: payment.createdAt
+          createdAt: payment.createdAt,
         },
-        subscription: payment.subscription ? {
-          status: payment.subscription.status,
-          plan: payment.plan
-        } : null
-      }
+        subscription: payment.subscription
+          ? {
+              status: payment.subscription.status,
+              plan: payment.plan,
+            }
+          : null,
+      },
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+    return res
+      .status(500)
+      .json({ success: false, error: { message: "Internal server error" } });
   }
 };
 
@@ -297,12 +336,14 @@ const getPaymentHistory = async (req, res) => {
   const userId = req.user._id;
   try {
     const payments = await Payment.find({ user: userId })
-      .populate('plan')
-      .populate('subscription')
+      .populate("plan")
+      .populate("subscription")
       .sort({ createdAt: -1 });
     return res.status(200).json({ success: true, data: payments });
   } catch (error) {
-    return res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+    return res
+      .status(500)
+      .json({ success: false, error: { message: "Internal server error" } });
   }
 };
 
@@ -312,39 +353,59 @@ const completeDummyPayment = async (req, res) => {
   try {
     const payment = await Payment.findOne({ merchantTransactionId });
     if (!payment) {
-      return res.status(404).json({ success: false, error: { message: 'Payment not found' } });
+      return res
+        .status(404)
+        .json({ success: false, error: { message: "Payment not found" } });
     }
-    if (payment.status !== 'pending') {
-      return res.status(200).json({ success: true, message: 'Payment already processed', data: { status: payment.status } });
+    if (payment.status !== "pending") {
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: "Payment already processed",
+          data: { status: payment.status },
+        });
     }
 
-    if (status === 'success') {
-      payment.status = 'success';
-      payment.responseCode = 'SUCCESS';
-      payment.responseMessage = 'Dummy payment successful';
+    if (status === "success") {
+      payment.status = "success";
+      payment.responseCode = "SUCCESS";
+      payment.responseMessage = "Dummy payment successful";
       payment.phonepeTransactionId = `DUMMY_${Date.now()}`;
 
-      const subscription = await UserSubscription.findById(payment.subscription);
+      const subscription = await UserSubscription.findById(
+        payment.subscription,
+      );
       if (subscription) {
-        subscription.status = 'active';
+        subscription.status = "active";
         subscription.paymentId = payment.phonepeTransactionId;
         await subscription.save();
       }
     } else {
-      payment.status = 'failed';
-      payment.responseCode = 'FAILED';
-      payment.responseMessage = 'Dummy payment failed';
-      const subscription = await UserSubscription.findById(payment.subscription);
+      payment.status = "failed";
+      payment.responseCode = "FAILED";
+      payment.responseMessage = "Dummy payment failed";
+      const subscription = await UserSubscription.findById(
+        payment.subscription,
+      );
       if (subscription) {
-        subscription.status = 'cancelled';
+        subscription.status = "cancelled";
         await subscription.save();
       }
     }
 
     await payment.save();
-    res.status(200).json({ success: true, message: 'Dummy payment processed', data: { status: payment.status } });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Dummy payment processed",
+        data: { status: payment.status },
+      });
   } catch (error) {
-    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+    res
+      .status(500)
+      .json({ success: false, error: { message: "Internal server error" } });
   }
 };
 
@@ -353,5 +414,5 @@ module.exports = {
   handleCallback,
   checkPaymentStatus,
   getPaymentHistory,
-  completeDummyPayment
+  completeDummyPayment,
 };
